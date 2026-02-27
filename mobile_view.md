@@ -68,3 +68,59 @@ Once connected, development is seamless:
 | `@expo/ngrok` not found error | Run `npm install` in the terminal first, then retry `npm run tunnel` |
 | Codespace went to sleep | Go to github.com → Codespaces → reopen it, then run `npm run tunnel` again |
 | "Something went wrong" in Expo Go | Stop Expo (`Ctrl+C`), run `npm run tunnel` again, rescan the QR code |
+
+---
+
+## Changelog — Codespace fixes
+
+The following changes were made to get the Codespace workflow working correctly.
+
+### Upgrade to Expo SDK 54 (for Expo Go 54 compatibility)
+
+**Problem:** Expo Go only supports the SDK version it was built for. The project was on SDK 52 but the installed Expo Go app was version 54, causing a version mismatch error on launch.
+
+**Fix:** Upgraded all Expo and React Native packages to their SDK 54 equivalents:
+
+| Package | Before | After |
+|---------|--------|-------|
+| `expo` | ~52.0.0 | ~54.0.0 |
+| `expo-router` | ~4.0.0 | ~6.0.0 |
+| `react` | 18.3.1 | 19.1.0 |
+| `react-native` | 0.76.3 | 0.81.5 |
+| `expo-status-bar` | ~2.0.0 | ~3.0.9 |
+| `@expo/vector-icons` | ^14.0.0 | ^15.0.0 |
+| `react-native-safe-area-context` | 4.12.0 | ~5.7.0 |
+| `react-native-screens` | ~4.4.0 | ~4.24.0 |
+| `@react-native-async-storage/async-storage` | 2.1.0 | 3.0.1 |
+| `react-native-svg` | 15.8.0 | ~15.15.3 |
+
+New peer dependencies added for expo-router 6:
+- `react-native-reanimated` ~3.16.7
+- `react-native-gesture-handler` ~2.30.0
+
+---
+
+### Disable `typedRoutes` to fix tunnel crash
+
+**Problem:** `expo-router` 4.0.22 does not expose `expo-router/internal/routing`, which the Expo 52 CLI requires when `typedRoutes` is enabled. This caused the tunnel to crash immediately on start inside the Codespace.
+
+**Fix:** Set `typedRoutes: false` in `app.json` under `expo.experiments`. This stops Expo from running type generation at startup, allowing the tunnel to initialise cleanly.
+
+---
+
+### Use `npx expo` to resolve `expo: not found`
+
+**Problem:** Running `npm run tunnel` (or any Expo script) in a fresh Codespace failed with `expo: not found` because the `expo` binary wasn't on the shell `PATH` after install.
+
+**Fix:** Changed all `package.json` scripts to use `npx expo` instead of `expo` directly. `npx` resolves the locally installed binary without needing `node_modules/.bin` on `PATH`.
+
+---
+
+### Add `expo-asset` and forward Expo ports in Codespace
+
+**Problem:** Expo 52 requires `expo-asset` as a dependency but it wasn't listed explicitly. Additionally, only port 8081 was forwarded in the Codespace, preventing the full Expo tunnel (which also uses ports 19000 and 19001) from working correctly.
+
+**Fix:**
+- Added `expo-asset ~10.0.0` as an explicit dependency in `package.json`.
+- Added `npx expo install --fix` as a post-install step in `.devcontainer/devcontainer.json` to automatically correct any peer dependency version mismatches when the Codespace starts.
+- Forwarded ports **19000** and **19001** alongside **8081** in `.devcontainer/devcontainer.json` so the full Expo tunnel can reach your phone.
