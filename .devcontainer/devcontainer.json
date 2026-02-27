@@ -1,11 +1,19 @@
 {
   "name": "HealthTracker Dev",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
-  "postCreateCommand": "npm install",
-  "forwardPorts": [8081],
+  "postCreateCommand": "npm install && npx expo install --fix",
+  "forwardPorts": [8081, 19000, 19001],
   "portsAttributes": {
     "8081": {
       "label": "Expo Metro",
+      "onAutoForward": "silent"
+    },
+    "19000": {
+      "label": "Expo DevTools",
+      "onAutoForward": "silent"
+    },
+    "19001": {
+      "label": "Expo Legacy",
       "onAutoForward": "silent"
     }
   }
