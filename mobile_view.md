@@ -124,3 +124,47 @@ New peer dependencies added for expo-router 6:
 - Added `expo-asset ~10.0.0` as an explicit dependency in `package.json`.
 - Added `npx expo install --fix` as a post-install step in `.devcontainer/devcontainer.json` to automatically correct any peer dependency version mismatches when the Codespace starts.
 - Forwarded ports **19000** and **19001** alongside **8081** in `.devcontainer/devcontainer.json` so the full Expo tunnel can reach your phone.
+
+---
+
+### Fix SDK 54 version mismatches and missing `expo-linking`
+
+**Problem 1 — Version mismatches:** Several packages were pinned to versions incompatible with Expo SDK 54, producing warnings at startup and potential runtime instability:
+
+| Package | Was | Now |
+|---------|-----|-----|
+| `@react-native-async-storage/async-storage` | 3.0.1 | 2.2.0 |
+| `react-native-gesture-handler` | ~2.30.0 | ~2.28.0 |
+| `react-native-reanimated` | ~3.16.7 | ~4.1.1 |
+| `react-native-safe-area-context` | ~5.7.0 | ~5.6.0 |
+| `react-native-screens` | ~4.24.0 | ~4.16.0 |
+| `react-native-svg` | ~15.15.3 | 15.12.1 |
+| `@types/react` (dev) | ~19.0.0 | ~19.1.10 |
+| `typescript` (dev) | ~5.3.3 | ~5.9.2 |
+
+**Fix:** Updated all versions in `package.json` to the values expected by Expo SDK 54. Deleted the stale `package-lock.json` so a clean install generates a consistent lock file.
+
+---
+
+**Problem 2 — Missing `expo-linking`:** `expo-router` v6 declares `expo-linking` as a required peer dependency (`^7.x`), but it was absent from `package.json`. npm does not install peer dependencies automatically, so `expo-linking` was never present in `node_modules`. This caused a hard Metro bundler failure:
+
+```
+Unable to resolve "expo-linking" from "node_modules/expo-router/build/views/Unmatched.js"
+```
+
+**Fix:** Added `expo-linking ~7.0.5` as an explicit dependency in `package.json`.
+
+---
+
+**Problem 3 — Scripts still using bare `expo` command:** Despite an earlier fix noted in this changelog, the `package.json` scripts were still calling `expo` directly instead of `npx expo`, causing `expo: not found` errors in fresh Codespaces where `node_modules/.bin` is not on `PATH`.
+
+**Fix:** Updated all scripts to use `npx expo`:
+- `start`, `android`, `ios`, `web`, `tunnel` — all now prefixed with `npx`
+
+---
+
+**Problem 4 — Port forwarding and auto-fix not applied:** The `.devcontainer/devcontainer.json` still only forwarded port 8081 and ran only `npm install`, meaning previously documented fixes (ports 19000/19001 and `npx expo install --fix`) were never actually in the file.
+
+**Fix:** Applied both fixes to `.devcontainer/devcontainer.json`:
+- `postCreateCommand` updated to `npm install && npx expo install --fix` — automatically corrects any peer-dep version drift every time a Codespace is created
+- Ports **19000** (Expo DevTools) and **19001** (Expo Legacy) added to `forwardPorts` and `portsAttributes`
