@@ -17,7 +17,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
-import { Colors, Spacing, Typography, Radius } from '../../constants/theme';
+import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
 import { convertWeight } from '../../utils/unitConversion';
 import WeightChart from '../../components/WeightChart';
@@ -31,8 +31,156 @@ function generateId(): string {
   });
 }
 
+const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
+  flex: { flex: 1, backgroundColor: colors.background },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: Spacing.md, paddingTop: Spacing.md },
+
+  // Toggle
+  toggleRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    padding: 4,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+  },
+  toggleBtnActive: {
+    backgroundColor: colors.primary,
+  },
+  toggleText: {
+    ...Typography.body,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  toggleTextActive: {
+    color: colors.white,
+    fontWeight: '600',
+  },
+
+  // Date navigation
+  dateNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: Spacing.sm,
+  },
+  arrowBtn: {
+    padding: Spacing.sm,
+  },
+  dateCenter: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  dateText: {
+    ...Typography.body,
+    color: colors.text,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  calendarIcon: {
+    marginLeft: Spacing.xs,
+  },
+  existingNote: {
+    ...Typography.small,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: Spacing.sm,
+    marginLeft: Spacing.xs,
+  },
+
+  // Weight input
+  sectionLabel: {
+    ...Typography.small,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: Spacing.xs,
+    marginTop: Spacing.sm,
+  },
+  input: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: 32,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+
+  // Save button
+  saveButton: {
+    backgroundColor: colors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saveButtonText: {
+    ...Typography.h3,
+    color: colors.white,
+  },
+
+  // iOS date picker modal
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  pickerSheet: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    paddingBottom: Spacing.xl,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  pickerDone: {
+    ...Typography.body,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  iosPicker: {
+    height: 200,
+  },
+});
+
 export default function WeightScreen() {
   const { entries, preferences, dispatch, isLoading } = useApp();
+  const colors = useColors();
+  const styles = makeStyles(colors);
 
   const [activeSection, setActiveSection] = useState<'log' | 'history'>('log');
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
@@ -117,7 +265,7 @@ export default function WeightScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -175,7 +323,7 @@ export default function WeightScreen() {
             {/* Date navigation bar */}
             <View style={styles.dateNav}>
               <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
-                <Ionicons name="chevron-back" size={22} color={Colors.primary} />
+                <Ionicons name="chevron-back" size={22} color={colors.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -189,7 +337,7 @@ export default function WeightScreen() {
                 <Ionicons
                   name="calendar-outline"
                   size={16}
-                  color={Colors.textSecondary}
+                  color={colors.textSecondary}
                   style={styles.calendarIcon}
                 />
               </TouchableOpacity>
@@ -202,7 +350,7 @@ export default function WeightScreen() {
                 <Ionicons
                   name="chevron-forward"
                   size={22}
-                  color={isForwardDisabled ? Colors.border : Colors.primary}
+                  color={isForwardDisabled ? colors.border : colors.primary}
                 />
               </TouchableOpacity>
             </View>
@@ -223,7 +371,7 @@ export default function WeightScreen() {
               onChangeText={setWeightInput}
               keyboardType="decimal-pad"
               placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
               returnKeyType="done"
               onSubmitEditing={handleSave}
             />
@@ -282,149 +430,3 @@ export default function WeightScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: Colors.background },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-  },
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.md, paddingTop: Spacing.md },
-
-  // Toggle
-  toggleRow: {
-    flexDirection: 'row',
-    backgroundColor: Colors.card,
-    borderRadius: Radius.lg,
-    padding: 4,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  toggleBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-  },
-  toggleBtnActive: {
-    backgroundColor: Colors.primary,
-  },
-  toggleText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  toggleTextActive: {
-    color: Colors.white,
-    fontWeight: '600',
-  },
-
-  // Date navigation
-  dateNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: Spacing.sm,
-  },
-  arrowBtn: {
-    padding: Spacing.sm,
-  },
-  dateCenter: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-  },
-  dateText: {
-    ...Typography.body,
-    color: Colors.text,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  calendarIcon: {
-    marginLeft: Spacing.xs,
-  },
-  existingNote: {
-    ...Typography.small,
-    color: Colors.textSecondary,
-    fontStyle: 'italic',
-    marginBottom: Spacing.sm,
-    marginLeft: Spacing.xs,
-  },
-
-  // Weight input
-  sectionLabel: {
-    ...Typography.small,
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: Spacing.xs,
-    marginTop: Spacing.sm,
-  },
-  input: {
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: 32,
-    fontWeight: '600',
-    color: Colors.text,
-    textAlign: 'center',
-  },
-
-  // Save button
-  saveButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    marginTop: Spacing.xl,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  saveButtonText: {
-    ...Typography.h3,
-    color: Colors.white,
-  },
-
-  // iOS date picker modal
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  pickerSheet: {
-    backgroundColor: Colors.card,
-    borderTopLeftRadius: Radius.lg,
-    borderTopRightRadius: Radius.lg,
-    paddingBottom: Spacing.xl,
-  },
-  pickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  pickerDone: {
-    ...Typography.body,
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  iosPicker: {
-    height: 200,
-  },
-});

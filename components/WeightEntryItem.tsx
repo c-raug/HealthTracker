@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WeightEntry } from '../types';
-import { Colors, Spacing, Typography, Radius } from '../constants/theme';
+import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
 import { formatDisplayDate } from '../utils/dateUtils';
 import { useApp } from '../context/AppContext';
 
@@ -9,8 +9,50 @@ interface Props {
   entry: WeightEntry;
 }
 
+const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    marginBottom: Spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  info: {
+    flex: 1,
+  },
+  date: {
+    ...Typography.small,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  weight: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  unit: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.textSecondary,
+  },
+  deleteBtn: {
+    padding: Spacing.xs,
+    borderRadius: Radius.sm,
+    backgroundColor: colors.dangerLight,
+  },
+});
+
 export default function WeightEntryItem({ entry }: Props) {
   const { dispatch } = useApp();
+  const colors = useColors();
+  const styles = makeStyles(colors);
 
   const handleDelete = () => {
     Alert.alert(
@@ -41,48 +83,8 @@ export default function WeightEntryItem({ entry }: Props) {
         style={styles.deleteBtn}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Ionicons name="trash-outline" size={18} color={Colors.danger} />
+        <Ionicons name="trash-outline" size={18} color={colors.danger} />
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: Radius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
-    marginBottom: Spacing.xs,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  info: {
-    flex: 1,
-  },
-  date: {
-    ...Typography.small,
-    color: Colors.textSecondary,
-    marginBottom: 2,
-  },
-  weight: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  unit: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: Colors.textSecondary,
-  },
-  deleteBtn: {
-    padding: Spacing.xs,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.dangerLight,
-  },
-});
