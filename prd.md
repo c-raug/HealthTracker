@@ -20,13 +20,13 @@ HealthTracker is a cross-platform mobile application (iOS & Android) built with 
 
 | Layer | Choice | Rationale |
 |---|---|---|
-| Framework | React Native + Expo (managed workflow) | Cross-platform, fast iteration, large ecosystem |
+| Framework | React Native + Expo SDK 52 (managed workflow) | Cross-platform, fast iteration, large ecosystem |
 | Language | TypeScript | Type safety, better IDE support |
-| Navigation | React Navigation v6 | Industry standard for RN |
-| Local Storage | expo-sqlite or AsyncStorage | On-device persistence, no backend required |
-| Charts | react-native-chart-kit or Victory Native | Flexible line charts |
+| Routing | Expo Router v4 (file-based) | Modern standard for Expo apps |
+| Local Storage | AsyncStorage (`@react-native-async-storage/async-storage` v2.1.0) | On-device persistence, no backend required |
+| Charts | react-native-chart-kit + react-native-svg | Flexible line charts, pure JS |
 | State | React Context + useReducer | Lightweight, no external library needed for v1 |
-| Styling | StyleSheet API + custom theme | Native, no extra dependencies |
+| Styling | StyleSheet API + custom theme (`constants/theme.ts`) | Native, no extra dependencies |
 
 ---
 
@@ -79,30 +79,35 @@ interface UserPreferences {
 
 ---
 
-## Project Structure (Proposed)
+## Project Structure
 
 ```
 HealthTracker/
 ├── app/                        # Expo Router file-based routing
+│   ├── _layout.tsx             # Root Stack layout + AppProvider wrapper
 │   ├── (tabs)/
-│   │   ├── index.tsx           # Home/Dashboard
-│   │   ├── history.tsx         # History (chart + list)
-│   │   └── settings.tsx        # Settings
-│   ├── log-weight.tsx          # Log Weight modal/screen
-│   └── _layout.tsx             # Root layout + navigation
+│   │   ├── _layout.tsx         # Tab bar (Home, History, Settings)
+│   │   ├── index.tsx           # Home/Dashboard screen
+│   │   ├── history.tsx         # History screen (chart + list)
+│   │   └── settings.tsx        # Settings screen
+│   └── log-weight.tsx          # Log Weight modal screen
 ├── components/
-│   ├── WeightChart.tsx         # Line chart component
-│   ├── WeightEntryList.tsx     # Scrollable list of entries
-│   └── WeightEntryItem.tsx     # Single list row
+│   ├── WeightChart.tsx         # Line chart (react-native-chart-kit)
+│   ├── WeightEntryList.tsx     # FlatList of all entries
+│   └── WeightEntryItem.tsx     # Single entry row with delete
+├── constants/
+│   └── theme.ts                # Colors, typography, spacing, radius tokens
 ├── context/
-│   └── AppContext.tsx          # Global state (entries + preferences)
+│   └── AppContext.tsx          # Global state (entries + preferences) + useApp hook
 ├── storage/
-│   └── storage.ts              # AsyncStorage / SQLite helpers
+│   └── storage.ts              # AsyncStorage read/write helpers
 ├── types/
-│   └── index.ts                # TypeScript interfaces
+│   └── index.ts                # WeightEntry & UserPreferences interfaces
 ├── utils/
-│   └── unitConversion.ts       # lbs <-> kg conversion helpers
-├── app.json                    # Expo config
+│   ├── dateUtils.ts            # getToday, formatDisplayDate, formatShortDate, addDays
+│   └── unitConversion.ts       # lbsToKg, kgToLbs, convertWeight
+├── app.json                    # Expo config (scheme, plugins)
+├── babel.config.js
 ├── package.json
 ├── tsconfig.json
 └── prd.md                      # This document
@@ -112,33 +117,52 @@ HealthTracker/
 
 ## Implementation Phases
 
-### Phase 1 — Project Setup
-- [ ] Initialize Expo project with TypeScript template
-- [ ] Install dependencies (React Navigation, chart library, AsyncStorage)
-- [ ] Set up project structure (folders, base files)
-- [ ] Configure TypeScript
+### Phase 1 — Project Setup ✅ _Completed 2026-02-27_
+- [x] Initialize Expo project with TypeScript template (Expo SDK 52, Expo Router v4)
+- [x] Install dependencies (react-native-chart-kit, AsyncStorage, react-native-svg, @expo/vector-icons)
+- [x] Set up project structure (app/, components/, context/, storage/, types/, utils/, constants/)
+- [x] Configure TypeScript (`tsconfig.json` extending `expo/tsconfig.base`)
 
-### Phase 2 — Core Data Layer
-- [ ] Define TypeScript interfaces (`WeightEntry`, `UserPreferences`)
-- [ ] Implement storage helpers (read/write/delete entries, read/write preferences)
-- [ ] Create `AppContext` with reducer for global state
+### Phase 2 — Core Data Layer ✅ _Completed 2026-02-27_
+- [x] Define TypeScript interfaces (`WeightEntry`, `UserPreferences`) in `types/index.ts`
+- [x] Implement storage helpers (`loadEntries`, `saveEntries`, `loadPreferences`, `savePreferences`) in `storage/storage.ts`
+- [x] Create `AppContext` with `useReducer` — actions: `LOAD_DATA`, `UPSERT_ENTRY`, `DELETE_ENTRY`, `SET_UNIT`
+- [x] Add `utils/unitConversion.ts` (lbs ↔ kg) and `utils/dateUtils.ts` (formatting, date arithmetic)
 
-### Phase 3 — Screens
-- [ ] Home screen (latest entry, quick-add CTA)
-- [ ] Log Weight screen (form with validation)
-- [ ] History screen (chart + list with delete)
-- [ ] Settings screen (unit toggle)
+### Phase 3 — Screens ✅ _Completed 2026-02-27_
+- [x] Home screen — today's date, today's weight card, Log Weight CTA, total entries summary
+- [x] Log Weight modal — prev/next day date selector, numeric input, validation (range + non-empty), upserts on same-day conflicts
+- [x] History screen — empty state with CTA; `WeightChart` (last 30 entries, bezier line); `WeightEntryList` (newest first) with per-item delete + confirmation
+- [x] Settings screen — lbs/kg toggle (segmented control style), persisted preference, About section
 
-### Phase 4 — Navigation & Polish
-- [ ] Configure tab navigation (Home, History, Settings)
-- [ ] Configure modal/stack for Log Weight
-- [ ] Add empty states and loading states
-- [ ] Basic theming (colors, typography)
+### Phase 4 — Navigation & Polish ✅ _Completed 2026-02-27_
+- [x] Expo Router file-based tab navigation (Home, History, Settings) with Ionicons
+- [x] Log Weight presented as a modal (`presentation: 'modal'`) via root Stack
+- [x] Loading states (ActivityIndicator) on Home and History screens
+- [x] Empty states on Home (no today entry prompt) and History (no entries prompt)
+- [x] Design system in `constants/theme.ts` (Colors, Typography, Spacing, Radius tokens)
 
-### Phase 5 — Testing & Cleanup
-- [ ] Manual test on iOS Simulator and Android Emulator (via Expo Go)
-- [ ] Fix edge cases (same-day duplicate entry handling, unit switching behavior)
-- [ ] Update README with setup instructions
+### Phase 5 — Testing & Cleanup ✅ _Completed 2026-02-27_
+- [x] Edge case: same-day duplicate entries handled via `UPSERT_ENTRY` (replaces existing entry for same date)
+- [x] Edge case: future date blocked in Log Weight date selector
+- [x] Edge case: chart guarded against < 2 data points (shows placeholder message)
+- [x] Unit switching: chart converts all entries to current preferred unit; list shows stored unit per entry
+- [x] Updated README with full setup instructions, project structure, and roadmap link
+
+---
+
+---
+
+## Development Log
+
+| Date | Phase | Notes |
+|---|---|---|
+| 2026-02-27 | Planning | PRD created; tech stack and screens decided (React Native Expo, local storage, lbs+kg, chart+list history) |
+| 2026-02-27 | Phase 1 | Expo SDK 52 project scaffolded; all config files created; 941 packages installed |
+| 2026-02-27 | Phase 2 | Full data layer complete: types, AsyncStorage helpers, AppContext with useReducer, unit & date utilities |
+| 2026-02-27 | Phase 3 | All 4 screens implemented: Home, Log Weight modal, History, Settings |
+| 2026-02-27 | Phase 4 | Expo Router tab navigation + modal wiring; design system (Colors, Typography, Spacing); loading & empty states |
+| 2026-02-27 | Phase 5 | Edge cases handled; README updated with full setup instructions |
 
 ---
 
