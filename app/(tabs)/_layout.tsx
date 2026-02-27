@@ -32,18 +32,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Weight',
           tabBarIcon: ({ color }) => (
-            <TabIcon name="home-outline" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'History',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="stats-chart-outline" color={color} />
+            <TabIcon name="barbell-outline" color={color} />
           ),
         }}
       />
