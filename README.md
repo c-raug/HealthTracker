@@ -74,9 +74,57 @@ AsyncStorage keys: `weight_entries`, `user_preferences`
 
 ---
 
+## Local Development (Mac)
+
+All dependencies and scripts work identically on a local Mac — none of the Codespace fixes were environment-specific.
+
+### Prerequisites
+
+- **Node.js 20+** — required by Expo SDK 54. Check with `node -v`; install from [nodejs.org](https://nodejs.org/) if needed
+- **Expo Go (SDK 54)** on your phone — the same app used for Codespace development
+- **Xcode** (optional) — for iOS Simulator; install from the Mac App Store
+- **Android Studio** (optional) — for Android Emulator; install from [developer.android.com](https://developer.android.com/studio)
+
+### Setup
+
+```bash
+git clone <repo-url>
+cd HealthTracker
+npm install
+```
+
+### Running the app
+
+```bash
+npm start
+```
+
+Metro starts and shows a QR code. Then choose your target:
+
+| Target | How |
+|--------|-----|
+| Physical device (Expo Go) | Scan the QR code — phone must be on the **same Wi-Fi** as your Mac |
+| iOS Simulator | Press `i` in the terminal (requires Xcode installed) |
+| Android Emulator | Press `a` in the terminal (requires Android Studio + emulator already running) |
+
+> **Different network?** If your phone isn't on the same Wi-Fi as your Mac, use `npm run tunnel` instead of `npm start`. This spins up an ngrok tunnel exactly like the Codespace workflow.
+
+### Live development (same as Codespace)
+
+| Key | Action |
+|-----|--------|
+| `r` | Force full reload |
+| `i` | Open iOS Simulator |
+| `a` | Open Android Emulator |
+| `j` | Open JS debugger |
+| `c` | Show QR code again |
+| `Ctrl+C` | Stop Metro |
+
+---
+
 ## Codespace Development
 
-This is the primary development workflow — no Mac or local install required.
+This is the no-install workflow — runs entirely in the browser with no local setup required.
 
 ### How it works
 
