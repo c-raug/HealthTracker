@@ -168,3 +168,22 @@ Unable to resolve "expo-linking" from "node_modules/expo-router/build/views/Unma
 **Fix:** Applied both fixes to `.devcontainer/devcontainer.json`:
 - `postCreateCommand` updated to `npm install && npx expo install --fix` — automatically corrects any peer-dep version drift every time a Codespace is created
 - Ports **19000** (Expo DevTools) and **19001** (Expo Legacy) added to `forwardPorts` and `portsAttributes`
+
+---
+
+### Fix `expo-asset` version mismatch — icons crash and phantom route errors
+
+**Problem:** `expo-asset` was pinned to `~10.0.0` but Expo SDK 54 requires `~12.0.12`. The `expo-asset@10.x` package is missing the `setCustomSourceTransformer` API that `@expo/vector-icons@15.x` calls at import time to register icon font assets.
+
+This caused a crash the instant `Ionicons` was imported in `app/(tabs)/_layout.tsx`, which produced a cascade of misleading secondary errors:
+
+- `TypeError: setCustomSourceTransformer is not a function` — the direct crash
+- `Route "(tabs)/_layout.tsx" is missing the required default export` — the layout crashed before its `export default` could be evaluated
+- `Route "(tabs)/history.tsx" is missing the required default export` — same, because the tabs layout never registered this route
+- `Route "log-weight.tsx" is missing the required default export` — propagated from the root layout crash
+- `[Layout children]: No route named "(tabs)" exists` — the tabs group layout never loaded so expo-router couldn't register the `(tabs)` group at all
+- `[Layout children]: No route named "log-weight" exists` — same cascade
+
+All route files (`_layout.tsx`, `history.tsx`, `log-weight.tsx`) have correct `export default function` statements. There were no code bugs — only the version mismatch.
+
+**Fix:** Updated `expo-asset` from `~10.0.0` to `~12.0.12` in `package.json`.
