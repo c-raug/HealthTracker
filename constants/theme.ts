@@ -1,4 +1,6 @@
-export const Colors = {
+import { useColorScheme } from 'react-native';
+
+export const LightColors = {
   primary: '#4CAF50',
   primaryLight: '#E8F5E9',
   background: '#F7F8FA',
@@ -10,6 +12,27 @@ export const Colors = {
   dangerLight: '#FEE2E2',
   white: '#FFFFFF',
 };
+
+export const DarkColors = {
+  primary: '#4CAF50',
+  primaryLight: '#1A3D20',
+  background: '#1C1C1E',
+  card: '#2C2C2E',
+  text: '#F2F2F7',
+  textSecondary: '#8E8E93',
+  border: '#3A3A3C',
+  danger: '#FF453A',
+  dangerLight: '#3D1919',
+  white: '#FFFFFF',
+};
+
+export function useColors() {
+  const scheme = useColorScheme();
+  return scheme === 'dark' ? DarkColors : LightColors;
+}
+
+// Fallback alias for any missed references
+export const Colors = LightColors;
 
 export const Typography = {
   h1: { fontSize: 28, fontWeight: '700' as const },

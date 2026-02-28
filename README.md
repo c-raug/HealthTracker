@@ -1,14 +1,31 @@
 # HealthTracker
 
-A cross-platform mobile app (iOS & Android) built with React Native (Expo) for tracking daily weight and visualizing progress over time.
+A cross-platform mobile app (iOS & Android) built with React Native (Expo) for tracking daily weight and nutrition, inspired by MyFitnessPal.
 
 ## Features
 
-- Log your weight for any date with a clean, keyboard-friendly form
+### Weight Tracking
+- Log your weight for any date with date navigation arrows and a native date picker
+- Toggle between **Log** and **History** views within the same screen — no separate tab
 - View your history as a line chart (last 30 entries) and a scrollable list
 - Delete any past entry with a confirmation prompt
 - Switch between **lbs** and **kg** — preference saved locally
-- All data stored on-device (no accounts or internet required)
+
+### Nutrition Tracking
+- **TDEE calculation** based on user profile (age, sex, height, activity level, weight goal) using the Mifflin-St Jeor equation
+- **Calorie ring chart** (SVG donut) showing consumed vs target with color indicators (green/yellow/red)
+- **Macro progress bars** for protein, carbs, and fat with configurable splits (Balanced, High Protein, Keto, or Custom)
+- **Four meal categories**: Breakfast, Lunch, Dinner, Snacks — each collapsible with calorie totals
+- **Food search** via OpenFoodFacts API with nutritional data (calories, protein, carbs, fat)
+- **Custom foods** — create and save personal foods with full nutritional info
+- **Saved meals** — group foods into reusable meals that can be added with one tap
+- **Drag-to-reorder** food items within meal categories
+- **Swipe-to-delete** food items
+- Date navigation matching the Weight screen pattern
+
+### General
+- All data stored on-device (no accounts required; OpenFoodFacts search requires internet)
+- Dark mode support throughout
 
 ---
 
@@ -20,8 +37,10 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 | Language | TypeScript |
 | Routing | Expo Router v6 (file-based) |
 | Storage | AsyncStorage (`@react-native-async-storage/async-storage`) |
-| Charts | react-native-chart-kit + react-native-svg |
+| Charts | react-native-chart-kit + react-native-svg (weight) / custom SVG (calorie ring) |
 | State | React Context + useReducer |
+| Food Data | OpenFoodFacts API (no key required) + local custom foods |
+| Drag & Drop | react-native-draggable-flatlist |
 | Icons | @expo/vector-icons (Ionicons) |
 
 ---
@@ -30,26 +49,44 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ```
 app/
-├── _layout.tsx          # Root Stack layout (wraps AppProvider)
-├── (tabs)/
-│   ├── _layout.tsx      # Tab bar (Home, History, Settings) + Ionicons
-│   ├── index.tsx        # Home / Dashboard screen
-│   ├── history.tsx      # History screen (chart + list)
-│   └── settings.tsx     # Settings screen (unit preference)
-└── log-weight.tsx       # Log Weight modal (presented via root Stack)
+├── _layout.tsx              # Root Stack layout (wraps AppProvider, modal route)
+├── add-food-modal.tsx       # Full-screen modal: Add Food / Add Meal tabs
+└── (tabs)/
+    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Settings) + Ionicons
+    ├── index.tsx            # Weight screen — Log/History toggle, date picker, chart
+    ├── nutrition.tsx        # Nutrition screen — calorie ring, macro bars, meal categories
+    └── settings.tsx         # Settings screen (profile, macros, units)
+
+api/
+└── openFoodFacts.ts         # OpenFoodFacts API search client
 
 components/
-├── WeightChart.tsx      # Line chart (react-native-chart-kit), guarded for <2 points
-├── WeightEntryList.tsx  # FlatList of all entries, newest first
-└── WeightEntryItem.tsx  # Single entry row with delete + confirmation
+├── WeightChart.tsx          # Line chart (react-native-chart-kit)
+├── WeightEntryList.tsx      # FlatList of all entries, newest first
+├── WeightEntryItem.tsx      # Single entry row with delete + confirmation
+├── settings/
+│   ├── ProfileSection.tsx   # Profile form (age, sex, height, activity, goal)
+│   └── MacroSection.tsx     # Macro split presets + custom percentages
+└── nutrition/
+    ├── CalorieRing.tsx      # SVG donut chart (consumed vs target)
+    ├── MacroProgressBars.tsx # Protein/Carbs/Fat horizontal progress bars
+    ├── MealCategory.tsx     # Collapsible meal section with header + food list
+    ├── FoodItem.tsx         # Food row with drag handle, swipe-to-delete, calories
+    ├── AddFoodTab.tsx       # Food search (OFF + custom foods) + create custom
+    ├── AddMealTab.tsx       # Saved meals list + create new meal
+    ├── CustomFoodForm.tsx   # Form to create a custom food with macros
+    ├── CreateMealFlow.tsx   # Name meal + search/add foods to it
+    └── ProfilePrompt.tsx    # CTA card when profile or weight is missing
 
-context/AppContext.tsx   # Global state (entries + preferences), useReducer
-storage/storage.ts       # AsyncStorage read/write helpers
-types/index.ts           # WeightEntry & UserPreferences interfaces
-constants/theme.ts       # Colors, Typography, Spacing, Radius tokens
+context/AppContext.tsx       # Global state (weight, nutrition, custom foods, saved meals)
+storage/storage.ts           # AsyncStorage read/write helpers
+types/index.ts               # All TypeScript interfaces and type unions
+constants/theme.ts           # Colors, Typography, Spacing, Radius tokens
 utils/
-├── dateUtils.ts         # getToday, formatDisplayDate, formatShortDate, addDays
-└── unitConversion.ts    # lbsToKg, kgToLbs, convertWeight
+├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays
+├── unitConversion.ts        # lbsToKg, kgToLbs, convertWeight
+├── generateId.ts            # Shared UUID v4 generator
+└── tdeeCalculation.ts       # Mifflin-St Jeor BMR, TDEE, goal calorie calculation
 ```
 
 ---
@@ -66,11 +103,31 @@ interface WeightEntry {
 }
 
 interface UserPreferences {
-  unit: 'lbs' | 'kg'; // default: 'lbs'
+  unit: 'lbs' | 'kg';
+  profile?: UserProfile;       // age, sex, height, activity, goal
+  macroPreset?: MacroPreset;   // 'balanced' | 'high_protein' | 'keto' | 'custom'
+  macroSplit?: MacroSplit;     // { protein, carbs, fat } percentages
 }
+
+interface NutritionFoodItem {
+  id: string;
+  name: string;
+  calories?: number;
+  protein?: number; carbs?: number; fat?: number;
+  servingSize?: string;
+  servings?: number;
+}
+
+interface DayNutrition {
+  date: string;
+  meals: Record<MealCategory, NutritionFoodItem[]>;
+}
+
+interface CustomFood { /* id, name, calories, protein, carbs, fat, servingSize, createdAt */ }
+interface SavedMeal  { /* id, name, foods: NutritionFoodItem[], createdAt */ }
 ```
 
-AsyncStorage keys: `weight_entries`, `user_preferences`
+AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custom_foods`, `saved_meals`
 
 ---
 
@@ -191,6 +248,7 @@ This is the no-install workflow — runs entirely in the browser with no local s
 | `react-native-reanimated` | `~4.1.1` | dep |
 | `react-native-safe-area-context` | `~5.6.0` | dep |
 | `react-native-screens` | `~4.16.0` | dep |
+| `react-native-draggable-flatlist` | `^4.0.3` | dep |
 | `react-native-svg` | `15.12.1` | dep |
 | `@babel/core` | `^7.24.0` | devDep |
 | `@expo/ngrok` | `^4.1.3` | devDep |
@@ -208,6 +266,9 @@ This is the no-install workflow — runs entirely in the browser with no local s
 
 **`babel-preset-expo` must be an explicit `devDependency` at `~54.0.0`**
 `babel.config.js` references `babel-preset-expo` by name. npm does not auto-install peer dependencies. If it is absent from `package.json`, Metro fails immediately at bundling time with `Cannot find module 'babel-preset-expo'`. The version must match the SDK (`~54.0.0` for SDK 54).
+
+**`react-native-draggable-flatlist` requires `--legacy-peer-deps`**
+This package has a transitive peer conflict with `react-dom@19.2.4` vs the project's `react@19.1.0`. Install with `npm install --save react-native-draggable-flatlist --legacy-peer-deps`.
 
 **`expo-router` scripts must use `npx expo`, not bare `expo`**
 In a Codespace, `node_modules/.bin` is not always on `PATH`. `npx expo` resolves the locally installed binary reliably. All scripts in `package.json` use `npx expo start`, `npx expo run:android`, etc.
@@ -244,3 +305,6 @@ Condensed log of dependency fixes applied after the initial SDK 52 scaffold:
 | `expo-asset` corrected to `~12.0.12` | `~10.0.0` lacked `setCustomSourceTransformer`; caused icons crash and phantom route errors |
 | All scripts switched to `npx expo` | Bare `expo` command not reliably on PATH in Codespaces |
 | `.devcontainer` updated | `postCreateCommand` runs `npm install && npx expo install --fix`; ports 19000 + 19001 forwarded |
+| Consolidate History + Log into single screen | Removed `history.tsx` and `log-weight.tsx`; `index.tsx` now contains a Log/History toggle with inline date picker; tab bar reduced from 3 tabs to 2 (Weight + Settings) |
+| `@react-native-community/datetimepicker` added | Native date picker for iOS (spinner modal) and Android (inline); required for date selection on the consolidated Weight screen |
+| Nutrition feature (Phases 1–3) | Added Nutrition tab with TDEE calculation, calorie/macro tracking, OpenFoodFacts search, custom foods, saved meals, drag-to-reorder, swipe-to-delete. Added `react-native-draggable-flatlist` dependency. Tab bar expanded from 2 to 3 tabs. |

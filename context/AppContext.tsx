@@ -5,12 +5,29 @@ import React, {
   useEffect,
   ReactNode,
 } from 'react';
-import { WeightEntry, UserPreferences } from '../types';
+import {
+  WeightEntry,
+  UserPreferences,
+  UserProfile,
+  DayNutrition,
+  MealCategory,
+  NutritionFoodItem,
+  MacroPreset,
+  MacroSplit,
+  CustomFood,
+  SavedMeal,
+} from '../types';
 import {
   loadEntries,
   saveEntries,
   loadPreferences,
   savePreferences,
+  loadNutritionLog,
+  saveNutritionLog,
+  loadCustomFoods,
+  saveCustomFoods,
+  loadSavedMeals,
+  saveSavedMeals,
 } from '../storage/storage';
 
 // ─── State & Actions ─────────────────────────────────────────────────────────
@@ -18,18 +35,50 @@ import {
 type State = {
   entries: WeightEntry[];
   preferences: UserPreferences;
+  nutritionLog: DayNutrition[];
+  customFoods: CustomFood[];
+  savedMeals: SavedMeal[];
   isLoading: boolean;
 };
 
 type Action =
-  | { type: 'LOAD_DATA'; entries: WeightEntry[]; preferences: UserPreferences }
+  | { type: 'LOAD_DATA'; entries: WeightEntry[]; preferences: UserPreferences; nutritionLog: DayNutrition[]; customFoods: CustomFood[]; savedMeals: SavedMeal[] }
   | { type: 'UPSERT_ENTRY'; entry: WeightEntry }
   | { type: 'DELETE_ENTRY'; id: string }
-  | { type: 'SET_UNIT'; unit: 'lbs' | 'kg' };
+  | { type: 'SET_UNIT'; unit: 'lbs' | 'kg' }
+  | { type: 'SET_PROFILE'; profile: UserProfile }
+  | { type: 'ADD_FOOD_TO_MEAL'; date: string; category: MealCategory; food: NutritionFoodItem }
+  | { type: 'DELETE_FOOD_FROM_MEAL'; date: string; category: MealCategory; foodId: string }
+  | { type: 'REORDER_MEAL_FOODS'; date: string; category: MealCategory; foods: NutritionFoodItem[] }
+  | { type: 'SET_MACRO_PRESET'; preset: MacroPreset; split: MacroSplit }
+  | { type: 'ADD_CUSTOM_FOOD'; food: CustomFood }
+  | { type: 'DELETE_CUSTOM_FOOD'; id: string }
+  | { type: 'ADD_SAVED_MEAL'; meal: SavedMeal }
+  | { type: 'UPDATE_SAVED_MEAL'; meal: SavedMeal }
+  | { type: 'DELETE_SAVED_MEAL'; id: string };
+
+const EMPTY_MEALS = (): DayNutrition['meals'] => ({
+  breakfast: [],
+  lunch: [],
+  dinner: [],
+  snacks: [],
+});
+
+function getOrCreateDay(log: DayNutrition[], date: string): DayNutrition {
+  return log.find((d) => d.date === date) ?? { date, meals: EMPTY_MEALS() };
+}
+
+function upsertDay(log: DayNutrition[], day: DayNutrition): DayNutrition[] {
+  const filtered = log.filter((d) => d.date !== day.date);
+  return [day, ...filtered];
+}
 
 const initialState: State = {
   entries: [],
   preferences: { unit: 'lbs' },
+  nutritionLog: [],
+  customFoods: [],
+  savedMeals: [],
   isLoading: true,
 };
 
@@ -40,10 +89,12 @@ function reducer(state: State, action: Action): State {
         ...state,
         entries: action.entries,
         preferences: action.preferences,
+        nutritionLog: action.nutritionLog,
+        customFoods: action.customFoods,
+        savedMeals: action.savedMeals,
         isLoading: false,
       };
     case 'UPSERT_ENTRY': {
-      // Replace any existing entry for the same date, then prepend the new one.
       const filtered = state.entries.filter(
         (e) => e.date !== action.entry.date,
       );
@@ -58,6 +109,76 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, unit: action.unit },
+      };
+    case 'SET_PROFILE':
+      return {
+        ...state,
+        preferences: { ...state.preferences, profile: action.profile },
+      };
+    case 'SET_MACRO_PRESET':
+      return {
+        ...state,
+        preferences: {
+          ...state.preferences,
+          macroPreset: action.preset,
+          macroSplit: action.split,
+        },
+      };
+    case 'ADD_FOOD_TO_MEAL': {
+      const day = getOrCreateDay(state.nutritionLog, action.date);
+      const updatedDay: DayNutrition = {
+        ...day,
+        meals: {
+          ...day.meals,
+          [action.category]: [...day.meals[action.category], action.food],
+        },
+      };
+      return { ...state, nutritionLog: upsertDay(state.nutritionLog, updatedDay) };
+    }
+    case 'DELETE_FOOD_FROM_MEAL': {
+      const day = getOrCreateDay(state.nutritionLog, action.date);
+      const updatedDay: DayNutrition = {
+        ...day,
+        meals: {
+          ...day.meals,
+          [action.category]: day.meals[action.category].filter(
+            (f) => f.id !== action.foodId,
+          ),
+        },
+      };
+      return { ...state, nutritionLog: upsertDay(state.nutritionLog, updatedDay) };
+    }
+    case 'REORDER_MEAL_FOODS': {
+      const day = getOrCreateDay(state.nutritionLog, action.date);
+      const updatedDay: DayNutrition = {
+        ...day,
+        meals: {
+          ...day.meals,
+          [action.category]: action.foods,
+        },
+      };
+      return { ...state, nutritionLog: upsertDay(state.nutritionLog, updatedDay) };
+    }
+    case 'ADD_CUSTOM_FOOD':
+      return { ...state, customFoods: [action.food, ...state.customFoods] };
+    case 'DELETE_CUSTOM_FOOD':
+      return {
+        ...state,
+        customFoods: state.customFoods.filter((f) => f.id !== action.id),
+      };
+    case 'ADD_SAVED_MEAL':
+      return { ...state, savedMeals: [action.meal, ...state.savedMeals] };
+    case 'UPDATE_SAVED_MEAL':
+      return {
+        ...state,
+        savedMeals: state.savedMeals.map((m) =>
+          m.id === action.meal.id ? action.meal : m,
+        ),
+      };
+    case 'DELETE_SAVED_MEAL':
+      return {
+        ...state,
+        savedMeals: state.savedMeals.filter((m) => m.id !== action.id),
       };
     default:
       return state;
@@ -76,11 +197,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Load persisted data on mount.
   useEffect(() => {
     (async () => {
-      const [entries, preferences] = await Promise.all([
+      const [entries, preferences, nutritionLog, customFoods, savedMeals] = await Promise.all([
         loadEntries(),
         loadPreferences(),
+        loadNutritionLog(),
+        loadCustomFoods(),
+        loadSavedMeals(),
       ]);
-      dispatch({ type: 'LOAD_DATA', entries, preferences });
+      dispatch({ type: 'LOAD_DATA', entries, preferences, nutritionLog, customFoods, savedMeals });
     })();
   }, []);
 
@@ -97,6 +221,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       savePreferences(state.preferences);
     }
   }, [state.preferences, state.isLoading]);
+
+  // Persist nutrition log whenever it changes.
+  useEffect(() => {
+    if (!state.isLoading) {
+      saveNutritionLog(state.nutritionLog);
+    }
+  }, [state.nutritionLog, state.isLoading]);
+
+  // Persist custom foods whenever they change.
+  useEffect(() => {
+    if (!state.isLoading) {
+      saveCustomFoods(state.customFoods);
+    }
+  }, [state.customFoods, state.isLoading]);
+
+  // Persist saved meals whenever they change.
+  useEffect(() => {
+    if (!state.isLoading) {
+      saveSavedMeals(state.savedMeals);
+    }
+  }, [state.savedMeals, state.isLoading]);
 
   return (
     <AppContext.Provider value={{ ...state, dispatch }}>

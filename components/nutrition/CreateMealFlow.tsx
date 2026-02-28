@@ -1,0 +1,314 @@
+import { useState, useCallback, useRef } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
+import { NutritionFoodItem } from '../../types';
+import { useApp } from '../../context/AppContext';
+import { generateId } from '../../utils/generateId';
+import { searchFoods } from '../../api/openFoodFacts';
+
+const makeStyles = (colors: typeof LightColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    header: {
+      padding: Spacing.md,
+    },
+    title: {
+      ...Typography.h3,
+      color: colors.text,
+      marginBottom: Spacing.sm,
+    },
+    nameInput: {
+      backgroundColor: colors.card,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      ...Typography.body,
+      color: colors.text,
+      marginBottom: Spacing.sm,
+    },
+    searchInput: {
+      backgroundColor: colors.card,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      ...Typography.body,
+      color: colors.text,
+    },
+    sectionLabel: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xs,
+    },
+    foodRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    foodName: {
+      ...Typography.body,
+      color: colors.text,
+      flex: 1,
+    },
+    foodCal: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      marginRight: Spacing.sm,
+    },
+    removeBtn: {
+      padding: Spacing.xs,
+    },
+    resultItem: {
+      backgroundColor: colors.card,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    resultName: {
+      ...Typography.body,
+      color: colors.text,
+    },
+    resultInfo: {
+      ...Typography.small,
+      color: colors.textSecondary,
+    },
+    loading: {
+      padding: Spacing.md,
+      alignItems: 'center',
+    },
+    btnRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      padding: Spacing.md,
+    },
+    saveBtn: {
+      flex: 1,
+      backgroundColor: colors.primary,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+    },
+    saveBtnText: {
+      ...Typography.body,
+      color: colors.white,
+      fontWeight: '600',
+    },
+    cancelBtn: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cancelText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+    },
+    empty: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      padding: Spacing.md,
+    },
+  });
+
+interface Props {
+  onDone: () => void;
+}
+
+export default function CreateMealFlow({ onDone }: Props) {
+  const colors = useColors();
+  const styles = makeStyles(colors);
+  const { customFoods, dispatch } = useApp();
+
+  const [mealName, setMealName] = useState('');
+  const [foods, setFoods] = useState<NutritionFoodItem[]>([]);
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<NutritionFoodItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearch = useCallback(
+    (text: string) => {
+      setQuery(text);
+
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+
+      if (text.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      debounceRef.current = setTimeout(async () => {
+        setLoading(true);
+        try {
+          // Search both custom foods and OFF
+          const matchingCustom: NutritionFoodItem[] = customFoods
+            .filter((f) => f.name.toLowerCase().includes(text.trim().toLowerCase()))
+            .map((f) => ({
+              id: f.id,
+              name: f.name,
+              calories: f.calories,
+              protein: f.protein,
+              carbs: f.carbs,
+              fat: f.fat,
+              servingSize: f.servingSize,
+              servings: 1,
+            }));
+
+          const { items } = await searchFoods(text.trim());
+          setSearchResults([...matchingCustom, ...items]);
+        } catch {
+          setSearchResults([]);
+        }
+        setLoading(false);
+      }, 300);
+    },
+    [customFoods],
+  );
+
+  const handleAddToMeal = (item: NutritionFoodItem) => {
+    setFoods((prev) => [...prev, { ...item, id: generateId() }]);
+    setQuery('');
+    setSearchResults([]);
+  };
+
+  const handleRemoveFromMeal = (id: string) => {
+    setFoods((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const handleSave = () => {
+    if (!mealName.trim()) {
+      Alert.alert('Required', 'Please enter a meal name.');
+      return;
+    }
+    if (foods.length === 0) {
+      Alert.alert('Required', 'Please add at least one food.');
+      return;
+    }
+
+    dispatch({
+      type: 'ADD_SAVED_MEAL',
+      meal: {
+        id: generateId(),
+        name: mealName.trim(),
+        foods,
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+    onDone();
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Create Meal</Text>
+        <TextInput
+          style={styles.nameInput}
+          value={mealName}
+          onChangeText={setMealName}
+          placeholder="Meal name (e.g. Post-Workout Shake)"
+          placeholderTextColor={colors.textSecondary}
+          autoFocus
+        />
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={handleSearch}
+          placeholder="Search foods to add..."
+          placeholderTextColor={colors.textSecondary}
+        />
+      </View>
+
+      {loading && (
+        <View style={styles.loading}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      )}
+
+      {searchResults.length > 0 && (
+        <>
+          <Text style={styles.sectionLabel}>Search Results</Text>
+          <FlatList
+            data={searchResults.slice(0, 10)}
+            keyExtractor={(item, i) => `${item.id}-${i}`}
+            keyboardShouldPersistTaps="handled"
+            style={{ maxHeight: 200 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.resultItem}
+                onPress={() => handleAddToMeal(item)}
+              >
+                <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.resultInfo}>
+                  {item.calories} cal{item.servingSize ? ` · ${item.servingSize}` : ''}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </>
+      )}
+
+      <Text style={styles.sectionLabel}>
+        Foods in Meal ({foods.length})
+      </Text>
+
+      {foods.length === 0 ? (
+        <Text style={styles.empty}>Search and tap foods above to add them</Text>
+      ) : (
+        <FlatList
+          data={foods}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.foodRow}>
+              <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
+              <Text style={styles.foodCal}>{item.calories} cal</Text>
+              <TouchableOpacity
+                style={styles.removeBtn}
+                onPress={() => handleRemoveFromMeal(item.id)}
+              >
+                <Ionicons name="close-circle" size={20} color={colors.danger} />
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+      )}
+
+      <View style={styles.btnRow}>
+        <TouchableOpacity style={styles.cancelBtn} onPress={onDone} activeOpacity={0.8}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
+          <Text style={styles.saveBtnText}>Save Meal</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}

@@ -14,12 +14,10 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
-          name="log-weight"
+          name="add-food-modal"
           options={{
             presentation: 'modal',
-            title: 'Log Weight',
-            headerStyle: { backgroundColor: Colors.card },
-            headerTintColor: Colors.text,
+            headerShown: false,
           }}
         />
       </Stack>
