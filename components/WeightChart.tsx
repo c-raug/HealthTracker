@@ -1,18 +1,67 @@
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useApp } from '../context/AppContext';
-import { Colors, Spacing, Typography, Radius } from '../constants/theme';
+import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
 import { formatShortDate } from '../utils/dateUtils';
 import { convertWeight } from '../utils/unitConversion';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CHART_WIDTH = SCREEN_WIDTH - Spacing.md * 2;
+// 16px scrollview padding + 16px card margin, each side = 64px total
+const CHART_WIDTH = SCREEN_WIDTH - Spacing.md * 4;
 
 /** Maximum number of entries to display on the chart. */
 const MAX_CHART_ENTRIES = 30;
 
+const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
+  container: {
+    backgroundColor: colors.card,
+    margin: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.md,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  title: {
+    ...Typography.small,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  chart: {
+    borderRadius: Radius.md,
+  },
+  placeholder: {
+    backgroundColor: colors.card,
+    margin: Spacing.md,
+    marginBottom: Spacing.sm,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  placeholderText: {
+    ...Typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+});
+
 export default function WeightChart() {
   const { entries, preferences } = useApp();
+  const colors = useColors();
+  const styles = makeStyles(colors);
 
   // Sort ascending by date and take the most recent MAX_CHART_ENTRIES entries.
   const sorted = [...entries]
@@ -44,26 +93,26 @@ export default function WeightChart() {
     datasets: [
       {
         data: dataValues,
-        color: () => Colors.primary,
+        color: () => colors.primary,
         strokeWidth: 2,
       },
     ],
   };
 
   const chartConfig = {
-    backgroundColor: Colors.card,
-    backgroundGradientFrom: Colors.card,
-    backgroundGradientTo: Colors.card,
+    backgroundColor: colors.card,
+    backgroundGradientFrom: colors.card,
+    backgroundGradientTo: colors.card,
     decimalPlaces: 1,
     color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
-    labelColor: () => Colors.textSecondary,
+    labelColor: () => colors.textSecondary,
     propsForDots: {
       r: '3',
       strokeWidth: '2',
-      stroke: Colors.primary,
+      stroke: colors.primary,
     },
     propsForBackgroundLines: {
-      stroke: Colors.border,
+      stroke: colors.border,
       strokeDasharray: '4',
     },
   };
@@ -87,48 +136,3 @@ export default function WeightChart() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.card,
-    margin: Spacing.md,
-    marginBottom: Spacing.sm,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  title: {
-    ...Typography.small,
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: Spacing.sm,
-  },
-  chart: {
-    borderRadius: Radius.md,
-    marginLeft: -Spacing.md,
-  },
-  placeholder: {
-    backgroundColor: Colors.card,
-    margin: Spacing.md,
-    marginBottom: Spacing.sm,
-    borderRadius: Radius.lg,
-    padding: Spacing.xl,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  placeholderText: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-});

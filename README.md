@@ -243,6 +243,7 @@ This is the no-install workflow — runs entirely in the browser with no local s
 | `react-native` | `0.81.5` | dep |
 | `@expo/vector-icons` | `^15.0.0` | dep |
 | `@react-native-async-storage/async-storage` | `2.2.0` | dep |
+| `@react-native-community/datetimepicker` | `^8.4.4` | dep |
 | `react-native-chart-kit` | `^6.12.0` | dep |
 | `react-native-gesture-handler` | `~2.28.0` | dep |
 | `react-native-reanimated` | `~4.1.1` | dep |

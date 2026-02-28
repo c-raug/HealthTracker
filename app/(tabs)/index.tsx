@@ -24,6 +24,7 @@ import WeightChart from '../../components/WeightChart';
 import { WeightEntry } from '../../types';
 import { generateId } from '../../utils/generateId';
 
+
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   centered: {
