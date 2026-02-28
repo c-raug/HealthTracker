@@ -13,15 +13,6 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="log-weight"
-          options={{
-            presentation: 'modal',
-            title: 'Log Weight',
-            headerStyle: { backgroundColor: Colors.card },
-            headerTintColor: Colors.text,
-          }}
-        />
       </Stack>
     </AppProvider>
   );

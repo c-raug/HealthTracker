@@ -4,7 +4,8 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ## Features
 
-- Log your weight for any date with a clean, keyboard-friendly form
+- Log your weight for any date with date navigation arrows and a native date picker
+- Toggle between **Log** and **History** views within the same screen — no separate tab
 - View your history as a line chart (last 30 entries) and a scrollable list
 - Delete any past entry with a confirmation prompt
 - Switch between **lbs** and **kg** — preference saved locally
@@ -30,13 +31,11 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ```
 app/
-├── _layout.tsx          # Root Stack layout (wraps AppProvider)
-├── (tabs)/
-│   ├── _layout.tsx      # Tab bar (Home, History, Settings) + Ionicons
-│   ├── index.tsx        # Home / Dashboard screen
-│   ├── history.tsx      # History screen (chart + list)
-│   └── settings.tsx     # Settings screen (unit preference)
-└── log-weight.tsx       # Log Weight modal (presented via root Stack)
+├── _layout.tsx          # Root Stack layout (wraps AppProvider, no modal routes)
+└── (tabs)/
+    ├── _layout.tsx      # Tab bar (Weight, Settings) + Ionicons
+    ├── index.tsx        # Weight screen — Log/History toggle, date picker, chart
+    └── settings.tsx     # Settings screen (unit preference)
 
 components/
 ├── WeightChart.tsx      # Line chart (react-native-chart-kit), guarded for <2 points
@@ -186,6 +185,7 @@ This is the no-install workflow — runs entirely in the browser with no local s
 | `react-native` | `0.81.5` | dep |
 | `@expo/vector-icons` | `^15.0.0` | dep |
 | `@react-native-async-storage/async-storage` | `2.2.0` | dep |
+| `@react-native-community/datetimepicker` | `^8.4.4` | dep |
 | `react-native-chart-kit` | `^6.12.0` | dep |
 | `react-native-gesture-handler` | `~2.28.0` | dep |
 | `react-native-reanimated` | `~4.1.1` | dep |
@@ -244,3 +244,5 @@ Condensed log of dependency fixes applied after the initial SDK 52 scaffold:
 | `expo-asset` corrected to `~12.0.12` | `~10.0.0` lacked `setCustomSourceTransformer`; caused icons crash and phantom route errors |
 | All scripts switched to `npx expo` | Bare `expo` command not reliably on PATH in Codespaces |
 | `.devcontainer` updated | `postCreateCommand` runs `npm install && npx expo install --fix`; ports 19000 + 19001 forwarded |
+| Consolidate History + Log into single screen | Removed `history.tsx` and `log-weight.tsx`; `index.tsx` now contains a Log/History toggle with inline date picker; tab bar reduced from 3 tabs to 2 (Weight + Settings) |
+| `@react-native-community/datetimepicker` added | Native date picker for iOS (spinner modal) and Android (inline); required for date selection on the consolidated Weight screen |
