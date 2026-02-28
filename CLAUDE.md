@@ -29,9 +29,16 @@ No test runner or lint script exists in package.json.
 - **ID generation**: use `generateId()` from `utils/generateId.ts` (shared UUID v4 generator)
 - **Styles**: use `makeStyles(colors)` pattern with `useColors()` for dark mode support
 
+## Runtime Requirements
+
+- **`GestureHandlerRootView`** wraps the entire app in `app/_layout.tsx` — required by `react-native-gesture-handler` and any library that depends on it (e.g., `react-native-draggable-flatlist`). Must be the outermost wrapper.
+
 ## Critical Dependency Constraints
 
 - `expo-asset` must stay at `~12.0.12` — lower versions crash vector-icons
 - `expo-linking` must stay at `~8.0.11` — expo-router peer dep
-- `react-native-draggable-flatlist` was installed with `--legacy-peer-deps` due to react-dom peer conflict
+- `react-native-worklets` must stay at `0.5.1` — required peer dep of `react-native-reanimated@4.1.x`
+- `react-refresh` must be an explicit dep at `^0.14.2` — npm with `--legacy-peer-deps` doesn't hoist it; `babel-preset-expo` needs it at top level
+- `@react-native-community/datetimepicker` at `8.4.4` — native date picker for Weight screen
+- **Always use `--legacy-peer-deps`** when running `npm install` — multiple packages have `react-dom` peer conflicts with `react@19.1.0`
 - All scripts use `npx expo` (not bare `expo`)
