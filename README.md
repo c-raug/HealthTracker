@@ -250,6 +250,9 @@ This is the no-install workflow — runs entirely in the browser with no local s
 | `react-native-screens` | `~4.16.0` | dep |
 | `react-native-draggable-flatlist` | `^4.0.3` | dep |
 | `react-native-svg` | `15.12.1` | dep |
+| `react-native-worklets` | `0.5.1` | dep |
+| `react-refresh` | `^0.14.2` | dep |
+| `@react-native-community/datetimepicker` | `8.4.4` | dep |
 | `@babel/core` | `^7.24.0` | devDep |
 | `@expo/ngrok` | `^4.1.3` | devDep |
 | `@types/react` | `~19.1.10` | devDep |
@@ -269,6 +272,18 @@ This is the no-install workflow — runs entirely in the browser with no local s
 
 **`react-native-draggable-flatlist` requires `--legacy-peer-deps`**
 This package has a transitive peer conflict with `react-dom@19.2.4` vs the project's `react@19.1.0`. Install with `npm install --save react-native-draggable-flatlist --legacy-peer-deps`.
+
+**`react-native-worklets` must be `0.5.1`**
+`react-native-reanimated@4.1.x` has a peer dependency on `react-native-worklets>=0.5.0`. The reanimated babel plugin directly `require()`s `react-native-worklets/plugin`. Without it, Metro fails with `Cannot find module 'react-native-worklets/plugin'`.
+
+**`react-refresh` must be an explicit dependency at `^0.14.2`**
+`babel-preset-expo` requires `react-refresh/babel` at transform time. Although `react-refresh` is a transitive dependency of `react-native`, `@react-native/babel-preset`, and `expo`, npm with `--legacy-peer-deps` does not hoist it to the top-level `node_modules`. Without an explicit entry in `package.json`, Metro fails with `Cannot find module 'react-refresh/babel'`.
+
+**`@react-native-community/datetimepicker` requires `--legacy-peer-deps`**
+Same `react-dom` peer conflict as `react-native-draggable-flatlist`. Install with `npm install --save @react-native-community/datetimepicker --legacy-peer-deps`.
+
+**Always use `--legacy-peer-deps` when installing packages**
+Multiple packages in this project have transitive peer conflicts with `react-dom@19.2.4` vs the project's `react@19.1.0`. Always run `npm install --legacy-peer-deps` to avoid resolution failures and to prevent npm from removing correctly-installed packages.
 
 **`expo-router` scripts must use `npx expo`, not bare `expo`**
 In a Codespace, `node_modules/.bin` is not always on `PATH`. `npx expo` resolves the locally installed binary reliably. All scripts in `package.json` use `npx expo start`, `npx expo run:android`, etc.
