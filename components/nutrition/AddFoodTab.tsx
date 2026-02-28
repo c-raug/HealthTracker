@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { NutritionFoodItem, MealCategory } from '../../types';
-import { searchFoods } from '../../api/openFoodFacts';
+import { searchFoods } from '../../api/usdaFoodData';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import CustomFoodForm from './CustomFoodForm';
@@ -148,6 +148,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const [servings, setServings] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Filter custom foods by query
   const filteredCustomFoods = query.trim().length >= 2
@@ -184,14 +185,20 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
       }
 
       debounceRef.current = setTimeout(async () => {
+        if (abortRef.current) abortRef.current.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         setLoading(true);
         try {
-          const { items } = await searchFoods(text.trim());
+          const { items } = await searchFoods(text.trim(), 1, controller.signal);
           setOffResults(items);
-        } catch {
+          setSearched(true);
+        } catch (e: unknown) {
+          if (e instanceof Error && e.name === 'AbortError') return;
           setOffResults([]);
+          setSearched(true);
         }
-        setSearched(true);
         setLoading(false);
       }, 300);
     },

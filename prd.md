@@ -26,3 +26,13 @@
 - When the user selects a meal, display their existing meals and provide an option to create a new meal. In the "Create New Meal" screen, allow users to name the meal and add foods.
 
 **Implementation:** Full-screen modal (`add-food-modal.tsx`) with "Add Food" and "Add Meal" tabs. Add Food tab searches both OpenFoodFacts and local custom foods simultaneously, with a "Create Custom Food" form. Add Meal tab lists saved meals and provides a "Create New Meal" flow that reuses the food search interface. All custom foods and saved meals persist via AsyncStorage.
+
+## Phase 4: Improved Food Search [COMPLETED]
+
+- Replace OpenFoodFacts API with USDA FoodData Central for faster, more accurate, English-only food search results.
+- Filter to Foundation and SR Legacy data types for well-named generic foods (e.g., "Egg, whole, raw" instead of random branded products).
+- Require a free USDA API key stored in `.env` as `EXPO_PUBLIC_USDA_API_KEY`.
+- Add AbortController support to cancel stale in-flight search requests when the user types more characters, preventing result flickering.
+- All nutrition values are per 100g serving (USDA standard for generic foods).
+
+**Implementation:** New `api/usdaFoodData.ts` module using POST `/fdc/v1/foods/search` with nutrient filtering (kcal, protein, fat, carbs). Both `AddFoodTab.tsx` and `CreateMealFlow.tsx` updated to use the new API with AbortController-based request cancellation. Old `api/openFoodFacts.ts` removed.

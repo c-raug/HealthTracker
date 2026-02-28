@@ -14,7 +14,7 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../../const
 import { NutritionFoodItem } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
-import { searchFoods } from '../../api/openFoodFacts';
+import { searchFoods } from '../../api/usdaFoodData';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -153,6 +153,7 @@ export default function CreateMealFlow({ onDone }: Props) {
   const [searchResults, setSearchResults] = useState<NutritionFoodItem[]>([]);
   const [loading, setLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const handleSearch = useCallback(
     (text: string) => {
@@ -166,9 +167,13 @@ export default function CreateMealFlow({ onDone }: Props) {
       }
 
       debounceRef.current = setTimeout(async () => {
+        if (abortRef.current) abortRef.current.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         setLoading(true);
         try {
-          // Search both custom foods and OFF
+          // Search both custom foods and USDA
           const matchingCustom: NutritionFoodItem[] = customFoods
             .filter((f) => f.name.toLowerCase().includes(text.trim().toLowerCase()))
             .map((f) => ({
@@ -182,9 +187,10 @@ export default function CreateMealFlow({ onDone }: Props) {
               servings: 1,
             }));
 
-          const { items } = await searchFoods(text.trim());
+          const { items } = await searchFoods(text.trim(), 1, controller.signal);
           setSearchResults([...matchingCustom, ...items]);
-        } catch {
+        } catch (e: unknown) {
+          if (e instanceof Error && e.name === 'AbortError') return;
           setSearchResults([]);
         }
         setLoading(false);
