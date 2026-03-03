@@ -224,73 +224,6 @@ This is the no-install workflow — runs entirely in the browser with no local s
 
 > **Free tier:** GitHub Free gets ~60 core-hours/month (roughly 60 hours on a 2-core Codespace). You'll receive an email warning before hitting the limit.
 
----
-
-## Dependency Reference
-
-> **Important for future changes:** This project has a history of dependency version conflicts from its original SDK 52 scaffolding. Always use the exact version ranges below and never upgrade a single package in isolation without checking the constraint notes.
-
-### Working versions (SDK 54)
-
-| Package | Version | Type |
-|---------|---------|------|
-| `expo` | `~54.0.0` | dep |
-| `expo-router` | `~6.0.0` | dep |
-| `expo-asset` | `~12.0.12` | dep |
-| `expo-linking` | `~8.0.11` | dep |
-| `expo-status-bar` | `~3.0.9` | dep |
-| `react` | `19.1.0` | dep |
-| `react-native` | `0.81.5` | dep |
-| `@expo/vector-icons` | `^15.0.0` | dep |
-| `@react-native-async-storage/async-storage` | `2.2.0` | dep |
-| `@react-native-community/datetimepicker` | `^8.4.4` | dep |
-| `react-native-chart-kit` | `^6.12.0` | dep |
-| `react-native-gesture-handler` | `~2.28.0` | dep |
-| `react-native-reanimated` | `~4.1.1` | dep |
-| `react-native-safe-area-context` | `~5.6.0` | dep |
-| `react-native-screens` | `~4.16.0` | dep |
-| `react-native-draggable-flatlist` | `^4.0.3` | dep |
-| `react-native-svg` | `15.12.1` | dep |
-| `react-native-worklets` | `0.5.1` | dep |
-| `react-refresh` | `^0.14.2` | dep |
-| `@react-native-community/datetimepicker` | `8.4.4` | dep |
-| `@babel/core` | `^7.24.0` | devDep |
-| `@expo/ngrok` | `^4.1.3` | devDep |
-| `@types/react` | `~19.1.10` | devDep |
-| `babel-preset-expo` | `~54.0.0` | devDep |
-| `typescript` | `~5.9.2` | devDep |
-
-### Version constraints — do not change without reading this
-
-**`expo-asset` must be `~12.0.12`**
-`@expo/vector-icons@15.x` calls `setCustomSourceTransformer` (from `expo-asset`) at import time to register icon font assets. This function does not exist in `expo-asset@10.x` (SDK 52 era) or `expo-asset@11.x`. Using the wrong version causes a crash the instant any icon is imported, which produces a deceptive cascade of secondary errors: "Route missing default export", "No route named (tabs) in nested children", etc. None of those routes have actual code bugs — they all fail because the tabs layout crashes before its `export default` is evaluated.
-
-**`expo-linking` must be `~8.0.11`**
-`expo-router@6.0.x` declares `expo-linking@^8.0.11` as a required peer dependency. `expo-linking@7.x` is the SDK 53 era version and will cause an `npm ERESOLVE` error that prevents `npm install` from completing at all, which in turn prevents `expo` from being installed locally, which causes `npm run tunnel` to fall back to `npx expo@latest` (wrong version) and then fail with a `ConfigError`.
-
-**`babel-preset-expo` must be an explicit `devDependency` at `~54.0.0`**
-`babel.config.js` references `babel-preset-expo` by name. npm does not auto-install peer dependencies. If it is absent from `package.json`, Metro fails immediately at bundling time with `Cannot find module 'babel-preset-expo'`. The version must match the SDK (`~54.0.0` for SDK 54).
-
-**`react-native-draggable-flatlist` requires `--legacy-peer-deps`**
-This package has a transitive peer conflict with `react-dom@19.2.4` vs the project's `react@19.1.0`. Install with `npm install --save react-native-draggable-flatlist --legacy-peer-deps`.
-
-**`react-native-worklets` must be `0.5.1`**
-`react-native-reanimated@4.1.x` has a peer dependency on `react-native-worklets>=0.5.0`. The reanimated babel plugin directly `require()`s `react-native-worklets/plugin`. Without it, Metro fails with `Cannot find module 'react-native-worklets/plugin'`.
-
-**`react-refresh` must be an explicit dependency at `^0.14.2`**
-`babel-preset-expo` requires `react-refresh/babel` at transform time. Although `react-refresh` is a transitive dependency of `react-native`, `@react-native/babel-preset`, and `expo`, npm with `--legacy-peer-deps` does not hoist it to the top-level `node_modules`. Without an explicit entry in `package.json`, Metro fails with `Cannot find module 'react-refresh/babel'`.
-
-**`@react-native-community/datetimepicker` requires `--legacy-peer-deps`**
-Same `react-dom` peer conflict as `react-native-draggable-flatlist`. Install with `npm install --save @react-native-community/datetimepicker --legacy-peer-deps`.
-
-**Always use `--legacy-peer-deps` when installing packages**
-Multiple packages in this project have transitive peer conflicts with `react-dom@19.2.4` vs the project's `react@19.1.0`. Always run `npm install --legacy-peer-deps` to avoid resolution failures and to prevent npm from removing correctly-installed packages.
-
-**`expo-router` scripts must use `npx expo`, not bare `expo`**
-In a Codespace, `node_modules/.bin` is not always on `PATH`. `npx expo` resolves the locally installed binary reliably. All scripts in `package.json` use `npx expo start`, `npx expo run:android`, etc.
-
----
-
 ## Troubleshooting
 
 | Problem | Fix |
@@ -301,26 +234,4 @@ In a Codespace, `node_modules/.bin` is not always on `PATH`. `npx expo` resolves
 | `@expo/ngrok` not found | Run `npm install` first, then retry `npm run tunnel` |
 | Codespace went to sleep | Reopen it at github.com → Codespaces, then run `npm run tunnel` again |
 | "Something went wrong" in Expo Go | Stop Expo (`Ctrl+C`), run `npm run tunnel` again, rescan QR code |
-| `Cannot find module 'babel-preset-expo'` | Run `npm install` — this package was missing from devDependencies and has since been added |
-| `setCustomSourceTransformer is not a function` | `expo-asset` version mismatch — ensure `expo-asset` is `~12.0.12` in `package.json` |
-| `npm ERESOLVE` on install | `expo-linking` version mismatch — ensure `expo-linking` is `~8.0.11` |
-| Route "missing default export" warnings | Usually a symptom of the `expo-asset`/`setCustomSourceTransformer` crash above, not an actual code error |
 
----
-
-## Fix History
-
-Condensed log of dependency fixes applied after the initial SDK 52 scaffold:
-
-| Fix | What changed |
-|-----|-------------|
-| Upgrade SDK 52 → 54 | All Expo + RN packages bumped to SDK 54 equivalents |
-| `expo-linking` added at `~7.0.5` | Was missing; added as explicit dep for expo-router peer dep |
-| `expo-linking` corrected to `~8.0.11` | `~7.0.5` was SDK 53 era; expo-router@6 requires `^8.0.11` |
-| `babel-preset-expo ~54.0.0` added to devDeps | Was entirely missing; Metro cannot bundle without it |
-| `expo-asset` corrected to `~12.0.12` | `~10.0.0` lacked `setCustomSourceTransformer`; caused icons crash and phantom route errors |
-| All scripts switched to `npx expo` | Bare `expo` command not reliably on PATH in Codespaces |
-| `.devcontainer` updated | `postCreateCommand` runs `npm install && npx expo install --fix`; ports 19000 + 19001 forwarded |
-| Consolidate History + Log into single screen | Removed `history.tsx` and `log-weight.tsx`; `index.tsx` now contains a Log/History toggle with inline date picker; tab bar reduced from 3 tabs to 2 (Weight + Settings) |
-| `@react-native-community/datetimepicker` added | Native date picker for iOS (spinner modal) and Android (inline); required for date selection on the consolidated Weight screen |
-| Nutrition feature (Phases 1–3) | Added Nutrition tab with TDEE calculation, calorie/macro tracking, OpenFoodFacts search, custom foods, saved meals, drag-to-reorder, swipe-to-delete. Added `react-native-draggable-flatlist` dependency. Tab bar expanded from 2 to 3 tabs. |
