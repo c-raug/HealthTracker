@@ -33,12 +33,6 @@ No test runner or lint script exists in package.json.
 
 - **`GestureHandlerRootView`** wraps the entire app in `app/_layout.tsx` — required by `react-native-gesture-handler` and any library that depends on it (e.g., `react-native-draggable-flatlist`). Must be the outermost wrapper.
 
-## Critical Dependency Constraints
+## Dependency Management
 
-- `expo-asset` must stay at `~12.0.12` — lower versions crash vector-icons
-- `expo-linking` must stay at `~8.0.11` — expo-router peer dep
-- `react-native-worklets` must stay at `0.5.1` — required peer dep of `react-native-reanimated@4.1.x`
-- `react-refresh` must be an explicit dep at `^0.14.2` — npm with `--legacy-peer-deps` doesn't hoist it; `babel-preset-expo` needs it at top level
-- `@react-native-community/datetimepicker` at `8.4.4` — native date picker for Weight screen
-- **Always use `--legacy-peer-deps`** when running `npm install` — multiple packages have `react-dom` peer conflicts with `react@19.1.0`
-- All scripts use `npx expo` (not bare `expo`)
+For all version constraints, compatibility rules, and install commands, use the `/dependency-check` skill.
