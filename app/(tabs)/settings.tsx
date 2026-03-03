@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
+import { calculateDailyCalories } from '../../utils/tdeeCalculation';
 import ProfileSection from '../../components/settings/ProfileSection';
 import MacroSection from '../../components/settings/MacroSection';
 
@@ -9,6 +12,35 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     padding: Spacing.md,
+  },
+  collapsibleCard: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    marginBottom: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  collapsibleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  collapsibleHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  sectionTitle: {
+    ...Typography.small,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    fontWeight: '600',
   },
   sectionHeader: {
     ...Typography.small,
@@ -84,21 +116,72 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
 });
 
 export default function SettingsScreen() {
-  const { preferences, dispatch } = useApp();
+  const { preferences, entries, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
 
+  const [profileExpanded, setProfileExpanded] = useState(true);
+  const [macroExpanded, setMacroExpanded] = useState(true);
+
   const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
+
+  // Compute goalCalories (same pattern as nutrition.tsx)
+  const profile = preferences.profile;
+  const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+  const latestWeight = sortedEntries[0];
+  const goalCalories: number | null =
+    profile && latestWeight
+      ? calculateDailyCalories(
+          latestWeight.weight,
+          latestWeight.unit,
+          profile.heightValue,
+          profile.heightUnit,
+          profile.age,
+          profile.sex,
+          profile.activityLevel,
+          profile.weightGoal,
+        )
+      : null;
 
   return (
     <ScrollView style={styles.container}>
-      {/* Profile */}
-      <Text style={styles.sectionHeader}>Profile</Text>
-      <ProfileSection />
+      {/* Profile — collapsible */}
+      <View style={styles.collapsibleCard}>
+        <TouchableOpacity
+          style={styles.collapsibleHeader}
+          onPress={() => setProfileExpanded((v) => !v)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.collapsibleHeaderLeft}>
+            <Ionicons
+              name={profileExpanded ? 'chevron-down' : 'chevron-forward'}
+              size={16}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.sectionTitle}>Profile</Text>
+          </View>
+        </TouchableOpacity>
+        {profileExpanded && <ProfileSection />}
+      </View>
 
-      {/* Macro settings */}
-      <Text style={styles.sectionHeader}>Macros</Text>
-      <MacroSection />
+      {/* Macro settings — collapsible */}
+      <View style={styles.collapsibleCard}>
+        <TouchableOpacity
+          style={styles.collapsibleHeader}
+          onPress={() => setMacroExpanded((v) => !v)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.collapsibleHeaderLeft}>
+            <Ionicons
+              name={macroExpanded ? 'chevron-down' : 'chevron-forward'}
+              size={16}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.sectionTitle}>Macros</Text>
+          </View>
+        </TouchableOpacity>
+        {macroExpanded && <MacroSection goalCalories={goalCalories} />}
+      </View>
 
       {/* Unit preference */}
       <Text style={styles.sectionHeader}>Units</Text>

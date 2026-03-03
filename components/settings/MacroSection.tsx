@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -22,18 +22,16 @@ const PRESETS: { value: MacroPreset; label: string; split: MacroSplit }[] = [
   { value: 'keto', label: 'Keto', split: { protein: 25, carbs: 5, fat: 70 } },
 ];
 
+// Reuse the same formula as MacroProgressBars.tsx lines 64-68
+function gramsFor(pct: number, goalCalories: number | null | undefined, calPerGram: number): string {
+  if (!goalCalories) return '—g';
+  return `${Math.round((pct / 100) * goalCalories / calPerGram)}g`;
+}
+
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
     card: {
-      backgroundColor: colors.card,
-      borderRadius: Radius.lg,
       padding: Spacing.md,
-      marginBottom: Spacing.sm,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
     },
     label: {
       ...Typography.body,
@@ -52,8 +50,12 @@ const makeStyles = (colors: typeof LightColors) =>
       gap: Spacing.xs,
       marginBottom: Spacing.md,
     },
-    presetBtn: {
+    presetGroup: {
       flex: 1,
+      alignItems: 'center',
+    },
+    presetBtn: {
+      width: '100%',
       backgroundColor: colors.background,
       borderRadius: Radius.sm,
       paddingVertical: Spacing.sm,
@@ -69,6 +71,13 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     presetTextActive: {
       color: colors.white,
+    },
+    gramHint: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      marginTop: 3,
+      textAlign: 'center',
+      fontSize: 11,
     },
     customBtn: {
       backgroundColor: colors.background,
@@ -118,7 +127,11 @@ const makeStyles = (colors: typeof LightColors) =>
     },
   });
 
-export default function MacroSection() {
+interface Props {
+  goalCalories: number | null;
+}
+
+export default function MacroSection({ goalCalories }: Props) {
   const { preferences, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
@@ -167,24 +180,28 @@ export default function MacroSection() {
 
       <View style={styles.presetRow}>
         {PRESETS.map((preset) => (
-          <TouchableOpacity
-            key={preset.value}
-            style={[
-              styles.presetBtn,
-              currentPreset === preset.value && styles.presetBtnActive,
-            ]}
-            onPress={() => handlePresetSelect(preset.value, preset.split)}
-            activeOpacity={0.8}
-          >
-            <Text
+          <View key={preset.value} style={styles.presetGroup}>
+            <TouchableOpacity
               style={[
-                styles.presetText,
-                currentPreset === preset.value && styles.presetTextActive,
+                styles.presetBtn,
+                currentPreset === preset.value && styles.presetBtnActive,
               ]}
+              onPress={() => handlePresetSelect(preset.value, preset.split)}
+              activeOpacity={0.8}
             >
-              {preset.label}
+              <Text
+                style={[
+                  styles.presetText,
+                  currentPreset === preset.value && styles.presetTextActive,
+                ]}
+              >
+                {preset.label}
+              </Text>
+            </TouchableOpacity>
+            <Text style={styles.gramHint}>
+              P {gramsFor(preset.split.protein, goalCalories, 4)} · C {gramsFor(preset.split.carbs, goalCalories, 4)} · F {gramsFor(preset.split.fat, goalCalories, 9)}
             </Text>
-          </TouchableOpacity>
+          </View>
         ))}
       </View>
 
@@ -211,6 +228,9 @@ export default function MacroSection() {
                 placeholder="30"
                 placeholderTextColor={colors.textSecondary}
               />
+              <Text style={styles.gramHint}>
+                {gramsFor(parseInt(customProtein) || 0, goalCalories, 4)}
+              </Text>
             </View>
             <View style={styles.customGroup}>
               <Text style={styles.customLabel}>Carbs %</Text>
@@ -222,6 +242,9 @@ export default function MacroSection() {
                 placeholder="40"
                 placeholderTextColor={colors.textSecondary}
               />
+              <Text style={styles.gramHint}>
+                {gramsFor(parseInt(customCarbs) || 0, goalCalories, 4)}
+              </Text>
             </View>
             <View style={styles.customGroup}>
               <Text style={styles.customLabel}>Fat %</Text>
@@ -233,6 +256,9 @@ export default function MacroSection() {
                 placeholder="30"
                 placeholderTextColor={colors.textSecondary}
               />
+              <Text style={styles.gramHint}>
+                {gramsFor(parseInt(customFat) || 0, goalCalories, 9)}
+              </Text>
             </View>
           </View>
           {customSum !== 100 && (
@@ -244,7 +270,7 @@ export default function MacroSection() {
       )}
 
       <Text style={styles.splitPreview}>
-        P: {currentSplit.protein}% / C: {currentSplit.carbs}% / F: {currentSplit.fat}%
+        P: {currentSplit.protein}% ({gramsFor(currentSplit.protein, goalCalories, 4)}) · C: {currentSplit.carbs}% ({gramsFor(currentSplit.carbs, goalCalories, 4)}) · F: {currentSplit.fat}% ({gramsFor(currentSplit.fat, goalCalories, 9)})
       </Text>
     </View>
   );

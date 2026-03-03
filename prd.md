@@ -36,3 +36,13 @@
 - All nutrition values are per 100g serving (USDA standard for generic foods).
 
 **Implementation:** New `api/usdaFoodData.ts` module using POST `/fdc/v1/foods/search` with nutrient filtering (kcal, protein, fat, carbs). Both `AddFoodTab.tsx` and `CreateMealFlow.tsx` updated to use the new API with AbortController-based request cancellation. Old `api/openFoodFacts.ts` removed.
+
+## Phase 5: UX Polish — Collapsible Settings, Macro Grams, and Portion Control [COMPLETED]
+
+- Settings sections (Profile and Macro Split) are collapsible/expandable with chevron headers, defaulting to expanded.
+- Macro Split section shows computed grams (e.g., 150g protein) beneath each percentage, live-updating as percentages change. Grams are shown for all presets and custom inputs. Requires a weight entry and completed profile to display actual values; shows "—g" otherwise.
+- Custom food creation: serving size split into a numeric quantity input plus a unit picker (Serving, g, oz, ml, Cup, Tbsp, Tsp). Calories are auto-computed from macros using (protein × 4) + (carbs × 4) + (fat × 9); users can manually override with a warning that calories may not match macro tracking.
+- Portion selector replaces the old +/- buttons when selecting a food to add: dual controls featuring a whole-number slider (0–250) and a fraction chip selector (0, ⅛, ¼, ⅜, ½, ⅝, ¾, ⅞) plus a keypad toggle for direct numeric entry. A live preview row shows updated calories, protein, carbs, and fat as the portion is adjusted.
+- Portion can be adjusted both before adding a food (inline in the food search flow) and after (tap an existing meal item to open a bottom-sheet editor with the same portion selector).
+
+**Implementation:** New `components/nutrition/PortionSelector.tsx` component with PanResponder-based whole slider, fraction chip row, keypad toggle, and live macro preview. `UPDATE_FOOD_IN_MEAL` action added to AppContext reducer. `CustomFoodForm.tsx` updated with quantity/unit picker and useEffect-driven calorie auto-compute. `AddFoodTab.tsx` replaces serving +/- buttons with PortionSelector. `FoodItem.tsx` adds a tap-to-edit bottom-sheet Modal using PortionSelector. `MealCategory.tsx` passes date/category props to FoodItem. `MacroSection.tsx` accepts a `goalCalories` prop and displays gram equivalents. `settings.tsx` gains collapsible card wrappers for Profile and Macros sections and computes `goalCalories` via `calculateDailyCalories()`.

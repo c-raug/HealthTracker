@@ -15,6 +15,7 @@ import { searchFoods } from '../../api/usdaFoodData';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import CustomFoodForm from './CustomFoodForm';
+import PortionSelector from './PortionSelector';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -72,40 +73,19 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       padding: Spacing.lg,
     },
-    servingRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: Spacing.md,
-      paddingVertical: Spacing.sm,
-      paddingHorizontal: Spacing.md,
+    portionPanel: {
       backgroundColor: colors.card,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-    },
-    servingLabel: {
-      ...Typography.body,
-      color: colors.text,
-    },
-    servingBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    servingCount: {
-      ...Typography.h3,
-      color: colors.text,
-      minWidth: 30,
-      textAlign: 'center',
     },
     confirmBtn: {
       backgroundColor: colors.primary,
       borderRadius: Radius.md,
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.lg,
+      marginHorizontal: Spacing.md,
+      marginBottom: Spacing.md,
+      alignItems: 'center',
     },
     confirmText: {
       ...Typography.body,
@@ -145,7 +125,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
-  const [servings, setServings] = useState(1);
+  const [servings, setServings] = useState<number>(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -252,23 +232,19 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
       </TouchableOpacity>
 
       {selectedItem && (
-        <View style={styles.servingRow}>
-          <Text style={styles.servingLabel}>Servings:</Text>
-          <TouchableOpacity
-            style={styles.servingBtn}
-            onPress={() => setServings(Math.max(1, servings - 1))}
-          >
-            <Ionicons name="remove" size={20} color={colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.servingCount}>{servings}</Text>
-          <TouchableOpacity
-            style={styles.servingBtn}
-            onPress={() => setServings(servings + 1)}
-          >
-            <Ionicons name="add" size={20} color={colors.white} />
-          </TouchableOpacity>
+        <View style={styles.portionPanel}>
+          <PortionSelector
+            value={servings}
+            onChange={setServings}
+            baseCalories={selectedItem.calories ?? 0}
+            baseProtein={selectedItem.protein ?? 0}
+            baseCarbs={selectedItem.carbs ?? 0}
+            baseFat={selectedItem.fat ?? 0}
+            servingSize={selectedItem.servingSize ?? '1 serving'}
+            baseServings={selectedItem.servings ?? 1}
+          />
           <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
-            <Text style={styles.confirmText}>Add</Text>
+            <Text style={styles.confirmText}>Add to {category}</Text>
           </TouchableOpacity>
         </View>
       )}

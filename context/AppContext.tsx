@@ -49,6 +49,7 @@ type Action =
   | { type: 'SET_PROFILE'; profile: UserProfile }
   | { type: 'ADD_FOOD_TO_MEAL'; date: string; category: MealCategory; food: NutritionFoodItem }
   | { type: 'DELETE_FOOD_FROM_MEAL'; date: string; category: MealCategory; foodId: string }
+  | { type: 'UPDATE_FOOD_IN_MEAL'; date: string; category: MealCategory; food: NutritionFoodItem }
   | { type: 'REORDER_MEAL_FOODS'; date: string; category: MealCategory; foods: NutritionFoodItem[] }
   | { type: 'SET_MACRO_PRESET'; preset: MacroPreset; split: MacroSplit }
   | { type: 'ADD_CUSTOM_FOOD'; food: CustomFood }
@@ -143,6 +144,19 @@ function reducer(state: State, action: Action): State {
           ...day.meals,
           [action.category]: day.meals[action.category].filter(
             (f) => f.id !== action.foodId,
+          ),
+        },
+      };
+      return { ...state, nutritionLog: upsertDay(state.nutritionLog, updatedDay) };
+    }
+    case 'UPDATE_FOOD_IN_MEAL': {
+      const day = getOrCreateDay(state.nutritionLog, action.date);
+      const updatedDay: DayNutrition = {
+        ...day,
+        meals: {
+          ...day.meals,
+          [action.category]: day.meals[action.category].map((f) =>
+            f.id === action.food.id ? action.food : f,
           ),
         },
       };
