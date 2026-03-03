@@ -102,6 +102,15 @@ breaks the install entirely.
 
 ---
 
+### `@react-native-community/slider` — install with `--legacy-peer-deps`
+
+**Why:** Native slider control used by `PortionSelector.tsx` for the whole-number portion
+adjuster. Installed at `4.5.5` which is compatible with React Native 0.81.x.
+
+**Install if re-adding:** `npm install --save @react-native-community/slider@4.5.5 --legacy-peer-deps`
+
+---
+
 ### `react-native-draggable-flatlist` — install with `--legacy-peer-deps`
 
 **Why:** Has a transitive peer conflict with `react-dom@19.2.4` vs the project's
@@ -125,6 +134,7 @@ breaks the install entirely.
 | `@expo/vector-icons` | `^15.0.0` | dep |
 | `@react-native-async-storage/async-storage` | `2.2.0` | dep |
 | `@react-native-community/datetimepicker` | `8.4.4` | dep |
+| `@react-native-community/slider` | `4.5.5` | dep |
 | `react-native-chart-kit` | `^6.12.0` | dep |
 | `react-native-gesture-handler` | `~2.28.0` | dep |
 | `react-native-reanimated` | `~4.1.1` | dep |
@@ -193,3 +203,4 @@ of the following fixes applied during the SDK 52 → 54 migration:
 | `react-refresh ^0.14.2` added as explicit dep | `--legacy-peer-deps` doesn't hoist it; `babel-preset-expo` needs it at top level |
 | `@react-native-community/datetimepicker 8.4.4` added | Native date picker for consolidated Weight screen |
 | `react-native-draggable-flatlist ^4.0.3` added | Drag-to-reorder for Nutrition meal categories |
+| `@react-native-community/slider 4.5.5` added | Native slider control for PortionSelector component |
