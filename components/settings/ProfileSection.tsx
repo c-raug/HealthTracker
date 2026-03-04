@@ -40,15 +40,7 @@ const GOAL_LABELS: { value: WeightGoal; label: string }[] = [
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
     card: {
-      backgroundColor: colors.card,
-      borderRadius: Radius.lg,
       padding: Spacing.md,
-      marginBottom: Spacing.sm,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
     },
     label: {
       ...Typography.body,

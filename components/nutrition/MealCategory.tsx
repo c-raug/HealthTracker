@@ -104,6 +104,8 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
       onDelete={() => handleDelete(item.id)}
       drag={drag}
       isActive={isActive}
+      date={date}
+      category={category}
     />
   );
 

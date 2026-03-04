@@ -16,15 +16,20 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **Calorie ring chart** (SVG donut) showing consumed vs target with color indicators (green/yellow/red)
 - **Macro progress bars** for protein, carbs, and fat with configurable splits (Balanced, High Protein, Keto, or Custom)
 - **Four meal categories**: Breakfast, Lunch, Dinner, Snacks — each collapsible with calorie totals
-- **Food search** via OpenFoodFacts API with nutritional data (calories, protein, carbs, fat)
-- **Custom foods** — create and save personal foods with full nutritional info
+- **Food search** via USDA FoodData Central API (Foundation + SR Legacy data types; requires free API key in `.env`)
+- **Custom foods** — create and save personal foods with full nutritional info; calories auto-computed from macros
 - **Saved meals** — group foods into reusable meals that can be added with one tap
+- **Portion selector** — dual sliders (whole 0–250 + fraction in ⅛ increments) with keypad toggle and live calorie/macro preview; available before adding a food and when editing an already-logged item
 - **Drag-to-reorder** food items within meal categories
 - **Swipe-to-delete** food items
 - Date navigation matching the Weight screen pattern
 
+### Settings
+- **Collapsible sections** — Profile and Macro Split sections expand/collapse with a chevron header
+- **Macro gram display** — computed grams shown alongside each percentage (e.g. 150g protein) for all presets and custom inputs; requires a completed profile and weight entry
+
 ### General
-- All data stored on-device (no accounts required; OpenFoodFacts search requires internet)
+- All data stored on-device (no accounts required; USDA food search requires internet + API key)
 - Dark mode support throughout
 
 ---
@@ -39,7 +44,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 | Storage | AsyncStorage (`@react-native-async-storage/async-storage`) |
 | Charts | react-native-chart-kit + react-native-svg (weight) / custom SVG (calorie ring) |
 | State | React Context + useReducer |
-| Food Data | OpenFoodFacts API (no key required) + local custom foods |
+| Food Data | USDA FoodData Central API (free key in `.env`) + local custom foods |
 | Drag & Drop | react-native-draggable-flatlist |
 | Icons | @expo/vector-icons (Ionicons) |
 
@@ -55,10 +60,10 @@ app/
     ├── _layout.tsx          # Tab bar (Weight, Nutrition, Settings) + Ionicons
     ├── index.tsx            # Weight screen — Log/History toggle, date picker, chart
     ├── nutrition.tsx        # Nutrition screen — calorie ring, macro bars, meal categories
-    └── settings.tsx         # Settings screen (profile, macros, units)
+    └── settings.tsx         # Settings screen (collapsible profile, macros, units)
 
 api/
-└── openFoodFacts.ts         # OpenFoodFacts API search client
+└── usdaFoodData.ts          # USDA FoodData Central API search client
 
 components/
 ├── WeightChart.tsx          # Line chart (react-native-chart-kit)
@@ -66,15 +71,16 @@ components/
 ├── WeightEntryItem.tsx      # Single entry row with delete + confirmation
 ├── settings/
 │   ├── ProfileSection.tsx   # Profile form (age, sex, height, activity, goal)
-│   └── MacroSection.tsx     # Macro split presets + custom percentages
+│   └── MacroSection.tsx     # Macro split presets + custom % + live gram display
 └── nutrition/
     ├── CalorieRing.tsx      # SVG donut chart (consumed vs target)
     ├── MacroProgressBars.tsx # Protein/Carbs/Fat horizontal progress bars
     ├── MealCategory.tsx     # Collapsible meal section with header + food list
-    ├── FoodItem.tsx         # Food row with drag handle, swipe-to-delete, calories
-    ├── AddFoodTab.tsx       # Food search (OFF + custom foods) + create custom
+    ├── FoodItem.tsx         # Food row with drag handle, swipe-to-delete, tap-to-edit
+    ├── PortionSelector.tsx  # Dual sliders + keypad toggle + live macro preview
+    ├── AddFoodTab.tsx       # Food search (USDA + custom foods) + create custom
     ├── AddMealTab.tsx       # Saved meals list + create new meal
-    ├── CustomFoodForm.tsx   # Form to create a custom food with macros
+    ├── CustomFoodForm.tsx   # Form to create a custom food (qty/unit + auto-calories)
     ├── CreateMealFlow.tsx   # Name meal + search/add foods to it
     └── ProfilePrompt.tsx    # CTA card when profile or weight is missing
 
@@ -88,6 +94,19 @@ utils/
 ├── generateId.ts            # Shared UUID v4 generator
 └── tdeeCalculation.ts       # Mifflin-St Jeor BMR, TDEE, goal calorie calculation
 ```
+
+---
+
+## USDA API Key Setup
+
+Food search uses the USDA FoodData Central API. A free key is required:
+
+1. Register at [https://fdc.nal.usda.gov/api-key-signup.html](https://fdc.nal.usda.gov/api-key-signup.html)
+2. Create a `.env` file in the project root:
+   ```
+   EXPO_PUBLIC_USDA_API_KEY=your_key_here
+   ```
+3. Restart Metro after adding the key
 
 ---
 
@@ -147,8 +166,10 @@ All dependencies and scripts work identically on a local Mac — none of the Cod
 ```bash
 git clone <repo-url>
 cd HealthTracker
-npm install
+npm install --legacy-peer-deps
 ```
+
+> Always use `--legacy-peer-deps` — see [CLAUDE.md → Dependency Management](CLAUDE.md) for details.
 
 ### Running the app
 
@@ -199,7 +220,7 @@ This is the no-install workflow — runs entirely in the browser with no local s
 1. Go to `github.com/[your-username]/HealthTracker`
 2. Tap **Code** → **Codespaces** tab → **Create codespace on main**
    - If you have an existing Codespace, reopen it instead
-3. Wait ~30 seconds for the Codespace to finish setting up (the `postCreateCommand` runs `npm install && npx expo install --fix` automatically)
+3. Wait ~30 seconds for the Codespace to finish setting up (the `postCreateCommand` runs `npm install --legacy-peer-deps` automatically)
 4. Open the **Terminal** panel (hamburger menu → Terminal → New Terminal)
 5. Run:
    ```bash
@@ -231,7 +252,6 @@ This is the no-install workflow — runs entirely in the browser with no local s
 | QR code won't scan | Press `c` in the terminal to redisplay it |
 | App not updating after a change | Press `r` in terminal, or shake your phone → **Reload** |
 | Tunnel is slow to start | Wait up to 60 seconds — ngrok can take a moment to initialise |
-| `@expo/ngrok` not found | Run `npm install` first, then retry `npm run tunnel` |
+| `@expo/ngrok` not found | Run `npm install --legacy-peer-deps` first, then retry `npm run tunnel` |
 | Codespace went to sleep | Reopen it at github.com → Codespaces, then run `npm run tunnel` again |
 | "Something went wrong" in Expo Go | Stop Expo (`Ctrl+C`), run `npm run tunnel` again, rescan QR code |
-

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -155,17 +155,64 @@ export default function CreateMealFlow({ onDone }: Props) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Show all custom foods on initial mount (query is empty)
+  useEffect(() => {
+    const allCustom: NutritionFoodItem[] = customFoods.map((f) => ({
+      id: f.id,
+      name: f.name,
+      calories: f.calories,
+      protein: f.protein,
+      carbs: f.carbs,
+      fat: f.fat,
+      servingSize: f.servingSize,
+      servings: 1,
+    }));
+    setSearchResults(allCustom);
+  }, []);
+
   const handleSearch = useCallback(
     (text: string) => {
       setQuery(text);
 
       if (debounceRef.current) clearTimeout(debounceRef.current);
 
-      if (text.trim().length < 2) {
-        setSearchResults([]);
+      const trimmedText = text.trim();
+
+      // When empty: show all custom foods immediately, no USDA call
+      if (trimmedText.length === 0) {
+        const allCustom: NutritionFoodItem[] = customFoods.map((f) => ({
+          id: f.id,
+          name: f.name,
+          calories: f.calories,
+          protein: f.protein,
+          carbs: f.carbs,
+          fat: f.fat,
+          servingSize: f.servingSize,
+          servings: 1,
+        }));
+        setSearchResults(allCustom);
         return;
       }
 
+      // When 1 char: filter custom foods only, no USDA call
+      if (trimmedText.length === 1) {
+        const matchingCustom: NutritionFoodItem[] = customFoods
+          .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
+          .map((f) => ({
+            id: f.id,
+            name: f.name,
+            calories: f.calories,
+            protein: f.protein,
+            carbs: f.carbs,
+            fat: f.fat,
+            servingSize: f.servingSize,
+            servings: 1,
+          }));
+        setSearchResults(matchingCustom);
+        return;
+      }
+
+      // 2+ chars: filter custom + USDA
       debounceRef.current = setTimeout(async () => {
         if (abortRef.current) abortRef.current.abort();
         const controller = new AbortController();
@@ -173,9 +220,8 @@ export default function CreateMealFlow({ onDone }: Props) {
 
         setLoading(true);
         try {
-          // Search both custom foods and USDA
           const matchingCustom: NutritionFoodItem[] = customFoods
-            .filter((f) => f.name.toLowerCase().includes(text.trim().toLowerCase()))
+            .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
             .map((f) => ({
               id: f.id,
               name: f.name,
@@ -187,7 +233,7 @@ export default function CreateMealFlow({ onDone }: Props) {
               servings: 1,
             }));
 
-          const { items } = await searchFoods(text.trim(), 1, controller.signal);
+          const { items } = await searchFoods(trimmedText, 1, controller.signal);
           setSearchResults([...matchingCustom, ...items]);
         } catch (e: unknown) {
           if (e instanceof Error && e.name === 'AbortError') return;
@@ -261,7 +307,9 @@ export default function CreateMealFlow({ onDone }: Props) {
 
       {searchResults.length > 0 && (
         <>
-          <Text style={styles.sectionLabel}>Search Results</Text>
+          <Text style={styles.sectionLabel}>
+            {query.trim().length === 0 ? 'My Foods' : 'Search Results'}
+          </Text>
           <FlatList
             data={searchResults.slice(0, 10)}
             keyExtractor={(item, i) => `${item.id}-${i}`}
