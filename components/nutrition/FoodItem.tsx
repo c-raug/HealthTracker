@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Animated,
   Modal,
+  ScrollView,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -67,7 +68,7 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.card,
       borderTopLeftRadius: Radius.lg,
       borderTopRightRadius: Radius.lg,
-      paddingBottom: Spacing.xl,
+      maxHeight: '85%',
     },
     editHeader: {
       flexDirection: 'row',
@@ -202,24 +203,29 @@ export default function FoodItem({ item, onDelete, drag, isActive, date, categor
               </TouchableOpacity>
             </View>
 
-            <PortionSelector
-              value={editServings}
-              onChange={setEditServings}
-              baseCalories={baseCalories}
-              baseProtein={baseProtein}
-              baseCarbs={baseCarbs}
-              baseFat={baseFat}
-              servingSize={item.servingSize ?? '1 serving'}
-              baseServings={1}
-            />
-
-            <TouchableOpacity
-              style={styles.confirmEditBtn}
-              onPress={handleConfirmEdit}
-              activeOpacity={0.8}
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: Spacing.xl }}
             >
-              <Text style={styles.confirmEditText}>Update Portion</Text>
-            </TouchableOpacity>
+              <PortionSelector
+                value={editServings}
+                onChange={setEditServings}
+                baseCalories={baseCalories}
+                baseProtein={baseProtein}
+                baseCarbs={baseCarbs}
+                baseFat={baseFat}
+                servingSize={item.servingSize ?? '1 serving'}
+                baseServings={1}
+              />
+
+              <TouchableOpacity
+                style={styles.confirmEditBtn}
+                onPress={handleConfirmEdit}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.confirmEditText}>Update Portion</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>

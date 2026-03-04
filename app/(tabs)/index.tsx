@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ScrollView,
   Modal,
@@ -245,6 +246,7 @@ export default function WeightScreen() {
     };
 
     dispatch({ type: 'UPSERT_ENTRY', entry });
+    Keyboard.dismiss();
     Alert.alert('Saved', `Weight logged for ${formatDisplayDate(selectedDate)}.`);
   };
 

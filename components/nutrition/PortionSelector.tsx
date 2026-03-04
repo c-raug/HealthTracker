@@ -24,7 +24,7 @@ const FRACTION_LABELS = ['0', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞'];
 const WHOLE_MAX = 250;
 
 const ITEM_HEIGHT = 44;
-const VISIBLE_ITEMS = 5;
+const VISIBLE_ITEMS = 3;
 const DRUM_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS; // 220
 const PAD_COUNT = Math.floor(VISIBLE_ITEMS / 2); // 2
 

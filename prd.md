@@ -1,72 +1,62 @@
 # HealthTracker — Product Requirements
 
-## Phase 1: Add a Nutrition Page [COMPLETED]
+## Phase 7: Nutrition & Weight UX Improvements [IN PROGRESS]
 
-- Note that this is meant to be very similar in functionality to the app called MyFitnessPal
-- Create a new page in the app called Nutrition.
-- Calculate calories and macros based on weight and display the results.
-- Provide four categories for adding food items (no calorie or macro information is added yet): breakfast, lunch, dinner, and snacks.
-- Each category should be a drop-down menu, and within the drop-down bar, have a "+" icon to add a food item. For now, it should just be a text entry.
+### 7.1 — Portion selection when building meal templates
 
-**Implementation:** Nutrition tab added between Weight and Settings. Profile setup in Settings (age, sex, height, activity level, weight goal) calculates TDEE via Mifflin-St Jeor. Four collapsible meal categories with add, swipe-to-delete, and drag-to-reorder. Date navigation matches Weight screen pattern.
+When creating a saved meal in the "Create New Meal" flow (`CreateMealFlow.tsx`), tapping a food from the search results previously added it immediately at 1 serving with no opportunity to choose portions. This should match the behavior in `AddFoodTab`:
 
-## Phase 2: Integrate Calories and Macros [COMPLETED]
+- Tapping a food result selects it and reveals a `PortionSelector` panel below the search results.
+- The user adjusts servings (whole + fraction drums or keypad), seeing a live macro preview.
+- An "Add to Meal" button confirms the selection, scaling calories/macros by the chosen portion before appending the food to the meal list.
+- After confirming, the search query clears and the portion panel hides, ready for the next food.
 
-- Add a setting in the settings menu to determine the percentage of calories that should be used for each macro. This should be three boxes that can be either scrolled or typed in for the 1%. Ensure that the total adds up to 100%.
-- At the top of the nutrition page, display two pie charts: one showing the total remaining calories and the other showing the remaining macros.
-- Research a food database or API that can be used to search for food and add them to meals. The caloric and macro information should be pulled in and used.
-- Add an ability to use this library to enter foods.
+### 7.2 — Food search results disappear when typing
 
-**Implementation:** Macro split settings (Balanced/High Protein/Keto presets + Custom with validation). CalorieRing SVG donut chart and MacroProgressBars on the nutrition screen. OpenFoodFacts API integration for food search with debounced queries and nutritional data.
+**Root cause:** In `AddFoodTab.tsx`, the render is `loading ? <ActivityIndicator> : <FlatList>`. When the user types 2+ characters, the 300ms debounce fires, sets `loading=true`, and the entire FlatList is replaced by a spinner — including matching custom foods that don't require an API call.
 
-## Phase 3: Customize Foods and Meals [COMPLETED]
+**Fix:** Decouple the spinner from the list. The ActivityIndicator is shown as a small inline indicator (above the list), and the FlatList always renders when results are available. Custom food matches remain visible during the USDA API loading phase.
 
-- When adding food to a meal, take the user to a menu with two tabs: "Add Food" and "Add Meal."
-- In the "Add Food" menu, allow users to search the database for food or create a new food item where they can add their personal favorite foods to the local database. This should include the name of the food and its macros.
-- When the user selects a meal, display their existing meals and provide an option to create a new meal. In the "Create New Meal" screen, allow users to name the meal and add foods.
+### 7.3 — Edit saved meal templates
 
-**Implementation:** Full-screen modal (`add-food-modal.tsx`) with "Add Food" and "Add Meal" tabs. Add Food tab searches both OpenFoodFacts and local custom foods simultaneously, with a "Create Custom Food" form. Add Meal tab lists saved meals and provides a "Create New Meal" flow that reuses the food search interface. All custom foods and saved meals persist via AsyncStorage.
+No edit UI exists for saved meal templates despite `UPDATE_SAVED_MEAL` already being handled in the reducer.
 
-## Phase 4: Improved Food Search [COMPLETED]
+**Changes:**
+- `AddMealTab.tsx`: Add a pencil (`pencil-outline`) icon button next to the existing delete (trash) button on each saved meal row. Tapping it opens `EditMealFlow`.
+- `EditMealFlow.tsx` (new): Same search + PortionSelector flow as CreateMealFlow, but pre-populated with the meal's existing name and foods. Existing foods in the meal can be removed (×) or have their portion adjusted (tap to open an inline PortionSelector). On save, dispatches `UPDATE_SAVED_MEAL`.
 
-- Replace OpenFoodFacts API with USDA FoodData Central for faster, more accurate, English-only food search results.
-- Filter to Foundation and SR Legacy data types for well-named generic foods (e.g., "Egg, whole, raw" instead of random branded products).
-- Require a free USDA API key stored in `.env` as `EXPO_PUBLIC_USDA_API_KEY`.
-- Add AbortController support to cancel stale in-flight search requests when the user types more characters, preventing result flickering.
-- All nutrition values are per 100g serving (USDA standard for generic foods).
+**Also covers daily meal editing note:** Individual food items in daily meals are already editable — tap a food to adjust portions via PortionSelector bottom sheet, swipe to delete, tap + to add foods. No changes needed there.
 
-**Implementation:** New `api/usdaFoodData.ts` module using POST `/fdc/v1/foods/search` with nutrient filtering (kcal, protein, fat, carbs). Both `AddFoodTab.tsx` and `CreateMealFlow.tsx` updated to use the new API with AbortController-based request cancellation. Old `api/openFoodFacts.ts` removed.
+### 7.4 — Keyboard dismissal after saving a weight
 
-## Phase 5: UX Polish — Collapsible Settings, Macro Grams, and Portion Control [COMPLETED]
+After the user taps "Save Entry" on the Weight tab, the keyboard remains visible behind the success Alert. Fix: call `Keyboard.dismiss()` in `handleSave()` (in `app/(tabs)/index.tsx`) immediately before the `Alert.alert('Saved', ...)` call on the success path.
 
-- Settings sections (Profile and Macro Split) are collapsible/expandable with chevron headers, defaulting to expanded.
-- Macro Split section shows computed grams (e.g., 150g protein) beneath each percentage, live-updating as percentages change. Grams are shown for all presets and custom inputs. Requires a weight entry and completed profile to display actual values; shows "—g" otherwise.
-- Custom food creation: serving size split into a numeric quantity input plus a unit picker (Serving, g, oz, ml, Cup, Tbsp, Tsp). Calories are auto-computed from macros using (protein × 4) + (carbs × 4) + (fat × 9); users can manually override with a warning that calories may not match macro tracking.
-- Portion selector replaces the old +/- buttons when selecting a food to add: dual controls featuring a whole-number slider (0–250) and a fraction chip selector (0, ⅛, ¼, ⅜, ½, ⅝, ¾, ⅞) plus a keypad toggle for direct numeric entry. A live preview row shows updated calories, protein, carbs, and fat as the portion is adjusted.
-- Portion can be adjusted both before adding a food (inline in the food search flow) and after (tap an existing meal item to open a bottom-sheet editor with the same portion selector).
+### 7.5 — Reduce custom food unit picker options
 
-**Implementation:** New `components/nutrition/PortionSelector.tsx` component with PanResponder-based whole slider, fraction chip row, keypad toggle, and live macro preview. `UPDATE_FOOD_IN_MEAL` action added to AppContext reducer. `CustomFoodForm.tsx` updated with quantity/unit picker and useEffect-driven calorie auto-compute. `AddFoodTab.tsx` replaces serving +/- buttons with PortionSelector. `FoodItem.tsx` adds a tap-to-edit bottom-sheet Modal using PortionSelector. `MealCategory.tsx` passes date/category props to FoodItem. `MacroSection.tsx` accepts a `goalCalories` prop and displays gram equivalents. `settings.tsx` gains collapsible card wrappers for Profile and Macros sections and computes `goalCalories` via `calculateDailyCalories()`.
+In `CustomFoodForm`, trim the serving-unit chip row from 7 options (`Serving`, `g`, `oz`, `ml`, `Cup`, `Tbsp`, `Tsp`) down to 3 (`g`, `oz`, `qty`). Default selection changes to `g`. The stored `servingSize` string format is unchanged.
 
-## Phase 6: Settings Polish, Drum Picker, and Custom Food Visibility [IN PROGRESS]
+### 7.6 — Create Meal search view: hide meal list while searching
 
-### 6.1 — Remove gram hints from Macro Split section
+In `CreateMealFlow`, introduce a `searchFocused` boolean state wired to `onFocus`/`onBlur` on the search TextInput. When `searchFocused || query.length > 0` (search mode), the "Foods in Meal" list is hidden and the search results FlatList expands to `flex: 1`, filling the space between the header and the always-visible Cancel/Save Meal buttons. When the search input is blurred and the query is empty (browse mode), the Foods in Meal list is shown instead. After confirming a food portion, `handleSearch('')` is called to repopulate custom foods so the user can immediately search again.
 
-Remove the computed gram hint text displayed below each macro preset button (Balanced, High Protein, Keto) and below each custom percentage input (Protein %, Carbs %, Fat %) in the Settings > Macro Split section. The summary line at the bottom of the section (e.g., "P: 30% (150g) · C: 40% (200g) · F: 30% (75g)") remains.
+### 7.7 — Dismiss keyboard on food selection in Add Food tab
 
-### 6.2 — Add +/- stepper buttons to custom macro inputs
+In `AddFoodTab`, call `Keyboard.dismiss()` immediately when the user taps a food result row, so the keyboard closes before the PortionSelector drum pickers appear.
 
-In the Settings > Macro Split > Custom section, add a minus (−) button to the left and a plus (+) button to the right of each percentage TextInput (Protein %, Carbs %, Fat %). Each press increments or decrements the value by 1%, clamped to [0, 100]. Dispatch to context only when the three values sum to 100% (existing validation behavior preserved).
+### 7.8 — Compact drum pickers and scrollable portion editor bottom sheet
 
-### 6.3 — Replace portion slider with iOS-style drum pickers
+`PortionSelector`: Reduced `VISIBLE_ITEMS` from 5 to 3, shrinking each drum from 220 px to 132 px. `FoodItem`: The portion-edit bottom sheet (`editSheet`) now has `maxHeight: '85%'` to prevent overflow on small screens. The PortionSelector and Update Portion button are wrapped in a `ScrollView` (with `paddingBottom` for safe-area clearance) so the button is always reachable.
 
-Replace the PanResponder-based horizontal slider and fraction chip row in `PortionSelector` with two vertically scrollable drum pickers side by side:
-- Left drum: whole numbers 0–250
-- Right drum: fractions ⅛-increments (0, ⅛, ¼, ⅜, ½, ⅝, ¾, ⅞)
+---
 
-Each drum uses a ScrollView with `snapToInterval` for snapping, `decelerationRate="fast"`, and an absolutely-positioned highlight bar over the center row. Initial scroll position is set from the `value` prop on mount. The keypad toggle mode is unchanged. The live macro preview row is unchanged.
+## Files Changed in Phase 7
 
-### 6.4 — Show custom foods when search query is empty
-
-In both `AddFoodTab` (food-to-meal flow) and `CreateMealFlow` (saved meal creation), display all custom foods in a "My Foods" section when the search query is empty (no characters typed). When the user types 1 or more characters, custom foods are filtered by name match. USDA API calls continue to require 2+ characters. This ensures custom foods are always accessible immediately without requiring a minimum search length.
-
-**Files changed:** `components/settings/MacroSection.tsx`, `components/nutrition/PortionSelector.tsx`, `components/nutrition/AddFoodTab.tsx`, `components/nutrition/CreateMealFlow.tsx`, `prd.md`
+- `components/nutrition/AddFoodTab.tsx` — fix loading spinner hiding FlatList; keyboard dismiss on selection
+- `components/nutrition/CreateMealFlow.tsx` — add PortionSelector before adding food to meal; search mode hides meal list
+- `components/nutrition/CustomFoodForm.tsx` — reduce unit picker to g / oz / qty
+- `components/nutrition/FoodItem.tsx` — scrollable bottom sheet with maxHeight cap
+- `components/nutrition/PortionSelector.tsx` — compact drums (VISIBLE_ITEMS 5→3)
+- `components/nutrition/EditMealFlow.tsx` *(new)* — edit saved meal templates
+- `components/nutrition/AddMealTab.tsx` — add edit button, wire up EditMealFlow
+- `app/(tabs)/index.tsx` — call `Keyboard.dismiss()` in `handleSave()`
+- `prd.md` — this file
