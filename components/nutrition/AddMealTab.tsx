@@ -9,10 +9,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { MealCategory, NutritionFoodItem } from '../../types';
+import { MealCategory, NutritionFoodItem, SavedMeal } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import CreateMealFlow from './CreateMealFlow';
+import EditMealFlow from './EditMealFlow';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -57,13 +58,18 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       padding: Spacing.xl,
     },
-    deleteBtn: {
+    actionBtn: {
       padding: Spacing.xs,
     },
     mealRow: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+    },
+    actionBtns: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
     },
   });
 
@@ -78,6 +84,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
   const styles = makeStyles(colors);
   const { savedMeals, dispatch } = useApp();
   const [showCreate, setShowCreate] = useState(false);
+  const [editingMeal, setEditingMeal] = useState<SavedMeal | null>(null);
 
   const handleAddMeal = (mealId: string) => {
     const meal = savedMeals.find((m) => m.id === mealId);
@@ -109,6 +116,10 @@ export default function AddMealTab({ date, category, onDone }: Props) {
     return <CreateMealFlow onDone={() => setShowCreate(false)} />;
   }
 
+  if (editingMeal) {
+    return <EditMealFlow meal={editingMeal} onDone={() => setEditingMeal(null)} />;
+  }
+
   const totalCalories = (foods: NutritionFoodItem[]) =>
     foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 
@@ -137,12 +148,20 @@ export default function AddMealTab({ date, category, onDone }: Props) {
                   {item.foods.length} food{item.foods.length !== 1 ? 's' : ''} · {totalCalories(item.foods)} cal
                 </Text>
               </View>
-              <TouchableOpacity
-                style={styles.deleteBtn}
-                onPress={() => handleDeleteMeal(item.id)}
-              >
-                <Ionicons name="trash-outline" size={18} color={colors.danger} />
-              </TouchableOpacity>
+              <View style={styles.actionBtns}>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => setEditingMeal(item)}
+                >
+                  <Ionicons name="pencil-outline" size={18} color={colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => handleDeleteMeal(item.id)}
+                >
+                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                </TouchableOpacity>
+              </View>
             </View>
           </TouchableOpacity>
         )}

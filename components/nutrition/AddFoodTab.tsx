@@ -63,8 +63,8 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.primary,
       fontWeight: '600',
     },
-    loading: {
-      padding: Spacing.lg,
+    inlineLoader: {
+      paddingVertical: Spacing.sm,
       alignItems: 'center',
     },
     empty: {
@@ -260,53 +260,53 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         </View>
       )}
 
-      {loading ? (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={colors.primary} />
+      {loading && (
+        <View style={styles.inlineLoader}>
+          <ActivityIndicator size="small" color={colors.primary} />
         </View>
-      ) : (
-        <FlatList
-          data={allResults}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
-          keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.resultItem,
-                selectedItem?.id === item.id && styles.resultSelected,
-              ]}
-              onPress={() => {
-                setSelectedItem(item);
-                setServings(1);
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
-                <Text style={styles.resultName} numberOfLines={1}>
-                  {item.name}
-                </Text>
-                {isCustom(item.id) && (
-                  <Text style={styles.customBadge}>Custom</Text>
-                )}
-              </View>
-              <Text style={styles.resultInfo}>
-                {item.calories} cal
-                {item.servingSize ? ` · ${item.servingSize}` : ''}
-                {item.protein != null ? ` · P: ${item.protein}g` : ''}
-              </Text>
-            </TouchableOpacity>
-          )}
-          ListHeaderComponent={
-            trimmed.length === 0 && filteredCustomFoods.length > 0 ? (
-              <Text style={styles.sectionHeader}>My Foods</Text>
-            ) : null
-          }
-          ListEmptyComponent={
-            searched && !loading && trimmed.length >= 2 ? (
-              <Text style={styles.empty}>No results found</Text>
-            ) : null
-          }
-        />
       )}
+
+      <FlatList
+        data={allResults}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyboardShouldPersistTaps="handled"
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.resultItem,
+              selectedItem?.id === item.id && styles.resultSelected,
+            ]}
+            onPress={() => {
+              setSelectedItem(item);
+              setServings(1);
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+              <Text style={styles.resultName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              {isCustom(item.id) && (
+                <Text style={styles.customBadge}>Custom</Text>
+              )}
+            </View>
+            <Text style={styles.resultInfo}>
+              {item.calories} cal
+              {item.servingSize ? ` · ${item.servingSize}` : ''}
+              {item.protein != null ? ` · P: ${item.protein}g` : ''}
+            </Text>
+          </TouchableOpacity>
+        )}
+        ListHeaderComponent={
+          trimmed.length === 0 && filteredCustomFoods.length > 0 ? (
+            <Text style={styles.sectionHeader}>My Foods</Text>
+          ) : null
+        }
+        ListEmptyComponent={
+          searched && !loading && trimmed.length >= 2 ? (
+            <Text style={styles.empty}>No results found</Text>
+          ) : null
+        }
+      />
     </View>
   );
 }

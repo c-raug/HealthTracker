@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,11 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { NutritionFoodItem } from '../../types';
+import { NutritionFoodItem, SavedMeal } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import { searchFoods } from '../../api/usdaFoodData';
@@ -69,15 +70,16 @@ const makeStyles = (colors: typeof LightColors) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
+    foodInfo: {
+      flex: 1,
+    },
     foodName: {
       ...Typography.body,
       color: colors.text,
-      flex: 1,
     },
     foodCal: {
       ...Typography.small,
       color: colors.textSecondary,
-      marginRight: Spacing.sm,
     },
     removeBtn: {
       padding: Spacing.xs,
@@ -98,8 +100,27 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.textSecondary,
     },
     loading: {
-      padding: Spacing.md,
+      paddingVertical: Spacing.sm,
       alignItems: 'center',
+    },
+    portionPanel: {
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    confirmBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.lg,
+      marginHorizontal: Spacing.md,
+      marginBottom: Spacing.md,
+      alignItems: 'center',
+    },
+    confirmText: {
+      ...Typography.body,
+      color: colors.white,
+      fontWeight: '600',
     },
     btnRow: {
       flexDirection: 'row',
@@ -137,21 +158,39 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       padding: Spacing.md,
     },
-    portionPanel: {
+    // Edit-portion modal
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    modalSheet: {
       backgroundColor: colors.card,
+      borderTopLeftRadius: Radius.lg,
+      borderTopRightRadius: Radius.lg,
+      paddingBottom: Spacing.xl,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: Spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    confirmBtn: {
+    modalTitle: {
+      ...Typography.body,
+      color: colors.text,
+      fontWeight: '600',
+      flex: 1,
+    },
+    modalSaveBtn: {
       backgroundColor: colors.primary,
       borderRadius: Radius.md,
-      paddingVertical: Spacing.sm,
-      paddingHorizontal: Spacing.lg,
-      marginHorizontal: Spacing.md,
-      marginBottom: Spacing.md,
-      alignItems: 'center',
+      paddingVertical: Spacing.xs,
+      paddingHorizontal: Spacing.md,
     },
-    confirmText: {
+    modalSaveText: {
       ...Typography.body,
       color: colors.white,
       fontWeight: '600',
@@ -159,82 +198,64 @@ const makeStyles = (colors: typeof LightColors) =>
   });
 
 interface Props {
+  meal: SavedMeal;
   onDone: () => void;
 }
 
-export default function CreateMealFlow({ onDone }: Props) {
+export default function EditMealFlow({ meal, onDone }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { customFoods, dispatch } = useApp();
 
-  const [mealName, setMealName] = useState('');
-  const [foods, setFoods] = useState<NutritionFoodItem[]>([]);
+  const [mealName, setMealName] = useState(meal.name);
+  const [foods, setFoods] = useState<NutritionFoodItem[]>(meal.foods);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NutritionFoodItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);
+
+  // For editing portions of already-added foods
+  const [editingFood, setEditingFood] = useState<NutritionFoodItem | null>(null);
+  const [editingServings, setEditingServings] = useState<number>(1);
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Show all custom foods on initial mount (query is empty)
-  useEffect(() => {
-    const allCustom: NutritionFoodItem[] = customFoods.map((f) => ({
-      id: f.id,
-      name: f.name,
-      calories: f.calories,
-      protein: f.protein,
-      carbs: f.carbs,
-      fat: f.fat,
-      servingSize: f.servingSize,
-      servings: 1,
-    }));
-    setSearchResults(allCustom);
-  }, []);
+  const toNutritionItem = (f: (typeof customFoods)[0]): NutritionFoodItem => ({
+    id: f.id,
+    name: f.name,
+    calories: f.calories,
+    protein: f.protein,
+    carbs: f.carbs,
+    fat: f.fat,
+    servingSize: f.servingSize,
+    servings: 1,
+  });
 
   const handleSearch = useCallback(
     (text: string) => {
       setQuery(text);
+      setSelectedItem(null);
 
       if (debounceRef.current) clearTimeout(debounceRef.current);
 
       const trimmedText = text.trim();
 
-      // When empty: show all custom foods immediately, no USDA call
       if (trimmedText.length === 0) {
-        const allCustom: NutritionFoodItem[] = customFoods.map((f) => ({
-          id: f.id,
-          name: f.name,
-          calories: f.calories,
-          protein: f.protein,
-          carbs: f.carbs,
-          fat: f.fat,
-          servingSize: f.servingSize,
-          servings: 1,
-        }));
-        setSearchResults(allCustom);
+        setSearchResults(customFoods.map(toNutritionItem));
         return;
       }
 
-      // When 1 char: filter custom foods only, no USDA call
       if (trimmedText.length === 1) {
-        const matchingCustom: NutritionFoodItem[] = customFoods
-          .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-          .map((f) => ({
-            id: f.id,
-            name: f.name,
-            calories: f.calories,
-            protein: f.protein,
-            carbs: f.carbs,
-            fat: f.fat,
-            servingSize: f.servingSize,
-            servings: 1,
-          }));
-        setSearchResults(matchingCustom);
+        setSearchResults(
+          customFoods
+            .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
+            .map(toNutritionItem),
+        );
         return;
       }
 
-      // 2+ chars: filter custom + USDA
       debounceRef.current = setTimeout(async () => {
         if (abortRef.current) abortRef.current.abort();
         const controller = new AbortController();
@@ -242,18 +263,9 @@ export default function CreateMealFlow({ onDone }: Props) {
 
         setLoading(true);
         try {
-          const matchingCustom: NutritionFoodItem[] = customFoods
+          const matchingCustom = customFoods
             .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-            .map((f) => ({
-              id: f.id,
-              name: f.name,
-              calories: f.calories,
-              protein: f.protein,
-              carbs: f.carbs,
-              fat: f.fat,
-              servingSize: f.servingSize,
-              servings: 1,
-            }));
+            .map(toNutritionItem);
 
           const { items } = await searchFoods(trimmedText, 1, controller.signal);
           setSearchResults([...matchingCustom, ...items]);
@@ -291,8 +303,39 @@ export default function CreateMealFlow({ onDone }: Props) {
     setSearchResults([]);
   };
 
-  const handleRemoveFromMeal = (id: string) => {
+  const handleRemoveFood = (id: string) => {
     setFoods((prev) => prev.filter((f) => f.id !== id));
+  };
+
+  const handleOpenEditPortion = (food: NutritionFoodItem) => {
+    setEditingFood(food);
+    setEditingServings(food.servings ?? 1);
+  };
+
+  const handleSaveEditPortion = () => {
+    if (!editingFood) return;
+    const baseServings = editingFood.servings ?? 1;
+    // Reconstruct base values from already-scaled food
+    const baseCalories = (editingFood.calories ?? 0) / baseServings;
+    const baseProtein = (editingFood.protein ?? 0) / baseServings;
+    const baseCarbs = (editingFood.carbs ?? 0) / baseServings;
+    const baseFat = (editingFood.fat ?? 0) / baseServings;
+
+    setFoods((prev) =>
+      prev.map((f) =>
+        f.id === editingFood.id
+          ? {
+              ...f,
+              calories: Math.round(baseCalories * editingServings),
+              protein: Math.round(baseProtein * editingServings * 10) / 10,
+              carbs: Math.round(baseCarbs * editingServings * 10) / 10,
+              fat: Math.round(baseFat * editingServings * 10) / 10,
+              servings: editingServings,
+            }
+          : f,
+      ),
+    );
+    setEditingFood(null);
   };
 
   const handleSave = () => {
@@ -306,13 +349,8 @@ export default function CreateMealFlow({ onDone }: Props) {
     }
 
     dispatch({
-      type: 'ADD_SAVED_MEAL',
-      meal: {
-        id: generateId(),
-        name: mealName.trim(),
-        foods,
-        createdAt: new Date().toISOString(),
-      },
+      type: 'UPDATE_SAVED_MEAL',
+      meal: { ...meal, name: mealName.trim(), foods },
     });
 
     onDone();
@@ -321,14 +359,13 @@ export default function CreateMealFlow({ onDone }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Create Meal</Text>
+        <Text style={styles.title}>Edit Meal</Text>
         <TextInput
           style={styles.nameInput}
           value={mealName}
           onChangeText={setMealName}
-          placeholder="Meal name (e.g. Post-Workout Shake)"
+          placeholder="Meal name"
           placeholderTextColor={colors.textSecondary}
-          autoFocus
         />
         <TextInput
           style={styles.searchInput}
@@ -402,16 +439,21 @@ export default function CreateMealFlow({ onDone }: Props) {
           data={foods}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.foodRow}>
-              <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
-              <Text style={styles.foodCal}>{item.calories} cal</Text>
+            <TouchableOpacity style={styles.foodRow} onPress={() => handleOpenEditPortion(item)}>
+              <View style={styles.foodInfo}>
+                <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.foodCal}>
+                  {item.calories} cal
+                  {item.servings != null && item.servings !== 1 ? ` · ${item.servings} servings` : ''}
+                </Text>
+              </View>
               <TouchableOpacity
                 style={styles.removeBtn}
-                onPress={() => handleRemoveFromMeal(item.id)}
+                onPress={() => handleRemoveFood(item.id)}
               >
                 <Ionicons name="close-circle" size={20} color={colors.danger} />
               </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           )}
         />
       )}
@@ -424,6 +466,42 @@ export default function CreateMealFlow({ onDone }: Props) {
           <Text style={styles.saveBtnText}>Save Meal</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Edit portion bottom sheet for existing foods */}
+      <Modal
+        visible={editingFood !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditingFood(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle} numberOfLines={1}>
+                {editingFood?.name}
+              </Text>
+              <TouchableOpacity
+                style={styles.modalSaveBtn}
+                onPress={handleSaveEditPortion}
+              >
+                <Text style={styles.modalSaveText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            {editingFood && (
+              <PortionSelector
+                value={editingServings}
+                onChange={setEditingServings}
+                baseCalories={(editingFood.calories ?? 0) / (editingFood.servings ?? 1)}
+                baseProtein={(editingFood.protein ?? 0) / (editingFood.servings ?? 1)}
+                baseCarbs={(editingFood.carbs ?? 0) / (editingFood.servings ?? 1)}
+                baseFat={(editingFood.fat ?? 0) / (editingFood.servings ?? 1)}
+                servingSize={editingFood.servingSize ?? '1 serving'}
+                baseServings={1}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
