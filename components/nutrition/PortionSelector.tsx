@@ -5,8 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  PanResponder,
-  LayoutChangeEvent,
+  ScrollView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -21,6 +22,11 @@ import {
 const FRACTIONS = [0, 1 / 8, 2 / 8, 3 / 8, 4 / 8, 5 / 8, 6 / 8, 7 / 8];
 const FRACTION_LABELS = ['0', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞'];
 const WHOLE_MAX = 250;
+
+const ITEM_HEIGHT = 44;
+const VISIBLE_ITEMS = 5;
+const DRUM_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS; // 220
+const PAD_COUNT = Math.floor(VISIBLE_ITEMS / 2); // 2
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -59,78 +65,6 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       marginBottom: Spacing.sm,
     },
-    sliderSection: {
-      marginBottom: Spacing.sm,
-    },
-    sliderLabel: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      marginBottom: Spacing.xs,
-    },
-    sliderRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: Spacing.sm,
-    },
-    sliderTrack: {
-      flex: 1,
-      height: 6,
-      backgroundColor: colors.border,
-      borderRadius: 3,
-      justifyContent: 'center',
-    },
-    sliderFill: {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      height: 6,
-      backgroundColor: colors.primary,
-      borderRadius: 3,
-    },
-    sliderThumb: {
-      position: 'absolute',
-      width: 22,
-      height: 22,
-      borderRadius: 11,
-      backgroundColor: colors.primary,
-      marginTop: -8,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 3,
-      elevation: 3,
-    },
-    sliderValue: {
-      ...Typography.small,
-      color: colors.text,
-      fontWeight: '600',
-      minWidth: 32,
-      textAlign: 'right',
-    },
-    fractionRow: {
-      flexDirection: 'row',
-      gap: 4,
-      flexWrap: 'wrap',
-    },
-    fractionChip: {
-      flex: 1,
-      minWidth: 36,
-      paddingVertical: Spacing.xs,
-      backgroundColor: colors.background,
-      borderRadius: Radius.sm,
-      alignItems: 'center',
-    },
-    fractionChipActive: {
-      backgroundColor: colors.primary,
-    },
-    fractionText: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      fontWeight: '600',
-    },
-    fractionTextActive: {
-      color: colors.white,
-    },
     keypadInput: {
       backgroundColor: colors.card,
       borderRadius: Radius.md,
@@ -163,6 +97,54 @@ const makeStyles = (colors: typeof LightColors) =>
     previewLabel: {
       ...Typography.small,
       color: colors.textSecondary,
+    },
+    drumWrapper: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: Spacing.md,
+      marginBottom: Spacing.sm,
+    },
+    drumContainer: {
+      width: 110,
+      height: DRUM_HEIGHT,
+      overflow: 'hidden',
+      borderRadius: Radius.md,
+      backgroundColor: colors.background,
+    },
+    drumScroll: {
+      flex: 1,
+    },
+    drumItem: {
+      height: ITEM_HEIGHT,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    drumItemText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+    },
+    drumItemTextSelected: {
+      ...Typography.h3,
+      color: colors.text,
+      fontWeight: '700',
+    },
+    drumHighlight: {
+      position: 'absolute',
+      top: ITEM_HEIGHT * PAD_COUNT,
+      left: 0,
+      right: 0,
+      height: ITEM_HEIGHT,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.sm,
+    },
+    drumLabel: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: Spacing.xs,
     },
   });
 
@@ -198,9 +180,10 @@ export default function PortionSelector({
   const [fractionIndex, setFractionIndex] = useState(initialFracIndex);
   const [keypadInput, setKeypadInput] = useState(value.toString());
 
-  const wholeTrackWidth = useRef(0);
+  const wholeScrollRef = useRef<ScrollView>(null);
+  const fracScrollRef = useRef<ScrollView>(null);
 
-  // Notify parent whenever sliders change
+  // Notify parent whenever drums change
   useEffect(() => {
     if (!keypadMode) {
       const total = wholeValue + FRACTIONS[fractionIndex];
@@ -208,23 +191,25 @@ export default function PortionSelector({
     }
   }, [wholeValue, fractionIndex, keypadMode]);
 
-  const wholePan = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (_, gs) => {
-        const pct = Math.min(1, Math.max(0, gs.x0 / (wholeTrackWidth.current || 1)));
-        setWholeValue(Math.round(pct * WHOLE_MAX));
-      },
-      onPanResponderMove: (_, gs) => {
-        const pct = Math.min(1, Math.max(0, gs.moveX / (wholeTrackWidth.current || 1)));
-        setWholeValue(Math.round(pct * WHOLE_MAX));
-      },
-    }),
-  ).current;
+  // Position drums to initial value on mount
+  useEffect(() => {
+    const t = setTimeout(() => {
+      wholeScrollRef.current?.scrollTo({ y: initialWhole * ITEM_HEIGHT, animated: false });
+      fracScrollRef.current?.scrollTo({ y: initialFracIndex * ITEM_HEIGHT, animated: false });
+    }, 50);
+    return () => clearTimeout(t);
+  }, []);
 
-  const handleWholeTrackLayout = (e: LayoutChangeEvent) => {
-    wholeTrackWidth.current = e.nativeEvent.layout.width;
+  const handleWholeScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(WHOLE_MAX, index));
+    if (clamped !== wholeValue) setWholeValue(clamped);
+  };
+
+  const handleFracScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(FRACTIONS.length - 1, index));
+    if (clamped !== fractionIndex) setFractionIndex(clamped);
   };
 
   const handleKeypadChange = (text: string) => {
@@ -237,15 +222,19 @@ export default function PortionSelector({
 
   const toggleMode = () => {
     if (keypadMode) {
-      // Switching back to sliders — sync slider state from keypad value
+      // Switching back to drums — sync drum state from keypad value
       const n = parseFloat(keypadInput) || 0;
       const whole = Math.min(WHOLE_MAX, Math.floor(n));
       const fracIdx = Math.min(7, Math.round((n - whole) * 8));
       setWholeValue(whole);
       setFractionIndex(fracIdx);
       setKeypadMode(false);
+      setTimeout(() => {
+        wholeScrollRef.current?.scrollTo({ y: whole * ITEM_HEIGHT, animated: false });
+        fracScrollRef.current?.scrollTo({ y: fracIdx * ITEM_HEIGHT, animated: false });
+      }, 50);
     } else {
-      // Switching to keypad — show current slider value
+      // Switching to keypad — show current drum value
       const total = wholeValue + FRACTIONS[fractionIndex];
       setKeypadInput(total % 1 === 0 ? total.toString() : total.toFixed(4).replace(/0+$/, ''));
       setKeypadMode(true);
@@ -272,8 +261,6 @@ export default function PortionSelector({
       ? fractionLabel
       : `${wholeValue} ${fractionLabel}`;
 
-  const thumbPct = WHOLE_MAX > 0 ? wholeValue / WHOLE_MAX : 0;
-
   return (
     <View style={styles.container}>
       {/* Header row */}
@@ -287,7 +274,7 @@ export default function PortionSelector({
             size={16}
             color={colors.primary}
           />
-          <Text style={styles.toggleBtnText}>{keypadMode ? 'Sliders' : 'Keypad'}</Text>
+          <Text style={styles.toggleBtnText}>{keypadMode ? 'Drums' : 'Keypad'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -304,56 +291,78 @@ export default function PortionSelector({
         />
       ) : (
         <>
-          {/* Whole number slider */}
-          <View style={styles.sliderSection}>
-            <Text style={styles.sliderLabel}>Whole servings</Text>
-            <View style={styles.sliderRow}>
-              <View
-                style={styles.sliderTrack}
-                onLayout={handleWholeTrackLayout}
-                {...wholePan.panHandlers}
-              >
-                <View style={[styles.sliderFill, { width: `${thumbPct * 100}%` }]} />
-                <View
-                  style={[
-                    styles.sliderThumb,
-                    { left: `${thumbPct * 100}%`, marginLeft: -11 },
-                  ]}
-                />
-              </View>
-              <Text style={styles.sliderValue}>{wholeValue}</Text>
-            </View>
-          </View>
-
-          {/* Fraction selector */}
-          <View style={styles.sliderSection}>
-            <Text style={styles.sliderLabel}>Fraction (⅛ increments)</Text>
-            <View style={styles.fractionRow}>
-              {FRACTION_LABELS.map((label, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[
-                    styles.fractionChip,
-                    fractionIndex === i && styles.fractionChipActive,
-                  ]}
-                  onPress={() => setFractionIndex(i)}
-                  activeOpacity={0.8}
+          <View style={styles.drumWrapper}>
+            {/* Whole number drum */}
+            <View>
+              <Text style={styles.drumLabel}>Whole</Text>
+              <View style={styles.drumContainer}>
+                <View style={styles.drumHighlight} pointerEvents="none" />
+                <ScrollView
+                  ref={wholeScrollRef}
+                  style={styles.drumScroll}
+                  showsVerticalScrollIndicator={false}
+                  snapToInterval={ITEM_HEIGHT}
+                  decelerationRate="fast"
+                  scrollEventThrottle={16}
+                  onMomentumScrollEnd={handleWholeScroll}
+                  onScrollEndDrag={handleWholeScroll}
+                  contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
                 >
-                  <Text
-                    style={[
-                      styles.fractionText,
-                      fractionIndex === i && styles.fractionTextActive,
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  {Array.from({ length: WHOLE_MAX + 1 }, (_, i) => (
+                    <View key={i} style={styles.drumItem}>
+                      <Text
+                        style={
+                          i === wholeValue
+                            ? styles.drumItemTextSelected
+                            : styles.drumItemText
+                        }
+                      >
+                        {i}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+
+            {/* Fraction drum */}
+            <View>
+              <Text style={styles.drumLabel}>Fraction</Text>
+              <View style={styles.drumContainer}>
+                <View style={styles.drumHighlight} pointerEvents="none" />
+                <ScrollView
+                  ref={fracScrollRef}
+                  style={styles.drumScroll}
+                  showsVerticalScrollIndicator={false}
+                  snapToInterval={ITEM_HEIGHT}
+                  decelerationRate="fast"
+                  scrollEventThrottle={16}
+                  onMomentumScrollEnd={handleFracScroll}
+                  onScrollEndDrag={handleFracScroll}
+                  contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
+                >
+                  {FRACTION_LABELS.map((label, i) => (
+                    <View key={i} style={styles.drumItem}>
+                      <Text
+                        style={
+                          i === fractionIndex
+                            ? styles.drumItemTextSelected
+                            : styles.drumItemText
+                        }
+                      >
+                        {label}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
             </View>
           </View>
 
           {/* Total display */}
-          <Text style={styles.totalText}>{totalDisplay} serving{currentTotal !== 1 ? 's' : ''}</Text>
+          <Text style={styles.totalText}>
+            {totalDisplay} serving{currentTotal !== 1 ? 's' : ''}
+          </Text>
         </>
       )}
 
