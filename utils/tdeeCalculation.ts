@@ -1,4 +1,4 @@
-import { Sex, ActivityLevel, WeightGoal } from '../types';
+import { Sex, ActivityLevel, WeightGoal, ActivityMode } from '../types';
 
 /** Mifflin-St Jeor BMR calculation. Weight in kg, height in cm. */
 export function calculateBMR(
@@ -51,7 +51,22 @@ export function weightToKg(weight: number, unit: 'lbs' | 'kg'): number {
   return unit === 'kg' ? weight : weight * 0.453592;
 }
 
-/** Calculate daily calorie goal from profile and current weight. */
+/** Compute age from a date-of-birth string "YYYY-MM-DD". */
+export function ageFromDob(dob: string): number {
+  const [y, m, d] = dob.split('-').map(Number);
+  const today = new Date();
+  let age = today.getFullYear() - y;
+  if (today.getMonth() + 1 < m || (today.getMonth() + 1 === m && today.getDate() < d)) age--;
+  return age;
+}
+
+/** Calculate daily calorie goal from profile and current weight.
+ *
+ * activityMode controls which multiplier is used:
+ *   'auto'       — uses the provided activityLevel (user's chosen level baked into TDEE)
+ *   'manual'     — always uses sedentary (×1.2); user logs all activity separately
+ *   'smartwatch' — always uses sedentary (×1.2); smartwatch calories added separately
+ */
 export function calculateDailyCalories(
   weightValue: number,
   weightUnit: 'lbs' | 'kg',
@@ -61,10 +76,12 @@ export function calculateDailyCalories(
   sex: Sex,
   activityLevel: ActivityLevel,
   weightGoal: WeightGoal,
+  activityMode: ActivityMode = 'manual',
 ): number {
   const weightKg = weightToKg(weightValue, weightUnit);
   const heightCm = heightToCm(heightValue, heightUnit);
   const bmr = calculateBMR(weightKg, heightCm, age, sex);
-  const tdee = bmr * getActivityMultiplier(activityLevel);
+  const effectiveLevel: ActivityLevel = activityMode === 'auto' ? activityLevel : 'sedentary';
+  const tdee = bmr * getActivityMultiplier(effectiveLevel);
   return getGoalCalories(tdee, weightGoal);
 }

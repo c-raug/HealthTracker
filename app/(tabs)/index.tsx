@@ -143,6 +143,15 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     color: colors.white,
   },
 
+  // Saved confirmation message
+  savedMessage: {
+    ...Typography.small,
+    color: colors.primary,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
+    fontStyle: 'italic',
+  },
+
   // iOS date picker modal
   modalOverlay: {
     flex: 1,
@@ -181,6 +190,7 @@ export default function WeightScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   const today = getToday();
   const existingEntry = entries.find((e) => e.date === selectedDate);
@@ -247,7 +257,14 @@ export default function WeightScreen() {
 
     dispatch({ type: 'UPSERT_ENTRY', entry });
     Keyboard.dismiss();
-    Alert.alert('Saved', `Weight logged for ${formatDisplayDate(selectedDate)}.`);
+
+    const now = new Date();
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const datePart = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const timePart = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    setSavedMessage(`Weight saved on ${datePart} at ${timePart}`);
+    setTimeout(() => setSavedMessage(null), 3500);
   };
 
   // Build maximumDate from today string to avoid UTC offset issues
@@ -364,7 +381,7 @@ export default function WeightScreen() {
             <TextInput
               style={styles.input}
               value={weightInput}
-              onChangeText={setWeightInput}
+              onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
               keyboardType="decimal-pad"
               placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
               placeholderTextColor={colors.textSecondary}
@@ -380,6 +397,10 @@ export default function WeightScreen() {
             >
               <Text style={styles.saveButtonText}>Save Entry</Text>
             </TouchableOpacity>
+
+            {savedMessage && (
+              <Text style={styles.savedMessage}>{savedMessage}</Text>
+            )}
           </>
         ) : (
           <WeightChart />

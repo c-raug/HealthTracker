@@ -22,8 +22,13 @@ export type WeightGoal =
   | 'gain_0.5'
   | 'gain_1';
 
+export type ActivityMode = 'auto' | 'manual' | 'smartwatch';
+
 export interface UserProfile {
-  age: number;
+  name?: string;
+  age?: number; // kept for backward compat; prefer dob when present
+  dob?: string; // "YYYY-MM-DD" — age computed from this at runtime
+  fitnessGoal?: string;
   sex: Sex;
   heightValue: number;
   heightUnit: 'in' | 'cm';
@@ -80,13 +85,14 @@ export interface UserPreferences {
   profile?: UserProfile;
   macroPreset?: MacroPreset;
   macroSplit?: MacroSplit;
+  activityMode?: ActivityMode;
 }
 
 export type ExerciseType = 'weight_lifting';
 
 export interface ActivityEntry {
   id: string;
-  type: 'exercise' | 'steps';
+  type: 'exercise' | 'steps' | 'smartwatch';
   exerciseType?: ExerciseType;
   durationMinutes?: number;
   steps?: number;

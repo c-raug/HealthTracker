@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
-import { calculateDailyCalories } from '../../utils/tdeeCalculation';
+import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
 import { MealCategory, MacroSplit } from '../../types';
 import ProfilePrompt from '../../components/nutrition/ProfilePrompt';
 import CalorieRing from '../../components/nutrition/CalorieRing';
@@ -170,24 +170,42 @@ export default function NutritionScreen() {
   const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
   const latestWeight = sortedEntries[0];
 
+  const activityMode = preferences.activityMode ?? 'manual';
+
   // Calculate calorie target
+  const resolvedAge = profile?.dob
+    ? ageFromDob(profile.dob)
+    : (profile?.age ?? null);
+
   let baseTdee = 0;
-  if (profile && latestWeight) {
+  if (profile && latestWeight && resolvedAge !== null) {
     baseTdee = calculateDailyCalories(
       latestWeight.weight,
       latestWeight.unit,
       profile.heightValue,
       profile.heightUnit,
-      profile.age,
+      resolvedAge,
       profile.sex,
       profile.activityLevel,
       profile.weightGoal,
+      activityMode,
     );
   }
 
-  // Add calories burned from activities for the selected date
+  // Add calories burned from activities for the selected date (mode-aware)
   const dayActivity = activityLog.find((d) => d.date === selectedDate);
-  const caloriesBurned = dayActivity?.activities.reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+  let caloriesBurned = 0;
+  if (activityMode === 'manual') {
+    caloriesBurned = dayActivity?.activities
+      .filter((a) => a.type !== 'smartwatch')
+      .reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+  } else if (activityMode === 'smartwatch') {
+    caloriesBurned = dayActivity?.activities
+      .filter((a) => a.type === 'smartwatch')
+      .reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+  }
+  // auto: caloriesBurned stays 0 — TDEE already includes activity level
+
   const calorieTarget = baseTdee + caloriesBurned;
 
   if (isLoading) {
@@ -251,7 +269,7 @@ export default function NutritionScreen() {
             <CalorieRing consumed={consumed} target={calorieTarget} />
             {caloriesBurned > 0 && (
               <Text style={styles.exerciseBurnedLabel}>
-                +{caloriesBurned} cal from exercise
+                +{caloriesBurned} cal from {activityMode === 'smartwatch' ? 'smart watch' : 'exercise'}
               </Text>
             )}
             <MacroProgressBars
