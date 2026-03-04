@@ -34,10 +34,11 @@ No test runner or lint script exists in package.json.
 
 ## Component Notes
 
-- **`PortionSelector`** (`components/nutrition/PortionSelector.tsx`): whole-number slider (PanResponder, 0–250) + fraction chip row (⅛ increments) + keypad toggle + live macro preview. Used in `AddFoodTab` (before adding) and `FoodItem` (bottom-sheet edit modal after adding).
+- **`PortionSelector`** (`components/nutrition/PortionSelector.tsx`): whole-number slider (PanResponder, 0–250) + fraction chip row (⅛ increments) + keypad toggle + live macro preview. Used in `AddFoodTab` (before adding), `CreateMealFlow` and `EditMealFlow` (before adding food to a saved meal), and `FoodItem` (bottom-sheet edit modal after adding).
 - **`FoodItem`** (`components/nutrition/FoodItem.tsx`): tapping the food info area opens a bottom-sheet `Modal` with `PortionSelector`; long-pressing the reorder icon drags; swiping right deletes. Requires `date` and `category` props (passed down from `MealCategory`).
 - **`MacroSection`** (`components/settings/MacroSection.tsx`): accepts `goalCalories: number | null` prop from `settings.tsx`. Displays gram equivalents below each preset button and custom % input. Shows `—g` when no goal calories are available.
 - **`CustomFoodForm`** (`components/nutrition/CustomFoodForm.tsx`): serving size is quantity + unit picker (Serving, g, oz, ml, Cup, Tbsp, Tsp). Calories auto-computed from macros via `useEffect`; manual override shows an `Alert` warning.
+- **`EditMealFlow`** (`components/nutrition/EditMealFlow.tsx`): edit an existing saved meal template. Pre-populated from a `SavedMeal` prop; supports renaming, adding foods (search + PortionSelector), removing foods (× button), and adjusting portions of already-added foods (tap row → bottom-sheet PortionSelector). Dispatches `UPDATE_SAVED_MEAL` on save. Launched from `AddMealTab` via the pencil icon.
 
 ## Runtime Requirements
 
