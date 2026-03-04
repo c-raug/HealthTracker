@@ -12,7 +12,7 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../../const
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 
-const PORTION_UNITS = ['Serving', 'g', 'oz', 'ml', 'Cup', 'Tbsp', 'Tsp'] as const;
+const PORTION_UNITS = ['g', 'oz', 'qty'] as const;
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -168,7 +168,7 @@ export default function CustomFoodForm({ onDone }: Props) {
   const [carbs, setCarbs] = useState('');
   const [fat, setFat] = useState('');
   const [portionQty, setPortionQty] = useState('1');
-  const [portionUnit, setPortionUnit] = useState<string>('Serving');
+  const [portionUnit, setPortionUnit] = useState<string>('g');
   const [isCaloriesManual, setIsCaloriesManual] = useState(false);
 
   // Auto-compute calories from macros when not in manual mode

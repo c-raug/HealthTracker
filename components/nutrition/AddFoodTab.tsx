@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -277,6 +278,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
               selectedItem?.id === item.id && styles.resultSelected,
             ]}
             onPress={() => {
+              Keyboard.dismiss();
               setSelectedItem(item);
               setServings(1);
             }}

@@ -31,12 +31,31 @@ No edit UI exists for saved meal templates despite `UPDATE_SAVED_MEAL` already b
 
 After the user taps "Save Entry" on the Weight tab, the keyboard remains visible behind the success Alert. Fix: call `Keyboard.dismiss()` in `handleSave()` (in `app/(tabs)/index.tsx`) immediately before the `Alert.alert('Saved', ...)` call on the success path.
 
+### 7.5 — Reduce custom food unit picker options
+
+In `CustomFoodForm`, trim the serving-unit chip row from 7 options (`Serving`, `g`, `oz`, `ml`, `Cup`, `Tbsp`, `Tsp`) down to 3 (`g`, `oz`, `qty`). Default selection changes to `g`. The stored `servingSize` string format is unchanged.
+
+### 7.6 — Create Meal search view: hide meal list while searching
+
+In `CreateMealFlow`, introduce a `searchFocused` boolean state wired to `onFocus`/`onBlur` on the search TextInput. When `searchFocused || query.length > 0` (search mode), the "Foods in Meal" list is hidden and the search results FlatList expands to `flex: 1`, filling the space between the header and the always-visible Cancel/Save Meal buttons. When the search input is blurred and the query is empty (browse mode), the Foods in Meal list is shown instead. After confirming a food portion, `handleSearch('')` is called to repopulate custom foods so the user can immediately search again.
+
+### 7.7 — Dismiss keyboard on food selection in Add Food tab
+
+In `AddFoodTab`, call `Keyboard.dismiss()` immediately when the user taps a food result row, so the keyboard closes before the PortionSelector drum pickers appear.
+
+### 7.8 — Compact drum pickers and scrollable portion editor bottom sheet
+
+`PortionSelector`: Reduced `VISIBLE_ITEMS` from 5 to 3, shrinking each drum from 220 px to 132 px. `FoodItem`: The portion-edit bottom sheet (`editSheet`) now has `maxHeight: '85%'` to prevent overflow on small screens. The PortionSelector and Update Portion button are wrapped in a `ScrollView` (with `paddingBottom` for safe-area clearance) so the button is always reachable.
+
 ---
 
 ## Files Changed in Phase 7
 
-- `components/nutrition/AddFoodTab.tsx` — fix loading spinner hiding FlatList
-- `components/nutrition/CreateMealFlow.tsx` — add PortionSelector before adding food to meal
+- `components/nutrition/AddFoodTab.tsx` — fix loading spinner hiding FlatList; keyboard dismiss on selection
+- `components/nutrition/CreateMealFlow.tsx` — add PortionSelector before adding food to meal; search mode hides meal list
+- `components/nutrition/CustomFoodForm.tsx` — reduce unit picker to g / oz / qty
+- `components/nutrition/FoodItem.tsx` — scrollable bottom sheet with maxHeight cap
+- `components/nutrition/PortionSelector.tsx` — compact drums (VISIBLE_ITEMS 5→3)
 - `components/nutrition/EditMealFlow.tsx` *(new)* — edit saved meal templates
 - `components/nutrition/AddMealTab.tsx` — add edit button, wire up EditMealFlow
 - `app/(tabs)/index.tsx` — call `Keyboard.dismiss()` in `handleSave()`

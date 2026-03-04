@@ -172,6 +172,7 @@ export default function CreateMealFlow({ onDone }: Props) {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NutritionFoodItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -195,6 +196,7 @@ export default function CreateMealFlow({ onDone }: Props) {
   const handleSearch = useCallback(
     (text: string) => {
       setQuery(text);
+      setSelectedItem(null);
 
       if (debounceRef.current) clearTimeout(debounceRef.current);
 
@@ -287,8 +289,7 @@ export default function CreateMealFlow({ onDone }: Props) {
     setFoods((prev) => [...prev, food]);
     setSelectedItem(null);
     setServings(1);
-    setQuery('');
-    setSearchResults([]);
+    handleSearch('');
   };
 
   const handleRemoveFromMeal = (id: string) => {
@@ -318,6 +319,8 @@ export default function CreateMealFlow({ onDone }: Props) {
     onDone();
   };
 
+  const isSearchMode = searchFocused || query.length > 0;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -336,17 +339,18 @@ export default function CreateMealFlow({ onDone }: Props) {
           onChangeText={handleSearch}
           placeholder="Search foods to add..."
           placeholderTextColor={colors.textSecondary}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
         />
       </View>
 
-      {loading && (
-        <View style={styles.loading}>
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      )}
-
-      {searchResults.length > 0 && (
+      {isSearchMode ? (
         <>
+          {loading && (
+            <View style={styles.loading}>
+              <ActivityIndicator size="small" color={colors.primary} />
+            </View>
+          )}
           <Text style={styles.sectionLabel}>
             {query.trim().length === 0 ? 'My Foods' : 'Search Results'}
           </Text>
@@ -354,7 +358,7 @@ export default function CreateMealFlow({ onDone }: Props) {
             data={searchResults.slice(0, 10)}
             keyExtractor={(item, i) => `${item.id}-${i}`}
             keyboardShouldPersistTaps="handled"
-            style={{ maxHeight: 200 }}
+            style={{ flex: 1 }}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[
@@ -369,51 +373,61 @@ export default function CreateMealFlow({ onDone }: Props) {
                 </Text>
               </TouchableOpacity>
             )}
+            ListEmptyComponent={
+              !loading ? (
+                <Text style={styles.empty}>
+                  {query.trim().length === 0
+                    ? 'No custom foods saved yet'
+                    : 'No results found'}
+                </Text>
+              ) : null
+            }
           />
-        </>
-      )}
-
-      {selectedItem && (
-        <View style={styles.portionPanel}>
-          <PortionSelector
-            value={servings}
-            onChange={setServings}
-            baseCalories={selectedItem.calories ?? 0}
-            baseProtein={selectedItem.protein ?? 0}
-            baseCarbs={selectedItem.carbs ?? 0}
-            baseFat={selectedItem.fat ?? 0}
-            servingSize={selectedItem.servingSize ?? '1 serving'}
-            baseServings={selectedItem.servings ?? 1}
-          />
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
-            <Text style={styles.confirmText}>Add to Meal</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      <Text style={styles.sectionLabel}>
-        Foods in Meal ({foods.length})
-      </Text>
-
-      {foods.length === 0 ? (
-        <Text style={styles.empty}>Search and tap foods above to add them</Text>
-      ) : (
-        <FlatList
-          data={foods}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.foodRow}>
-              <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
-              <Text style={styles.foodCal}>{item.calories} cal</Text>
-              <TouchableOpacity
-                style={styles.removeBtn}
-                onPress={() => handleRemoveFromMeal(item.id)}
-              >
-                <Ionicons name="close-circle" size={20} color={colors.danger} />
+          {selectedItem && (
+            <View style={styles.portionPanel}>
+              <PortionSelector
+                value={servings}
+                onChange={setServings}
+                baseCalories={selectedItem.calories ?? 0}
+                baseProtein={selectedItem.protein ?? 0}
+                baseCarbs={selectedItem.carbs ?? 0}
+                baseFat={selectedItem.fat ?? 0}
+                servingSize={selectedItem.servingSize ?? '1 serving'}
+                baseServings={selectedItem.servings ?? 1}
+              />
+              <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
+                <Text style={styles.confirmText}>Add to Meal</Text>
               </TouchableOpacity>
             </View>
           )}
-        />
+        </>
+      ) : (
+        <>
+          <Text style={styles.sectionLabel}>
+            Foods in Meal ({foods.length})
+          </Text>
+          {foods.length === 0 ? (
+            <Text style={styles.empty}>Tap the search box above to find foods to add</Text>
+          ) : (
+            <FlatList
+              data={foods}
+              keyExtractor={(item) => item.id}
+              style={{ flex: 1 }}
+              renderItem={({ item }) => (
+                <View style={styles.foodRow}>
+                  <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.foodCal}>{item.calories} cal</Text>
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => handleRemoveFromMeal(item.id)}
+                  >
+                    <Ionicons name="close-circle" size={20} color={colors.danger} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+          )}
+        </>
       )}
 
       <View style={styles.btnRow}>
