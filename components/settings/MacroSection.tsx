@@ -72,13 +72,6 @@ const makeStyles = (colors: typeof LightColors) =>
     presetTextActive: {
       color: colors.white,
     },
-    gramHint: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      marginTop: 3,
-      textAlign: 'center',
-      fontSize: 11,
-    },
     customBtn: {
       backgroundColor: colors.background,
       borderRadius: Radius.sm,
@@ -103,15 +96,34 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.textSecondary,
       marginBottom: Spacing.xs,
     },
-    customInput: {
+    stepperRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+      gap: 4,
+    },
+    stepperBtn: {
+      width: 32,
+      height: 36,
       backgroundColor: colors.background,
       borderRadius: Radius.sm,
-      paddingHorizontal: Spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepperBtnText: {
+      ...Typography.h3,
+      color: colors.primary,
+      lineHeight: 20,
+    },
+    stepperInput: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderRadius: Radius.sm,
+      paddingHorizontal: Spacing.xs,
       paddingVertical: Spacing.sm,
       ...Typography.body,
       color: colors.text,
       textAlign: 'center',
-      width: '100%',
     },
     validation: {
       ...Typography.small,
@@ -169,6 +181,23 @@ export default function MacroSection({ goalCalories }: Props) {
     }
   };
 
+  const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+  const stepProtein = (delta: number) => {
+    const newVal = clamp((parseInt(customProtein) || 0) + delta).toString();
+    handleCustomChange('protein', newVal, setCustomProtein);
+  };
+
+  const stepCarbs = (delta: number) => {
+    const newVal = clamp((parseInt(customCarbs) || 0) + delta).toString();
+    handleCustomChange('carbs', newVal, setCustomCarbs);
+  };
+
+  const stepFat = (delta: number) => {
+    const newVal = clamp((parseInt(customFat) || 0) + delta).toString();
+    handleCustomChange('fat', newVal, setCustomFat);
+  };
+
   const customSum = (parseInt(customProtein) || 0) + (parseInt(customCarbs) || 0) + (parseInt(customFat) || 0);
 
   return (
@@ -198,9 +227,6 @@ export default function MacroSection({ goalCalories }: Props) {
                 {preset.label}
               </Text>
             </TouchableOpacity>
-            <Text style={styles.gramHint}>
-              P {gramsFor(preset.split.protein, goalCalories, 4)} · C {gramsFor(preset.split.carbs, goalCalories, 4)} · F {gramsFor(preset.split.fat, goalCalories, 9)}
-            </Text>
           </View>
         ))}
       </View>
@@ -220,45 +246,84 @@ export default function MacroSection({ goalCalories }: Props) {
           <View style={styles.customRow}>
             <View style={styles.customGroup}>
               <Text style={styles.customLabel}>Protein %</Text>
-              <TextInput
-                style={styles.customInput}
-                value={customProtein}
-                onChangeText={(v) => handleCustomChange('protein', v, setCustomProtein)}
-                keyboardType="number-pad"
-                placeholder="30"
-                placeholderTextColor={colors.textSecondary}
-              />
-              <Text style={styles.gramHint}>
-                {gramsFor(parseInt(customProtein) || 0, goalCalories, 4)}
-              </Text>
+              <View style={styles.stepperRow}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepProtein(-1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>-</Text>
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.stepperInput}
+                  value={customProtein}
+                  onChangeText={(v) => handleCustomChange('protein', v, setCustomProtein)}
+                  keyboardType="number-pad"
+                  placeholder="30"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepProtein(1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
             <View style={styles.customGroup}>
               <Text style={styles.customLabel}>Carbs %</Text>
-              <TextInput
-                style={styles.customInput}
-                value={customCarbs}
-                onChangeText={(v) => handleCustomChange('carbs', v, setCustomCarbs)}
-                keyboardType="number-pad"
-                placeholder="40"
-                placeholderTextColor={colors.textSecondary}
-              />
-              <Text style={styles.gramHint}>
-                {gramsFor(parseInt(customCarbs) || 0, goalCalories, 4)}
-              </Text>
+              <View style={styles.stepperRow}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepCarbs(-1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>-</Text>
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.stepperInput}
+                  value={customCarbs}
+                  onChangeText={(v) => handleCustomChange('carbs', v, setCustomCarbs)}
+                  keyboardType="number-pad"
+                  placeholder="40"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepCarbs(1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
             <View style={styles.customGroup}>
               <Text style={styles.customLabel}>Fat %</Text>
-              <TextInput
-                style={styles.customInput}
-                value={customFat}
-                onChangeText={(v) => handleCustomChange('fat', v, setCustomFat)}
-                keyboardType="number-pad"
-                placeholder="30"
-                placeholderTextColor={colors.textSecondary}
-              />
-              <Text style={styles.gramHint}>
-                {gramsFor(parseInt(customFat) || 0, goalCalories, 9)}
-              </Text>
+              <View style={styles.stepperRow}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepFat(-1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>-</Text>
+                </TouchableOpacity>
+                <TextInput
+                  style={styles.stepperInput}
+                  value={customFat}
+                  onChangeText={(v) => handleCustomChange('fat', v, setCustomFat)}
+                  keyboardType="number-pad"
+                  placeholder="30"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => stepFat(1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
           {customSum !== 100 && (

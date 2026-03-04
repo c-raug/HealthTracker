@@ -46,3 +46,27 @@
 - Portion can be adjusted both before adding a food (inline in the food search flow) and after (tap an existing meal item to open a bottom-sheet editor with the same portion selector).
 
 **Implementation:** New `components/nutrition/PortionSelector.tsx` component with PanResponder-based whole slider, fraction chip row, keypad toggle, and live macro preview. `UPDATE_FOOD_IN_MEAL` action added to AppContext reducer. `CustomFoodForm.tsx` updated with quantity/unit picker and useEffect-driven calorie auto-compute. `AddFoodTab.tsx` replaces serving +/- buttons with PortionSelector. `FoodItem.tsx` adds a tap-to-edit bottom-sheet Modal using PortionSelector. `MealCategory.tsx` passes date/category props to FoodItem. `MacroSection.tsx` accepts a `goalCalories` prop and displays gram equivalents. `settings.tsx` gains collapsible card wrappers for Profile and Macros sections and computes `goalCalories` via `calculateDailyCalories()`.
+
+## Phase 6: Settings Polish, Drum Picker, and Custom Food Visibility [IN PROGRESS]
+
+### 6.1 — Remove gram hints from Macro Split section
+
+Remove the computed gram hint text displayed below each macro preset button (Balanced, High Protein, Keto) and below each custom percentage input (Protein %, Carbs %, Fat %) in the Settings > Macro Split section. The summary line at the bottom of the section (e.g., "P: 30% (150g) · C: 40% (200g) · F: 30% (75g)") remains.
+
+### 6.2 — Add +/- stepper buttons to custom macro inputs
+
+In the Settings > Macro Split > Custom section, add a minus (−) button to the left and a plus (+) button to the right of each percentage TextInput (Protein %, Carbs %, Fat %). Each press increments or decrements the value by 1%, clamped to [0, 100]. Dispatch to context only when the three values sum to 100% (existing validation behavior preserved).
+
+### 6.3 — Replace portion slider with iOS-style drum pickers
+
+Replace the PanResponder-based horizontal slider and fraction chip row in `PortionSelector` with two vertically scrollable drum pickers side by side:
+- Left drum: whole numbers 0–250
+- Right drum: fractions ⅛-increments (0, ⅛, ¼, ⅜, ½, ⅝, ¾, ⅞)
+
+Each drum uses a ScrollView with `snapToInterval` for snapping, `decelerationRate="fast"`, and an absolutely-positioned highlight bar over the center row. Initial scroll position is set from the `value` prop on mount. The keypad toggle mode is unchanged. The live macro preview row is unchanged.
+
+### 6.4 — Show custom foods when search query is empty
+
+In both `AddFoodTab` (food-to-meal flow) and `CreateMealFlow` (saved meal creation), display all custom foods in a "My Foods" section when the search query is empty (no characters typed). When the user types 1 or more characters, custom foods are filtered by name match. USDA API calls continue to require 2+ characters. This ensures custom foods are always accessible immediately without requiring a minimum search length.
+
+**Files changed:** `components/settings/MacroSection.tsx`, `components/nutrition/PortionSelector.tsx`, `components/nutrition/AddFoodTab.tsx`, `components/nutrition/CreateMealFlow.tsx`, `prd.md`

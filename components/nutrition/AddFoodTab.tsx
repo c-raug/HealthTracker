@@ -73,6 +73,15 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       padding: Spacing.lg,
     },
+    sectionHeader: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      backgroundColor: colors.background,
+    },
     portionPanel: {
       backgroundColor: colors.card,
       borderBottomWidth: 1,
@@ -130,12 +139,14 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Filter custom foods by query
-  const filteredCustomFoods = query.trim().length >= 2
-    ? customFoods.filter((f) =>
-        f.name.toLowerCase().includes(query.trim().toLowerCase()),
-      )
-    : [];
+  // Filter custom foods by query — show all when empty, filter at 1+ chars
+  const trimmed = query.trim();
+  const filteredCustomFoods =
+    trimmed.length === 0
+      ? customFoods
+      : customFoods.filter((f) =>
+          f.name.toLowerCase().includes(trimmed.toLowerCase()),
+        );
 
   // Convert custom foods to NutritionFoodItem format for display
   const customResults: NutritionFoodItem[] = filteredCustomFoods.map((f) => ({
@@ -284,8 +295,13 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
               </Text>
             </TouchableOpacity>
           )}
+          ListHeaderComponent={
+            trimmed.length === 0 && filteredCustomFoods.length > 0 ? (
+              <Text style={styles.sectionHeader}>My Foods</Text>
+            ) : null
+          }
           ListEmptyComponent={
-            searched && !loading ? (
+            searched && !loading && trimmed.length >= 2 ? (
               <Text style={styles.empty}>No results found</Text>
             ) : null
           }
