@@ -20,7 +20,6 @@ import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
 import { calculateExerciseCalories, calculateStepCalories } from '../../utils/activityCalculation';
-import { weightToKg } from '../../utils/tdeeCalculation';
 import { generateId } from '../../utils/generateId';
 import { ActivityEntry } from '../../types';
 import ProfilePrompt from '../../components/nutrition/ProfilePrompt';
@@ -221,7 +220,7 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.primary,
       fontWeight: '600',
     },
-    // Steps input
+    // Steps / smartwatch input
     stepsInput: {
       backgroundColor: colors.background,
       borderRadius: Radius.md,
@@ -274,6 +273,18 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '600',
       marginRight: Spacing.sm,
     },
+    activityCaloriesRef: {
+      ...Typography.body,
+      color: colors.textSecondary,
+      fontWeight: '600',
+      marginRight: Spacing.sm,
+    },
+    refOnlyLabel: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      marginRight: Spacing.xs,
+    },
     deleteBtn: {
       padding: Spacing.xs,
     },
@@ -284,6 +295,22 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.lg,
     },
     promptContainer: { marginTop: Spacing.xl },
+    // Warning / info banners
+    warningBanner: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: Spacing.xs,
+      backgroundColor: colors.dangerLight,
+      borderRadius: Radius.sm,
+      padding: Spacing.sm,
+      marginBottom: Spacing.md,
+    },
+    warningText: {
+      ...Typography.small,
+      color: colors.danger,
+      flex: 1,
+      lineHeight: 17,
+    },
     // iOS date picker modal
     modalOverlay: {
       flex: 1,
@@ -328,12 +355,17 @@ export default function ActivitiesScreen() {
   // Steps form state
   const [stepsInput, setStepsInput] = useState('');
 
+  // Smartwatch form state
+  const [smartwatchInput, setSmartwatchInput] = useState('');
+
   // Drum refs
   const hoursScrollRef = useRef<ScrollView>(null);
   const minutesScrollRef = useRef<ScrollView>(null);
 
   const today = getToday();
   const isForwardDisabled = selectedDate >= today;
+
+  const activityMode = preferences.activityMode ?? 'manual';
 
   const goBack = () => setSelectedDate(addDays(selectedDate, -1));
   const goForward = () => {
@@ -365,6 +397,13 @@ export default function ActivitiesScreen() {
     }, 50);
     return () => clearTimeout(t);
   }, []);
+
+  // Pre-fill smartwatch input from existing entry for selected date
+  useEffect(() => {
+    const dayAct = activityLog.find((d) => d.date === selectedDate);
+    const existing = dayAct?.activities.find((a) => a.type === 'smartwatch');
+    setSmartwatchInput(existing ? String(existing.caloriesBurned) : '');
+  }, [selectedDate, activityLog]);
 
   const handleHoursScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
@@ -411,7 +450,6 @@ export default function ActivitiesScreen() {
       caloriesBurned: cals,
     };
     dispatch({ type: 'ADD_ACTIVITY', date: selectedDate, activity: entry });
-    // Reset drums
     setSelectedHours(0);
     setSelectedMinutes(30);
     setTimeout(() => {
@@ -433,6 +471,26 @@ export default function ActivitiesScreen() {
     setStepsInput('');
   };
 
+  const handleSaveSmartwatch = () => {
+    const cals = parseInt(smartwatchInput, 10);
+    if (isNaN(cals) || cals < 0) return;
+
+    // Remove any existing smartwatch entry for the day first
+    const existingEntry = dayActivity?.activities.find((a) => a.type === 'smartwatch');
+    if (existingEntry) {
+      dispatch({ type: 'DELETE_ACTIVITY', date: selectedDate, activityId: existingEntry.id });
+    }
+
+    if (cals > 0) {
+      const entry: ActivityEntry = {
+        id: generateId(),
+        type: 'smartwatch',
+        caloriesBurned: cals,
+      };
+      dispatch({ type: 'ADD_ACTIVITY', date: selectedDate, activity: entry });
+    }
+  };
+
   const handleDelete = (activityId: string) => {
     dispatch({ type: 'DELETE_ACTIVITY', date: selectedDate, activityId });
   };
@@ -445,8 +503,22 @@ export default function ActivitiesScreen() {
     return `${m}m`;
   };
 
-  const EXERCISE_LABELS: Record<string, string> = {
-    weight_lifting: 'Weight Lifting',
+  const getActivityLabel = (activity: ActivityEntry): string => {
+    if (activity.type === 'exercise') {
+      return activity.exerciseType === 'weight_lifting' ? 'Weight Lifting' : 'Exercise';
+    }
+    if (activity.type === 'steps') return 'Steps';
+    return 'Smart Watch';
+  };
+
+  const getActivityDetail = (activity: ActivityEntry): string => {
+    if (activity.type === 'exercise' && activity.durationMinutes != null) {
+      return formatDuration(activity.durationMinutes);
+    }
+    if (activity.type === 'steps' && activity.steps != null) {
+      return `${activity.steps.toLocaleString()} steps`;
+    }
+    return 'Calories from wearable';
   };
 
   if (isLoading) {
@@ -501,6 +573,16 @@ export default function ActivitiesScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Auto mode warning */}
+        {activityMode === 'auto' && (
+          <View style={styles.warningBanner}>
+            <Ionicons name="warning-outline" size={14} color={colors.danger} />
+            <Text style={styles.warningText}>
+              You're in Auto mode — activities logged here are for reference only and won't affect your calorie target.
+            </Text>
+          </View>
+        )}
+
         {/* Calories burned summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
@@ -510,173 +592,189 @@ export default function ActivitiesScreen() {
           <Text style={styles.summaryLabel}>calories burned</Text>
         </View>
 
-        {/* Log Exercise section */}
-        <View style={styles.sectionCard}>
-          <TouchableOpacity
-            style={styles.sectionHeader}
-            onPress={() => setExerciseCollapsed(!exerciseCollapsed)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.sectionTitle}>Log Exercise</Text>
-            <Ionicons
-              name={exerciseCollapsed ? 'chevron-forward' : 'chevron-down'}
-              size={20}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-
-          {!exerciseCollapsed && (
-            <View style={styles.sectionBody}>
-              {/* Exercise type */}
-              <Text style={styles.drumSectionLabel}>Exercise Type</Text>
-              <View style={styles.pillRow}>
-                <View style={[styles.pill, styles.pillSelected]}>
-                  <Text style={styles.pillTextSelected}>Weight Lifting</Text>
-                </View>
-              </View>
-
-              {/* Duration drums */}
-              <Text style={styles.drumSectionLabel}>Duration</Text>
-              <View style={styles.drumWrapper}>
-                {/* Hours drum */}
-                <View style={styles.drumColumn}>
-                  <Text style={styles.drumLabel}>Hours</Text>
-                  <View style={styles.drumContainer}>
-                    <View style={styles.drumHighlight} pointerEvents="none" />
-                    <ScrollView
-                      ref={hoursScrollRef}
-                      style={styles.drumScroll}
-                      showsVerticalScrollIndicator={false}
-                      snapToInterval={ITEM_HEIGHT}
-                      decelerationRate="fast"
-                      scrollEventThrottle={16}
-                      onMomentumScrollEnd={handleHoursScroll}
-                      onScrollEndDrag={handleHoursScroll}
-                      contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
-                    >
-                      {HOURS.map((h) => (
-                        <View key={h} style={styles.drumItem}>
-                          <Text
-                            style={
-                              h === selectedHours
-                                ? styles.drumItemTextSelected
-                                : styles.drumItemText
-                            }
-                          >
-                            {h}
-                          </Text>
-                        </View>
-                      ))}
-                    </ScrollView>
-                  </View>
-                </View>
-
-                {/* Minutes drum */}
-                <View style={styles.drumColumn}>
-                  <Text style={styles.drumLabel}>Minutes</Text>
-                  <View style={styles.drumContainer}>
-                    <View style={styles.drumHighlight} pointerEvents="none" />
-                    <ScrollView
-                      ref={minutesScrollRef}
-                      style={styles.drumScroll}
-                      showsVerticalScrollIndicator={false}
-                      snapToInterval={ITEM_HEIGHT}
-                      decelerationRate="fast"
-                      scrollEventThrottle={16}
-                      onMomentumScrollEnd={handleMinutesScroll}
-                      onScrollEndDrag={handleMinutesScroll}
-                      contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
-                    >
-                      {MINUTES.map((m) => (
-                        <View key={m} style={styles.drumItem}>
-                          <Text
-                            style={
-                              m === selectedMinutes
-                                ? styles.drumItemTextSelected
-                                : styles.drumItemText
-                            }
-                          >
-                            {m}
-                          </Text>
-                        </View>
-                      ))}
-                    </ScrollView>
-                  </View>
-                </View>
-              </View>
-
-              {/* Calorie preview */}
-              {exercisePreviewCals > 0 && (
-                <View style={styles.previewRow}>
-                  <Ionicons name="flame-outline" size={16} color={colors.primary} />
-                  <Text style={styles.previewText}>~{exercisePreviewCals} cal burned</Text>
-                </View>
-              )}
-
-              <TouchableOpacity
-                style={[styles.addButton, totalDurationMinutes === 0 && { opacity: 0.5 }]}
-                onPress={handleAddExercise}
-                disabled={totalDurationMinutes === 0}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.addButtonText}>Add Exercise</Text>
-              </TouchableOpacity>
+        {activityMode === 'smartwatch' ? (
+          /* Smart Watch Mode: single calorie input */
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Smart Watch Calories</Text>
             </View>
-          )}
-        </View>
-
-        {/* Log Steps section */}
-        <View style={styles.sectionCard}>
-          <TouchableOpacity
-            style={styles.sectionHeader}
-            onPress={() => setStepsCollapsed(!stepsCollapsed)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.sectionTitle}>Log Steps</Text>
-            <Ionicons
-              name={stepsCollapsed ? 'chevron-forward' : 'chevron-down'}
-              size={20}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-
-          {!stepsCollapsed && (
             <View style={styles.sectionBody}>
+              <Text style={styles.drumSectionLabel}>
+                Enter total calories burned from your smart watch today
+              </Text>
               <TextInput
                 style={styles.stepsInput}
-                value={stepsInput}
-                onChangeText={setStepsInput}
+                value={smartwatchInput}
+                onChangeText={setSmartwatchInput}
                 keyboardType="number-pad"
-                placeholder="Enter step count"
+                placeholder="e.g. 450"
                 placeholderTextColor={colors.textSecondary}
               />
-
-              {stepsPreviewCals > 0 && (
-                <View style={[styles.previewRow, { marginTop: 0 }]}>
-                  <Ionicons name="flame-outline" size={16} color={colors.primary} />
-                  <Text style={styles.previewText}>~{stepsPreviewCals} cal burned</Text>
-                </View>
-              )}
-
               <TouchableOpacity
-                style={[
-                  styles.addButton,
-                  (isNaN(stepsCount) || stepsCount <= 0) && { opacity: 0.5 },
-                ]}
-                onPress={handleAddSteps}
-                disabled={isNaN(stepsCount) || stepsCount <= 0}
+                style={[styles.addButton, (!smartwatchInput || parseInt(smartwatchInput, 10) < 0) && { opacity: 0.5 }]}
+                onPress={handleSaveSmartwatch}
+                disabled={!smartwatchInput || isNaN(parseInt(smartwatchInput, 10))}
                 activeOpacity={0.8}
               >
-                <Text style={styles.addButtonText}>Add Steps</Text>
+                <Text style={styles.addButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
-          )}
-        </View>
+          </View>
+        ) : (
+          <>
+            {/* Log Exercise section */}
+            <View style={styles.sectionCard}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => setExerciseCollapsed(!exerciseCollapsed)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>Log Exercise</Text>
+                <Ionicons
+                  name={exerciseCollapsed ? 'chevron-forward' : 'chevron-down'}
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {!exerciseCollapsed && (
+                <View style={styles.sectionBody}>
+                  <Text style={styles.drumSectionLabel}>Exercise Type</Text>
+                  <View style={styles.pillRow}>
+                    <View style={[styles.pill, styles.pillSelected]}>
+                      <Text style={styles.pillTextSelected}>Weight Lifting</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.drumSectionLabel}>Duration</Text>
+                  <View style={styles.drumWrapper}>
+                    {/* Hours drum */}
+                    <View style={styles.drumColumn}>
+                      <Text style={styles.drumLabel}>Hours</Text>
+                      <View style={styles.drumContainer}>
+                        <View style={styles.drumHighlight} pointerEvents="none" />
+                        <ScrollView
+                          ref={hoursScrollRef}
+                          style={styles.drumScroll}
+                          showsVerticalScrollIndicator={false}
+                          snapToInterval={ITEM_HEIGHT}
+                          decelerationRate="fast"
+                          scrollEventThrottle={16}
+                          onMomentumScrollEnd={handleHoursScroll}
+                          onScrollEndDrag={handleHoursScroll}
+                          contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
+                        >
+                          {HOURS.map((h) => (
+                            <View key={h} style={styles.drumItem}>
+                              <Text style={h === selectedHours ? styles.drumItemTextSelected : styles.drumItemText}>
+                                {h}
+                              </Text>
+                            </View>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    </View>
+
+                    {/* Minutes drum */}
+                    <View style={styles.drumColumn}>
+                      <Text style={styles.drumLabel}>Minutes</Text>
+                      <View style={styles.drumContainer}>
+                        <View style={styles.drumHighlight} pointerEvents="none" />
+                        <ScrollView
+                          ref={minutesScrollRef}
+                          style={styles.drumScroll}
+                          showsVerticalScrollIndicator={false}
+                          snapToInterval={ITEM_HEIGHT}
+                          decelerationRate="fast"
+                          scrollEventThrottle={16}
+                          onMomentumScrollEnd={handleMinutesScroll}
+                          onScrollEndDrag={handleMinutesScroll}
+                          contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
+                        >
+                          {MINUTES.map((m) => (
+                            <View key={m} style={styles.drumItem}>
+                              <Text style={m === selectedMinutes ? styles.drumItemTextSelected : styles.drumItemText}>
+                                {m}
+                              </Text>
+                            </View>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    </View>
+                  </View>
+
+                  {exercisePreviewCals > 0 && (
+                    <View style={styles.previewRow}>
+                      <Ionicons name="flame-outline" size={16} color={colors.primary} />
+                      <Text style={styles.previewText}>~{exercisePreviewCals} cal burned</Text>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[styles.addButton, totalDurationMinutes === 0 && { opacity: 0.5 }]}
+                    onPress={handleAddExercise}
+                    disabled={totalDurationMinutes === 0}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.addButtonText}>Add Exercise</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+
+            {/* Log Steps section */}
+            <View style={styles.sectionCard}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => setStepsCollapsed(!stepsCollapsed)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>Log Steps</Text>
+                <Ionicons
+                  name={stepsCollapsed ? 'chevron-forward' : 'chevron-down'}
+                  size={20}
+                  color={colors.textSecondary}
+                />
+              </TouchableOpacity>
+
+              {!stepsCollapsed && (
+                <View style={styles.sectionBody}>
+                  <TextInput
+                    style={styles.stepsInput}
+                    value={stepsInput}
+                    onChangeText={setStepsInput}
+                    keyboardType="number-pad"
+                    placeholder="Enter step count"
+                    placeholderTextColor={colors.textSecondary}
+                  />
+
+                  {stepsPreviewCals > 0 && (
+                    <View style={[styles.previewRow, { marginTop: 0 }]}>
+                      <Ionicons name="flame-outline" size={16} color={colors.primary} />
+                      <Text style={styles.previewText}>~{stepsPreviewCals} cal burned</Text>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[styles.addButton, (isNaN(stepsCount) || stepsCount <= 0) && { opacity: 0.5 }]}
+                    onPress={handleAddSteps}
+                    disabled={isNaN(stepsCount) || stepsCount <= 0}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.addButtonText}>Add Steps</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </>
+        )}
 
         {/* Activity list */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today's Activities</Text>
+            <Text style={styles.sectionTitle}>
+              {activityMode === 'auto' ? "Today's Activities (reference)" : "Today's Activities"}
+            </Text>
           </View>
 
           {!dayActivity || dayActivity.activities.length === 0 ? (
@@ -691,20 +789,15 @@ export default function ActivitiesScreen() {
                 ]}
               >
                 <View style={styles.activityInfo}>
-                  <Text style={styles.activityName}>
-                    {activity.type === 'exercise'
-                      ? EXERCISE_LABELS[activity.exerciseType ?? ''] ?? 'Exercise'
-                      : 'Steps'}
-                  </Text>
-                  <Text style={styles.activityDetail}>
-                    {activity.type === 'exercise' && activity.durationMinutes != null
-                      ? formatDuration(activity.durationMinutes)
-                      : activity.steps != null
-                      ? `${activity.steps.toLocaleString()} steps`
-                      : ''}
-                  </Text>
+                  <Text style={styles.activityName}>{getActivityLabel(activity)}</Text>
+                  <Text style={styles.activityDetail}>{getActivityDetail(activity)}</Text>
                 </View>
-                <Text style={styles.activityCalories}>{activity.caloriesBurned} cal</Text>
+                {activityMode === 'auto' && (
+                  <Text style={styles.refOnlyLabel}>ref</Text>
+                )}
+                <Text style={activityMode === 'auto' ? styles.activityCaloriesRef : styles.activityCalories}>
+                  {activity.caloriesBurned} cal
+                </Text>
                 <TouchableOpacity
                   style={styles.deleteBtn}
                   onPress={() => handleDelete(activity.id)}

@@ -18,6 +18,7 @@ import {
   SavedMeal,
   ActivityEntry,
   DayActivity,
+  ActivityMode,
 } from '../types';
 import {
   loadEntries,
@@ -63,7 +64,8 @@ type Action =
   | { type: 'UPDATE_SAVED_MEAL'; meal: SavedMeal }
   | { type: 'DELETE_SAVED_MEAL'; id: string }
   | { type: 'ADD_ACTIVITY'; date: string; activity: ActivityEntry }
-  | { type: 'DELETE_ACTIVITY'; date: string; activityId: string };
+  | { type: 'DELETE_ACTIVITY'; date: string; activityId: string }
+  | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -228,6 +230,11 @@ function reducer(state: State, action: Action): State {
       };
       return { ...state, activityLog: upsertActivityDay(state.activityLog, updatedDay) };
     }
+    case 'SET_ACTIVITY_MODE':
+      return {
+        ...state,
+        preferences: { ...state.preferences, activityMode: action.mode },
+      };
     default:
       return state;
   }

@@ -49,6 +49,62 @@ In `AddFoodTab`, call `Keyboard.dismiss()` immediately when the user taps a food
 
 ---
 
+## Phase 8: Profile & Activity Tracking Overhaul [IN PROGRESS]
+
+### 8.1 — Enhanced Profile Form
+
+The profile form only captured age, sex, height, activity level, and weight goal. Added name (optional), date of birth replacing the age input (age auto-updates yearly via `ageFromDob()`), and a freeform fitness goal field.
+
+**Changes:**
+- `types/index.ts`: Added `name?: string`, `dob?: string`, `fitnessGoal?: string` to `UserProfile`; kept `age?: number` for backward compat with existing stored data
+- `utils/tdeeCalculation.ts`: Added `ageFromDob(dob: string): number` helper; updated all TDEE call sites to use `dob ? ageFromDob(dob) : age ?? 30`
+- `components/settings/ProfileSection.tsx`: Added Name TextInput at top; replaced Age TextInput with DOB date picker (DateTimePicker + iOS bottom-sheet Modal); added Fitness Goal TextInput after weight goal; updated `buildAndSave` signature and state vars
+
+### 8.2 — Activity Tracking Mode (Auto / Manual / Smart Watch)
+
+All logged activities previously always added to the nutrition calorie target, causing double-counting for users who selected an activity level for TDEE. A mode selector was added to Settings.
+
+**Changes:**
+- `types/index.ts`: Added `ActivityMode = 'auto' | 'manual' | 'smartwatch'`; added `activityMode?: ActivityMode` to `UserPreferences`; extended `ActivityEntry.type` to include `'smartwatch'`
+- `context/AppContext.tsx`: Added `SET_ACTIVITY_MODE` action and reducer case
+- `app/(tabs)/settings.tsx`: Added new collapsible "Activity Tracking" card between Profile and Macros; three pill buttons (Auto / Manual / Smart Watch) each with an ⓘ info button; warning/info banners below; passes `activityMode` prop to `ProfileSection`
+- `components/settings/ProfileSection.tsx`: Accepts `activityMode` prop; shows activity level buttons at 0.4 opacity (non-tappable) with a note when mode is Manual or Smart Watch
+- `utils/tdeeCalculation.ts`: Added `activityMode` param (default `'manual'`); when not `'auto'`, overrides activity multiplier with sedentary (×1.2)
+- `app/(tabs)/nutrition.tsx`: Reads `activityMode`; skips activity calories when `'auto'`; sums only smartwatch entries when `'smartwatch'`; updates TDEE call with resolved age and mode
+- `app/(tabs)/activities.tsx`: Reads `activityMode`; shows warning banner in `'auto'` mode with grayed calorie figures labeled "ref"; replaces exercise/steps sections with smartwatch calorie input when `'smartwatch'`; pre-fills smartwatch input from existing entry
+
+### 8.3 — Info Buttons ("ⓘ") Throughout
+
+No info/help context existed anywhere. Added contextual info buttons for activity modes and activity levels.
+
+**Changes:**
+- `components/InfoModal.tsx` *(new)*: Reusable transparent-overlay modal. Props: `visible`, `title`, `description`, `onClose`. Fade animation, centered card, "Got it" close button.
+- `components/settings/ProfileSection.tsx`: ⓘ icon next to each Activity Level button. Tapping opens InfoModal with level description and multiplier.
+- `app/(tabs)/settings.tsx`: ⓘ icon next to each Activity Mode pill. Tapping opens InfoModal with mode description.
+
+### 8.4 — Weight Save: Inline Confirmation Instead of Alert Popup
+
+After saving a weight entry the app showed `Alert.alert('Saved', ...)`. Replaced with an inline message below the save button.
+
+**Changes:**
+- `app/(tabs)/index.tsx`: Removed `Alert.alert('Saved', ...)`. Added `savedMessage: string | null` state. After dispatch, sets message to "Weight saved on [Weekday, Month Day] at [H:MM AM/PM]". Auto-clears via `setTimeout` after 3.5 s. Clears when user starts typing. Rendered below save button in primary-colored italic small text.
+
+---
+
+## Files Changed in Phase 8
+
+- `types/index.ts` — Added `name`, `dob`, `fitnessGoal` to UserProfile; added `ActivityMode`; extended UserPreferences and ActivityEntry
+- `utils/tdeeCalculation.ts` — Added `ageFromDob()`, updated `calculateDailyCalories` with activityMode param
+- `components/InfoModal.tsx` *(new)* — Reusable info modal component
+- `components/settings/ProfileSection.tsx` — Name, DOB picker, fitness goal, activityMode prop, greyed-out activity level state, activity level info buttons
+- `context/AppContext.tsx` — SET_ACTIVITY_MODE action
+- `app/(tabs)/settings.tsx` — Activity Tracking mode card with info buttons, mode-aware TDEE call
+- `app/(tabs)/nutrition.tsx` — Mode-aware calorie target calculation and label
+- `app/(tabs)/activities.tsx` — Mode-aware UI: auto warning, smartwatch input section, reference labels
+- `app/(tabs)/index.tsx` — Inline weight save confirmation
+
+---
+
 ## Files Changed in Phase 7
 
 - `components/nutrition/AddFoodTab.tsx` — fix loading spinner hiding FlatList; keyboard dismiss on selection
