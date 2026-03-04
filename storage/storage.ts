@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { WeightEntry, UserPreferences, DayNutrition, CustomFood, SavedMeal } from '../types';
+import { WeightEntry, UserPreferences, DayNutrition, CustomFood, SavedMeal, DayActivity } from '../types';
 
 const ENTRIES_KEY = 'weight_entries';
 const PREFS_KEY = 'user_preferences';
@@ -50,4 +50,15 @@ export async function loadSavedMeals(): Promise<SavedMeal[]> {
 
 export async function saveSavedMeals(meals: SavedMeal[]): Promise<void> {
   await AsyncStorage.setItem(SAVED_MEALS_KEY, JSON.stringify(meals));
+}
+
+const ACTIVITY_LOG_KEY = 'activity_log';
+
+export async function loadActivityLog(): Promise<DayActivity[]> {
+  const raw = await AsyncStorage.getItem(ACTIVITY_LOG_KEY);
+  return raw ? (JSON.parse(raw) as DayActivity[]) : [];
+}
+
+export async function saveActivityLog(log: DayActivity[]): Promise<void> {
+  await AsyncStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(log));
 }

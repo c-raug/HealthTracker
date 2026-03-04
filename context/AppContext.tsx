@@ -16,6 +16,8 @@ import {
   MacroSplit,
   CustomFood,
   SavedMeal,
+  ActivityEntry,
+  DayActivity,
 } from '../types';
 import {
   loadEntries,
@@ -28,6 +30,8 @@ import {
   saveCustomFoods,
   loadSavedMeals,
   saveSavedMeals,
+  loadActivityLog,
+  saveActivityLog,
 } from '../storage/storage';
 
 // ─── State & Actions ─────────────────────────────────────────────────────────
@@ -38,11 +42,12 @@ type State = {
   nutritionLog: DayNutrition[];
   customFoods: CustomFood[];
   savedMeals: SavedMeal[];
+  activityLog: DayActivity[];
   isLoading: boolean;
 };
 
 type Action =
-  | { type: 'LOAD_DATA'; entries: WeightEntry[]; preferences: UserPreferences; nutritionLog: DayNutrition[]; customFoods: CustomFood[]; savedMeals: SavedMeal[] }
+  | { type: 'LOAD_DATA'; entries: WeightEntry[]; preferences: UserPreferences; nutritionLog: DayNutrition[]; customFoods: CustomFood[]; savedMeals: SavedMeal[]; activityLog: DayActivity[] }
   | { type: 'UPSERT_ENTRY'; entry: WeightEntry }
   | { type: 'DELETE_ENTRY'; id: string }
   | { type: 'SET_UNIT'; unit: 'lbs' | 'kg' }
@@ -56,7 +61,9 @@ type Action =
   | { type: 'DELETE_CUSTOM_FOOD'; id: string }
   | { type: 'ADD_SAVED_MEAL'; meal: SavedMeal }
   | { type: 'UPDATE_SAVED_MEAL'; meal: SavedMeal }
-  | { type: 'DELETE_SAVED_MEAL'; id: string };
+  | { type: 'DELETE_SAVED_MEAL'; id: string }
+  | { type: 'ADD_ACTIVITY'; date: string; activity: ActivityEntry }
+  | { type: 'DELETE_ACTIVITY'; date: string; activityId: string };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -74,12 +81,22 @@ function upsertDay(log: DayNutrition[], day: DayNutrition): DayNutrition[] {
   return [day, ...filtered];
 }
 
+function getOrCreateActivityDay(log: DayActivity[], date: string): DayActivity {
+  return log.find((d) => d.date === date) ?? { date, activities: [] };
+}
+
+function upsertActivityDay(log: DayActivity[], day: DayActivity): DayActivity[] {
+  const filtered = log.filter((d) => d.date !== day.date);
+  return [day, ...filtered];
+}
+
 const initialState: State = {
   entries: [],
   preferences: { unit: 'lbs' },
   nutritionLog: [],
   customFoods: [],
   savedMeals: [],
+  activityLog: [],
   isLoading: true,
 };
 
@@ -93,6 +110,7 @@ function reducer(state: State, action: Action): State {
         nutritionLog: action.nutritionLog,
         customFoods: action.customFoods,
         savedMeals: action.savedMeals,
+        activityLog: action.activityLog,
         isLoading: false,
       };
     case 'UPSERT_ENTRY': {
@@ -194,6 +212,22 @@ function reducer(state: State, action: Action): State {
         ...state,
         savedMeals: state.savedMeals.filter((m) => m.id !== action.id),
       };
+    case 'ADD_ACTIVITY': {
+      const day = getOrCreateActivityDay(state.activityLog, action.date);
+      const updatedDay: DayActivity = {
+        ...day,
+        activities: [...day.activities, action.activity],
+      };
+      return { ...state, activityLog: upsertActivityDay(state.activityLog, updatedDay) };
+    }
+    case 'DELETE_ACTIVITY': {
+      const day = getOrCreateActivityDay(state.activityLog, action.date);
+      const updatedDay: DayActivity = {
+        ...day,
+        activities: day.activities.filter((a) => a.id !== action.activityId),
+      };
+      return { ...state, activityLog: upsertActivityDay(state.activityLog, updatedDay) };
+    }
     default:
       return state;
   }
@@ -211,14 +245,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Load persisted data on mount.
   useEffect(() => {
     (async () => {
-      const [entries, preferences, nutritionLog, customFoods, savedMeals] = await Promise.all([
+      const [entries, preferences, nutritionLog, customFoods, savedMeals, activityLog] = await Promise.all([
         loadEntries(),
         loadPreferences(),
         loadNutritionLog(),
         loadCustomFoods(),
         loadSavedMeals(),
+        loadActivityLog(),
       ]);
-      dispatch({ type: 'LOAD_DATA', entries, preferences, nutritionLog, customFoods, savedMeals });
+      dispatch({ type: 'LOAD_DATA', entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
     })();
   }, []);
 
@@ -256,6 +291,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveSavedMeals(state.savedMeals);
     }
   }, [state.savedMeals, state.isLoading]);
+
+  // Persist activity log whenever it changes.
+  useEffect(() => {
+    if (!state.isLoading) {
+      saveActivityLog(state.activityLog);
+    }
+  }, [state.activityLog, state.isLoading]);
 
   return (
     <AppContext.Provider value={{ ...state, dispatch }}>

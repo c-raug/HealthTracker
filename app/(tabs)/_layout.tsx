@@ -50,6 +50,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="activities"
+        options={{
+          title: 'Activities',
+          tabBarIcon: ({ color }) => (
+            <TabIcon name="flame-outline" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
