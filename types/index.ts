@@ -81,3 +81,19 @@ export interface UserPreferences {
   macroPreset?: MacroPreset;
   macroSplit?: MacroSplit;
 }
+
+export type ExerciseType = 'weight_lifting';
+
+export interface ActivityEntry {
+  id: string;
+  type: 'exercise' | 'steps';
+  exerciseType?: ExerciseType;
+  durationMinutes?: number;
+  steps?: number;
+  caloriesBurned: number;
+}
+
+export interface DayActivity {
+  date: string; // "YYYY-MM-DD"
+  activities: ActivityEntry[];
+}

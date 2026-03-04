@@ -66,6 +66,13 @@ const makeStyles = (colors: typeof LightColors) =>
     promptContainer: {
       marginTop: Spacing.xl,
     },
+    exerciseBurnedLabel: {
+      ...Typography.small,
+      color: colors.primary,
+      textAlign: 'center',
+      marginTop: -Spacing.sm,
+      marginBottom: Spacing.md,
+    },
     modalOverlay: {
       flex: 1,
       justifyContent: 'flex-end',
@@ -95,7 +102,7 @@ const makeStyles = (colors: typeof LightColors) =>
   });
 
 export default function NutritionScreen() {
-  const { entries, preferences, nutritionLog, isLoading } = useApp();
+  const { entries, preferences, nutritionLog, activityLog, isLoading } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
   const profile = preferences.profile;
@@ -164,9 +171,9 @@ export default function NutritionScreen() {
   const latestWeight = sortedEntries[0];
 
   // Calculate calorie target
-  let calorieTarget = 0;
+  let baseTdee = 0;
   if (profile && latestWeight) {
-    calorieTarget = calculateDailyCalories(
+    baseTdee = calculateDailyCalories(
       latestWeight.weight,
       latestWeight.unit,
       profile.heightValue,
@@ -177,6 +184,11 @@ export default function NutritionScreen() {
       profile.weightGoal,
     );
   }
+
+  // Add calories burned from activities for the selected date
+  const dayActivity = activityLog.find((d) => d.date === selectedDate);
+  const caloriesBurned = dayActivity?.activities.reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+  const calorieTarget = baseTdee + caloriesBurned;
 
   if (isLoading) {
     return (
@@ -237,6 +249,11 @@ export default function NutritionScreen() {
         ) : (
           <>
             <CalorieRing consumed={consumed} target={calorieTarget} />
+            {caloriesBurned > 0 && (
+              <Text style={styles.exerciseBurnedLabel}>
+                +{caloriesBurned} cal from exercise
+              </Text>
+            )}
             <MacroProgressBars
               consumed={consumedMacros}
               goalCalories={calorieTarget}
