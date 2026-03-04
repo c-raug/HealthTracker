@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -261,17 +262,17 @@ export default function EditMealFlow({ meal, onDone }: Props) {
         const controller = new AbortController();
         abortRef.current = controller;
 
+        const matchingCustom = customFoods
+          .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
+          .map(toNutritionItem);
+
         setLoading(true);
         try {
-          const matchingCustom = customFoods
-            .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-            .map(toNutritionItem);
-
           const { items } = await searchFoods(trimmedText, 1, controller.signal);
           setSearchResults([...matchingCustom, ...items]);
         } catch (e: unknown) {
           if (e instanceof Error && e.name === 'AbortError') return;
-          setSearchResults([]);
+          setSearchResults(matchingCustom);
         }
         setLoading(false);
       }, 300);
@@ -280,6 +281,7 @@ export default function EditMealFlow({ meal, onDone }: Props) {
   );
 
   const handleSelectItem = (item: NutritionFoodItem) => {
+    Keyboard.dismiss();
     setSelectedItem(item);
     setServings(1);
   };

@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -242,26 +243,26 @@ export default function CreateMealFlow({ onDone }: Props) {
         const controller = new AbortController();
         abortRef.current = controller;
 
+        const matchingCustom: NutritionFoodItem[] = customFoods
+          .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
+          .map((f) => ({
+            id: f.id,
+            name: f.name,
+            calories: f.calories,
+            protein: f.protein,
+            carbs: f.carbs,
+            fat: f.fat,
+            servingSize: f.servingSize,
+            servings: 1,
+          }));
+
         setLoading(true);
         try {
-          const matchingCustom: NutritionFoodItem[] = customFoods
-            .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-            .map((f) => ({
-              id: f.id,
-              name: f.name,
-              calories: f.calories,
-              protein: f.protein,
-              carbs: f.carbs,
-              fat: f.fat,
-              servingSize: f.servingSize,
-              servings: 1,
-            }));
-
           const { items } = await searchFoods(trimmedText, 1, controller.signal);
           setSearchResults([...matchingCustom, ...items]);
         } catch (e: unknown) {
           if (e instanceof Error && e.name === 'AbortError') return;
-          setSearchResults([]);
+          setSearchResults(matchingCustom);
         }
         setLoading(false);
       }, 300);
@@ -270,6 +271,7 @@ export default function CreateMealFlow({ onDone }: Props) {
   );
 
   const handleSelectItem = (item: NutritionFoodItem) => {
+    Keyboard.dismiss();
     setSelectedItem(item);
     setServings(1);
   };
