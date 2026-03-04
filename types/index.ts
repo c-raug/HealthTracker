@@ -16,11 +16,15 @@ export type ActivityLevel =
   | 'very_active';
 
 export type WeightGoal =
+  | 'lose_2'
+  | 'lose_1.5'
   | 'lose_1'
   | 'lose_0.5'
   | 'maintain'
   | 'gain_0.5'
-  | 'gain_1';
+  | 'gain_1'
+  | 'gain_1.5'
+  | 'gain_2';
 
 export type ActivityMode = 'auto' | 'manual' | 'smartwatch';
 

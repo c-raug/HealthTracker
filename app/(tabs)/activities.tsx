@@ -11,6 +11,7 @@ import {
   Platform,
   Modal,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
@@ -44,6 +45,20 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.background,
     },
     content: { padding: Spacing.md },
+    // Today pill
+    todayPill: {
+      alignSelf: 'center',
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.md,
+      paddingVertical: 4,
+      paddingHorizontal: Spacing.md,
+      marginBottom: Spacing.xs,
+    },
+    todayPillText: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '600',
+    },
     // Date nav
     dateNav: {
       flexDirection: 'row',
@@ -459,6 +474,7 @@ export default function ActivitiesScreen() {
   };
 
   const handleAddSteps = () => {
+    Keyboard.dismiss();
     if (isNaN(stepsCount) || stepsCount <= 0 || !latestWeight) return;
     const cals = calculateStepCalories(stepsCount, latestWeight.weight, latestWeight.unit);
     const entry: ActivityEntry = {
@@ -472,6 +488,7 @@ export default function ActivitiesScreen() {
   };
 
   const handleSaveSmartwatch = () => {
+    Keyboard.dismiss();
     const cals = parseInt(smartwatchInput, 10);
     if (isNaN(cals) || cals < 0) return;
 
@@ -542,6 +559,13 @@ export default function ActivitiesScreen() {
   return (
     <View style={styles.flex}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* Today pill */}
+        {selectedDate !== today && (
+          <TouchableOpacity style={styles.todayPill} onPress={() => setSelectedDate(today)} activeOpacity={0.7}>
+            <Text style={styles.todayPillText}>Today</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Date navigation */}
         <View style={styles.dateNav}>
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>

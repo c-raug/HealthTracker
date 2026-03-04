@@ -28,6 +28,10 @@ export function getActivityMultiplier(level: ActivityLevel): number {
 
 export function getGoalCalories(tdee: number, goal: WeightGoal): number {
   switch (goal) {
+    case 'lose_2':
+      return Math.round(tdee - 1000);
+    case 'lose_1.5':
+      return Math.round(tdee - 750);
     case 'lose_1':
       return Math.round(tdee - 500);
     case 'lose_0.5':
@@ -38,6 +42,10 @@ export function getGoalCalories(tdee: number, goal: WeightGoal): number {
       return Math.round(tdee + 250);
     case 'gain_1':
       return Math.round(tdee + 500);
+    case 'gain_1.5':
+      return Math.round(tdee + 750);
+    case 'gain_2':
+      return Math.round(tdee + 1000);
   }
 }
 

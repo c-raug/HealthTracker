@@ -22,6 +22,7 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../../const
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
 import { convertWeight } from '../../utils/unitConversion';
 import WeightChart from '../../components/WeightChart';
+import WeightInsights from '../../components/WeightInsights';
 import { WeightEntry } from '../../types';
 import { generateId } from '../../utils/generateId';
 
@@ -63,6 +64,21 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   },
   toggleTextActive: {
     color: colors.white,
+    fontWeight: '600',
+  },
+
+  // Today pill
+  todayPill: {
+    alignSelf: 'center',
+    backgroundColor: colors.primaryLight,
+    borderRadius: Radius.md,
+    paddingVertical: 4,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  todayPillText: {
+    ...Typography.small,
+    color: colors.primary,
     fontWeight: '600',
   },
 
@@ -333,6 +349,13 @@ export default function WeightScreen() {
 
         {activeSection === 'log' ? (
           <>
+            {/* Today pill */}
+            {selectedDate !== today && (
+              <TouchableOpacity style={styles.todayPill} onPress={() => setSelectedDate(today)} activeOpacity={0.7}>
+                <Text style={styles.todayPillText}>Today</Text>
+              </TouchableOpacity>
+            )}
+
             {/* Date navigation bar */}
             <View style={styles.dateNav}>
               <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
@@ -403,7 +426,10 @@ export default function WeightScreen() {
             )}
           </>
         ) : (
-          <WeightChart />
+          <>
+            <WeightChart />
+            <WeightInsights />
+          </>
         )}
       </ScrollView>
 

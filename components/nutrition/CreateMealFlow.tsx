@@ -321,7 +321,7 @@ export default function CreateMealFlow({ onDone }: Props) {
     onDone();
   };
 
-  const isSearchMode = searchFocused || query.length > 0;
+  const isSearchMode = searchFocused || query.length > 0 || selectedItem !== null;
 
   return (
     <View style={styles.container}>
