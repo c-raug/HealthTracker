@@ -1,5 +1,32 @@
 # HealthTracker — Product Requirements
 
+## Phase 10: v1.0 Release Infrastructure [IN PROGRESS]
+
+### 10.1 — EAS Build configuration for Android APK
+
+No build configuration existed for producing a distributable Android APK. Added `eas.json` with a `preview` profile (`distribution: "internal"`, `buildType: "apk"`) for sideloadable APK builds and a `production` profile for future Play Store AAB builds. Added `build:preview` and `build:production` npm scripts.
+
+**Changes:**
+- `eas.json` *(new)*: EAS Build config with `preview` (APK) and `production` (AAB) profiles
+- `package.json`: Added `build:preview` and `build:production` scripts
+
+### 10.2 — Gate USDA food search behind environment variable
+
+The USDA FoodData Central API integration has not been tested in production. To avoid shipping broken functionality in the v1.0 release, food search is gated behind `EXPO_PUBLIC_ENABLE_USDA_SEARCH`. When the variable is missing or not `"true"`, `searchFoods()` returns empty results immediately. Custom foods continue to work. All three consumers (`AddFoodTab`, `CreateMealFlow`, `EditMealFlow`) already handle empty USDA results gracefully.
+
+**Changes:**
+- `api/usdaFoodData.ts`: Added `USDA_ENABLED` constant; early return in `searchFoods()` when disabled
+
+---
+
+## Files Changed in Phase 10
+
+- `eas.json` *(new)* — EAS Build configuration with preview APK and production AAB profiles
+- `package.json` — Added `build:preview` and `build:production` scripts
+- `api/usdaFoodData.ts` — Added `EXPO_PUBLIC_ENABLE_USDA_SEARCH` gate in `searchFoods()`
+
+---
+
 ## Phase 9: Cross-Page Polish & Settings Overhaul [IN PROGRESS]
 
 ### 9.1 — "Go to Today" quick-nav pill

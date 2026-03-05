@@ -3,6 +3,7 @@ import { generateId } from '../utils/generateId';
 
 const API_KEY = process.env.EXPO_PUBLIC_USDA_API_KEY ?? '';
 const BASE_URL = 'https://api.nal.usda.gov/fdc/v1/foods/search';
+const USDA_ENABLED = process.env.EXPO_PUBLIC_ENABLE_USDA_SEARCH === 'true';
 
 /** USDA nutrient IDs */
 const NUTRIENT_KCAL = 1008;
@@ -34,6 +35,8 @@ export async function searchFoods(
   page: number = 1,
   signal?: AbortSignal,
 ): Promise<{ items: NutritionFoodItem[]; total: number }> {
+  if (!USDA_ENABLED) return { items: [], total: 0 };
+
   const res = await fetch(`${BASE_URL}?api_key=${API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

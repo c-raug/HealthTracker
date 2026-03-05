@@ -7,7 +7,9 @@
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
     "web": "npx expo start --web",
-    "tunnel": "npx expo start --tunnel"
+    "tunnel": "npx expo start --tunnel",
+    "build:preview": "npx eas build --profile preview --platform android",
+    "build:production": "npx eas build --profile production --platform android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.0",
