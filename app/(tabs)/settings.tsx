@@ -6,26 +6,8 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../../const
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
 import { ActivityMode } from '../../types';
 import ProfileSection from '../../components/settings/ProfileSection';
+import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
-import InfoModal from '../../components/InfoModal';
-
-const ACTIVITY_MODE_INFO: Record<ActivityMode, { title: string; description: string }> = {
-  auto: {
-    title: 'Auto Mode',
-    description:
-      'Your activity level multiplier is built into your daily calorie target. Exercise you log on the Activity tab is tracked for reference only — it won\'t increase your calorie target. Best for people with a consistent activity routine.',
-  },
-  manual: {
-    title: 'Manual Mode',
-    description:
-      'Your base calorie target assumes a sedentary lifestyle. Every workout and step count you log on the Activity tab is added directly to your daily calorie target. Best for people with variable activity day to day.',
-  },
-  smartwatch: {
-    title: 'Smart Watch Mode',
-    description:
-      'Your base calorie target assumes a sedentary lifestyle. Enter the total calories burned from your smart watch each day on the Activity tab, and that amount is added to your calorie target.',
-  },
-};
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: {
@@ -61,15 +43,6 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     fontWeight: '600',
-  },
-  sectionHeader: {
-    ...Typography.small,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginTop: Spacing.md,
-    marginBottom: Spacing.sm,
-    marginLeft: Spacing.xs,
   },
   card: {
     backgroundColor: colors.card,
@@ -123,83 +96,11 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   toggleTextActive: {
     color: colors.white,
   },
-  aboutRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.xs,
-  },
-  versionText: {
+  footer: {
     ...Typography.small,
     color: colors.textSecondary,
-  },
-  // Activity mode styles
-  activityModeBody: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-  modeDescription: {
-    ...Typography.small,
-    color: colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: Spacing.sm,
-  },
-  modeRow: {
-    gap: Spacing.xs,
-  },
-  modePillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  modePill: {
-    flex: 1,
-    backgroundColor: colors.background,
-    borderRadius: Radius.sm,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    alignItems: 'center',
-  },
-  modePillActive: {
-    backgroundColor: colors.primary,
-  },
-  modePillText: {
-    ...Typography.small,
-    color: colors.textSecondary,
-    fontWeight: '600',
-  },
-  modePillTextActive: {
-    color: colors.white,
-  },
-  modeInfoIcon: {
-    padding: Spacing.xs,
-  },
-  warningBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.xs,
-    backgroundColor: colors.dangerLight,
-    borderRadius: Radius.sm,
-    padding: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  warningText: {
-    ...Typography.small,
-    color: colors.danger,
-    flex: 1,
-    lineHeight: 17,
-  },
-  infoBanner: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: Radius.sm,
-    padding: Spacing.sm,
-    marginTop: Spacing.sm,
-  },
-  infoText: {
-    ...Typography.small,
-    color: colors.primary,
-    lineHeight: 17,
+    textAlign: 'center',
+    paddingVertical: Spacing.lg,
   },
 });
 
@@ -209,17 +110,13 @@ export default function SettingsScreen() {
   const styles = makeStyles(colors);
 
   const [profileExpanded, setProfileExpanded] = useState(true);
-  const [activityModeExpanded, setActivityModeExpanded] = useState(true);
+  const [goalsExpanded, setGoalsExpanded] = useState(true);
   const [macroExpanded, setMacroExpanded] = useState(true);
-  const [modeInfoModal, setModeInfoModal] = useState<{ title: string; description: string } | null>(null);
 
   const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
 
   const activityMode: ActivityMode = preferences.activityMode ?? 'manual';
-
-  const setActivityMode = (mode: ActivityMode) => {
-    dispatch({ type: 'SET_ACTIVITY_MODE', mode });
-  };
+  const setActivityMode = (mode: ActivityMode) => dispatch({ type: 'SET_ACTIVITY_MODE', mode });
 
   // Compute goalCalories (same pattern as nutrition.tsx)
   const profile = preferences.profile;
@@ -247,7 +144,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Profile — collapsible */}
+      {/* 1. Profile — biometrics only */}
       <View style={styles.collapsibleCard}>
         <TouchableOpacity
           style={styles.collapsibleHeader}
@@ -263,88 +160,59 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Profile</Text>
           </View>
         </TouchableOpacity>
-        {profileExpanded && <ProfileSection activityMode={activityMode} />}
+        {profileExpanded && <ProfileSection />}
       </View>
 
-      {/* Activity Tracking Mode — collapsible */}
+      {/* 2. Goals & Calorie Target */}
       <View style={styles.collapsibleCard}>
         <TouchableOpacity
           style={styles.collapsibleHeader}
-          onPress={() => setActivityModeExpanded((v) => !v)}
+          onPress={() => setGoalsExpanded((v) => !v)}
           activeOpacity={0.7}
         >
           <View style={styles.collapsibleHeaderLeft}>
             <Ionicons
-              name={activityModeExpanded ? 'chevron-down' : 'chevron-forward'}
+              name={goalsExpanded ? 'chevron-down' : 'chevron-forward'}
               size={16}
               color={colors.textSecondary}
             />
-            <Text style={styles.sectionTitle}>Activity Tracking</Text>
+            <Text style={styles.sectionTitle}>Goals &amp; Calorie Target</Text>
           </View>
         </TouchableOpacity>
-        {activityModeExpanded && (
-          <View style={styles.activityModeBody}>
-            <Text style={styles.modeDescription}>
-              Choose how your activity is factored into your calorie target.
-            </Text>
-            <View style={styles.modeRow}>
-              {(['auto', 'manual', 'smartwatch'] as ActivityMode[]).map((mode) => {
-                const labels: Record<ActivityMode, string> = {
-                  auto: 'Auto',
-                  manual: 'Manual',
-                  smartwatch: 'Smart Watch',
-                };
-                return (
-                  <View key={mode} style={styles.modePillRow}>
-                    <TouchableOpacity
-                      style={[styles.modePill, activityMode === mode && styles.modePillActive]}
-                      onPress={() => setActivityMode(mode)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.modePillText, activityMode === mode && styles.modePillTextActive]}>
-                        {labels[mode]}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => setModeInfoModal(ACTIVITY_MODE_INFO[mode])}
-                      style={styles.modeInfoIcon}
-                      hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-                      activeOpacity={0.6}
-                    >
-                      <Ionicons name="information-circle-outline" size={17} color={colors.textSecondary} />
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </View>
-
-            {activityMode === 'auto' && (
-              <View style={styles.warningBanner}>
-                <Ionicons name="warning-outline" size={14} color={colors.danger} />
-                <Text style={styles.warningText}>
-                  In Auto mode, activities logged on the Activity tab are for reference only and do not count toward your calorie target.
-                </Text>
-              </View>
-            )}
-            {activityMode === 'manual' && (
-              <View style={styles.infoBanner}>
-                <Text style={styles.infoText}>
-                  Log all your workouts on the Activity tab for an accurate calorie target. No activity is assumed in your base calculation.
-                </Text>
-              </View>
-            )}
-            {activityMode === 'smartwatch' && (
-              <View style={styles.infoBanner}>
-                <Text style={styles.infoText}>
-                  Enter your smart watch's daily calorie burn on the Activity tab. No activity is assumed in your base calculation.
-                </Text>
-              </View>
-            )}
-          </View>
+        {goalsExpanded && (
+          <GoalsSection activityMode={activityMode} onActivityModeChange={setActivityMode} />
         )}
       </View>
 
-      {/* Macro settings — collapsible */}
+      {/* 3. Units */}
+      <View style={styles.card}>
+        <Text style={styles.settingLabel}>Weight Unit</Text>
+        <Text style={styles.settingDescription}>
+          Applies to new entries and the history chart. Existing entries keep their original unit.
+        </Text>
+        <View style={styles.toggle}>
+          <TouchableOpacity
+            style={[styles.toggleOption, preferences.unit === 'lbs' && styles.toggleOptionActive]}
+            onPress={() => setUnit('lbs')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.toggleText, preferences.unit === 'lbs' && styles.toggleTextActive]}>
+              lbs
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleOption, preferences.unit === 'kg' && styles.toggleOptionActive]}
+            onPress={() => setUnit('kg')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.toggleText, preferences.unit === 'kg' && styles.toggleTextActive]}>
+              kg
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 4. Macros — collapsible */}
       <View style={styles.collapsibleCard}>
         <TouchableOpacity
           style={styles.collapsibleHeader}
@@ -363,71 +231,8 @@ export default function SettingsScreen() {
         {macroExpanded && <MacroSection goalCalories={goalCalories} />}
       </View>
 
-      {/* Unit preference */}
-      <Text style={styles.sectionHeader}>Units</Text>
-      <View style={styles.card}>
-        <Text style={styles.settingLabel}>Weight Unit</Text>
-        <Text style={styles.settingDescription}>
-          Applies to new entries and the history chart. Existing entries keep
-          their original unit.
-        </Text>
-        <View style={styles.toggle}>
-          <TouchableOpacity
-            style={[
-              styles.toggleOption,
-              preferences.unit === 'lbs' && styles.toggleOptionActive,
-            ]}
-            onPress={() => setUnit('lbs')}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                preferences.unit === 'lbs' && styles.toggleTextActive,
-              ]}
-            >
-              lbs
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.toggleOption,
-              preferences.unit === 'kg' && styles.toggleOptionActive,
-            ]}
-            onPress={() => setUnit('kg')}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                preferences.unit === 'kg' && styles.toggleTextActive,
-              ]}
-            >
-              kg
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* About section */}
-      <Text style={styles.sectionHeader}>About</Text>
-      <View style={styles.card}>
-        <View style={styles.aboutRow}>
-          <Text style={styles.settingLabel}>HealthTracker</Text>
-          <Text style={styles.versionText}>v1.0.0</Text>
-        </View>
-        <Text style={styles.settingDescription}>
-          Track your weight and nutrition daily and visualize your progress over time.
-        </Text>
-      </View>
-
-      {/* Activity mode info modal */}
-      <InfoModal
-        visible={modeInfoModal !== null}
-        title={modeInfoModal?.title ?? ''}
-        description={modeInfoModal?.description ?? ''}
-        onClose={() => setModeInfoModal(null)}
-      />
+      {/* Footer */}
+      <Text style={styles.footer}>HealthTracker v1.0.0</Text>
     </ScrollView>
   );
 }

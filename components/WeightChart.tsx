@@ -127,7 +127,6 @@ export default function WeightChart() {
         width={CHART_WIDTH}
         height={200}
         chartConfig={chartConfig}
-        bezier
         style={styles.chart}
         withInnerLines
         withOuterLines={false}

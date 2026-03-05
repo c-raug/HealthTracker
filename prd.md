@@ -1,5 +1,132 @@
 # HealthTracker — Product Requirements
 
+## Phase 9: Cross-Page Polish & Settings Overhaul [IN PROGRESS]
+
+### 9.1 — "Go to Today" quick-nav pill
+
+All three date-navigable screens (Weight, Nutrition, Activities) let users scroll arbitrarily far into the past with no fast path back to the current day. A small "Today" pill button should appear above the date navigation bar **only** when the selected date is not today. Tapping it snaps the selected date back to `getToday()` immediately.
+
+**Changes:**
+- `app/(tabs)/index.tsx`: Add `todayPill` / `todayPillText` styles. Render `{selectedDate !== today && <TouchableOpacity style={styles.todayPill} onPress={() => setSelectedDate(today)}><Text style={styles.todayPillText}>Today</Text></TouchableOpacity>}` directly above the `dateNav` View inside the `'log'` section.
+- `app/(tabs)/nutrition.tsx`: Same pill pattern — add styles, render pill above the `dateNav` View when `selectedDate !== today`.
+- `app/(tabs)/activities.tsx`: Same pill pattern — render above the `dateNav` View when `selectedDate !== today`.
+- Style: small horizontally-centered rounded pill (`backgroundColor: colors.primaryLight`, `color: colors.primary`, `borderRadius: Radius.md`, `paddingVertical: 4`, `paddingHorizontal: Spacing.md`, `alignSelf: 'center'`, `marginBottom: Spacing.xs`).
+
+### 9.2 — Weight chart: linear interpolation
+
+The `<LineChart>` in `WeightChart.tsx` uses the `bezier` prop, which produces curved splines between points. This can visually imply values above or below the actual logged readings, misleading the user. Removing `bezier` makes the line a straight segment between each adjacent pair of data points.
+
+**Changes:**
+- `components/WeightChart.tsx`: Remove the `bezier` prop from `<LineChart>`.
+
+### 9.3 — Weight insights card
+
+After the chart, there is no summary of progress toward the user's weight goal. A new insights card should appear below `<WeightChart />` in the History view, showing:
+1. **Total change in the last 7 days** — difference (in the user's preferred unit) between the most recent entry and the oldest entry within the past 7 calendar days.
+2. **Estimated weekly rate** — the above change scaled to a per-week rate (change / days_span × 7).
+3. **On-Track status badge** — compares the weekly rate against the target rate implied by `profile.weightGoal`:
+   - Target rates (lbs/wk): `lose_2` = −2, `lose_1.5` = −1.5, `lose_1` = −1, `lose_0.5` = −0.5, `maintain` = 0, `gain_0.5` = +0.5, `gain_1` = +1, `gain_1.5` = +1.5, `gain_2` = +2.
+   - **On Track** (green ✓): `|actual_rate − target_rate| ≤ 0.25 lbs/wk` (or `≤ 0.1 kg/wk` when unit is kg).
+   - **Behind** (amber ⚠): actual rate is in the wrong direction or the gap is too large.
+   - **Ahead** (amber ⚠): actual rate exceeds target by more than the tolerance (e.g. losing faster than intended).
+   - If `< 2` entries exist in the last 7 days, or no weight goal is set (no profile), display a neutral placeholder: "Log more entries to see progress insights."
+
+**Changes:**
+- `components/WeightInsights.tsx` *(new)*: Reads `entries`, `preferences.unit`, and `preferences.profile.weightGoal`. Implements the logic above. Renders a card (`backgroundColor: colors.card`, `borderRadius: Radius.lg`, `padding: Spacing.md`, shadow) with a "Progress Insights" label, the change value + rate line, and a colored status badge row.
+- `app/(tabs)/index.tsx`: Import and render `<WeightInsights />` below `<WeightChart />` inside the `'history'` section.
+
+### 9.4 — CreateMealFlow: custom food tap resets selection (bug fix)
+
+**Root cause:** `handleSelectItem` calls `Keyboard.dismiss()`, which triggers `onBlur` on the search `TextInput`, setting `searchFocused = false`. When `query` is also empty (no text typed), `isSearchMode` (`searchFocused || query.length > 0`) becomes `false`, switching the view to the "Foods in Meal" list and hiding the `PortionSelector` panel — even though `selectedItem` was just set.
+
+On the second tap the user sees both the portion window and the keyboard simultaneously because keyboard re-focuses on tap, creating a broken state that forces them to cancel and restart.
+
+**Fix:** Include `selectedItem !== null` in the `isSearchMode` guard so a selected item keeps the search-mode view alive regardless of focus state.
+
+**Changes:**
+- `components/nutrition/CreateMealFlow.tsx`: Change line `const isSearchMode = searchFocused || query.length > 0;` → `const isSearchMode = searchFocused || query.length > 0 || selectedItem !== null;`
+
+### 9.5 — Activity page: keyboard doesn't dismiss on save
+
+After the user enters steps or smartwatch calories via the keyboard and taps the save/add button, the keyboard stays open. `handleAddSteps` and `handleSaveSmartwatch` need to call `Keyboard.dismiss()` before their dispatch/logic so the keyboard closes on save.
+
+**Changes:**
+- `app/(tabs)/activities.tsx`: Add `import { Keyboard } from 'react-native'` (already imported via the existing import block — verify it's included). In `handleAddSteps`, call `Keyboard.dismiss()` before the `dispatch` call. In `handleSaveSmartwatch`, call `Keyboard.dismiss()` at the top of the function (before the early return guard).
+
+### 9.6 — Settings page reorganization
+
+The current Settings layout mixes biometric identity data (name, DOB, sex, height), goal/calorie settings (weight goal, activity level, activity mode, fitness goal), and display preferences (units) into an unintuitive order. Specifically: Activity Tracking mode sits between Profile and Macros despite being conceptually part of calorie-goal configuration; the Profile section is overlong; the About card adds noise.
+
+**New section order:**
+1. **Profile** (collapsible) — biometrics only: Name, DOB, Sex, Height.
+2. **Goals & Calorie Target** (collapsible, new) — everything that affects the calorie calculation: Weight Goal, Activity Level, Activity Tracking Mode, Fitness Goal.
+3. **Units** (non-collapsible card, moved up) — lbs/kg toggle.
+4. **Macros** (collapsible) — unchanged.
+5. **About** — removed as a card; replaced with a small plain `<Text>` footer at the bottom of the `ScrollView` showing `HealthTracker v1.0.0`.
+
+**Changes:**
+- `components/settings/ProfileSection.tsx`: Remove the Activity Level, Weight Goal, and Fitness Goal fields. The component retains only Name, DOB picker, Sex toggle, and Height input(s). Remove the `GOAL_LABELS`, `ACTIVITY_LABELS`, `ACTIVITY_INFO`, and associated handler/state (`activityLevel`, `weightGoal`, `fitnessGoal`, `infoModal` for activity, etc.). Remove the `activityMode` prop (no longer needed here).
+- `components/settings/GoalsSection.tsx` *(new)*: Accepts props `activityMode: ActivityMode`, `goalCalories: number | null`, `onActivityModeChange: (mode: ActivityMode) => void`. Contains:
+  - **Weight Goal** picker — dynamic labels based on `isImperial` (see 9.7).
+  - **Activity Level** buttons — same greyed-out behaviour (opacity 0.4, non-tappable) when `activityMode !== 'auto'`; ⓘ info buttons opening `InfoModal`.
+  - **Activity Tracking Mode** — the three pill buttons (Auto / Manual / Smart Watch) with ⓘ buttons and banner (moved from `settings.tsx` inline block).
+  - **Fitness Goal** text input.
+  - Dispatches `SET_PROFILE` for weight goal, activity level, fitness goal changes; calls `onActivityModeChange` for mode changes.
+- `app/(tabs)/settings.tsx`: Remove the `activityModeExpanded` state and the "Activity Tracking" collapsible card. Add `goalsExpanded` state (default `true`). Add a new "Goals & Calorie Target" collapsible card that renders `<GoalsSection activityMode={activityMode} goalCalories={goalCalories} onActivityModeChange={setActivityMode} />`. Move the Units card above the Macros card. Remove the About card; add `<Text style={styles.footer}>HealthTracker v1.0.0</Text>` at the bottom of the `ScrollView`. Update `ProfileSection` — remove `activityMode` prop.
+
+### 9.7 — Expanded weight goal options (±2 lbs in 0.5 lb steps)
+
+Currently only 5 weight goal presets exist (lose 1, lose 0.5, maintain, gain 0.5, gain 1). The full ±2 lb range in 0.5 lb increments requires 9 options. When the user's unit is `kg`, labels show the kg equivalent.
+
+**Target rate → daily calorie offset mapping:**
+| Goal | Cal offset |
+|------|-----------|
+| lose_2 | −1000 |
+| lose_1.5 | −750 |
+| lose_1 | −500 |
+| lose_0.5 | −250 |
+| maintain | 0 |
+| gain_0.5 | +250 |
+| gain_1 | +500 |
+| gain_1.5 | +750 |
+| gain_2 | +1000 |
+
+**Label mapping (lbs / kg):**
+| Value | lbs label | kg label |
+|-------|-----------|---------|
+| lose_2 | Lose 2 lb/wk | Lose 0.9 kg/wk |
+| lose_1.5 | Lose 1.5 lb/wk | Lose 0.7 kg/wk |
+| lose_1 | Lose 1 lb/wk | Lose 0.5 kg/wk |
+| lose_0.5 | Lose 0.5 lb/wk | Lose 0.25 kg/wk |
+| maintain | Maintain | Maintain |
+| gain_0.5 | Gain 0.5 lb/wk | Gain 0.25 kg/wk |
+| gain_1 | Gain 1 lb/wk | Gain 0.5 kg/wk |
+| gain_1.5 | Gain 1.5 lb/wk | Gain 0.7 kg/wk |
+| gain_2 | Gain 2 lb/wk | Gain 0.9 kg/wk |
+
+**Changes:**
+- `types/index.ts`: Expand `WeightGoal` union to add `'lose_2' | 'lose_1.5' | 'gain_1.5' | 'gain_2'`.
+- `utils/tdeeCalculation.ts`: Add four new cases to `getGoalCalories` switch: `lose_2` (−1000), `lose_1.5` (−750), `gain_1.5` (+750), `gain_2` (+1000).
+- `components/settings/GoalsSection.tsx`: Build `GOAL_LABELS` dynamically from `isImperial` using the table above. Render all 9 options in the weight goal picker grid.
+
+---
+
+## Files Changed in Phase 9
+
+- `app/(tabs)/index.tsx` — Add "Today" pill above date nav; render `WeightInsights` in History view
+- `app/(tabs)/nutrition.tsx` — Add "Today" pill above date nav
+- `app/(tabs)/activities.tsx` — Add "Today" pill above date nav; `Keyboard.dismiss()` in `handleAddSteps` and `handleSaveSmartwatch`
+- `app/(tabs)/settings.tsx` — Restructure sections: slim Profile, new Goals card, Units moved up, About removed → footer text
+- `components/WeightChart.tsx` — Remove `bezier` prop
+- `components/WeightInsights.tsx` *(new)* — 7-day progress insights card
+- `components/settings/ProfileSection.tsx` — Remove Activity Level, Weight Goal, Fitness Goal; remove `activityMode` prop
+- `components/settings/GoalsSection.tsx` *(new)* — Weight Goal, Activity Level, Activity Mode, Fitness Goal; dynamic lbs/kg labels
+- `types/index.ts` — Expand `WeightGoal` with 4 new values
+- `utils/tdeeCalculation.ts` — Add `lose_2`, `lose_1.5`, `gain_1.5`, `gain_2` to `getGoalCalories`
+- `components/nutrition/CreateMealFlow.tsx` — Fix `isSearchMode` guard to include `selectedItem !== null`
+
+---
+
 ## Phase 7: Nutrition & Weight UX Improvements [IN PROGRESS]
 
 ### 7.1 — Portion selection when building meal templates

@@ -35,6 +35,19 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.background,
     },
     content: { padding: Spacing.md },
+    todayPill: {
+      alignSelf: 'center',
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.md,
+      paddingVertical: 4,
+      paddingHorizontal: Spacing.md,
+      marginBottom: Spacing.xs,
+    },
+    todayPillText: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '600',
+    },
     dateNav: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -222,6 +235,13 @@ export default function NutritionScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Today pill */}
+        {selectedDate !== today && (
+          <TouchableOpacity style={styles.todayPill} onPress={() => setSelectedDate(today)} activeOpacity={0.7}>
+            <Text style={styles.todayPillText}>Today</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Date navigation */}
         <View style={styles.dateNav}>
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
