@@ -15,7 +15,7 @@ No test runner or lint script exists in package.json.
   - 4 tabs: Weight (`app/(tabs)/index.tsx`), Nutrition (`app/(tabs)/nutrition.tsx`), Activities (`app/(tabs)/activities.tsx`), and Settings (`app/(tabs)/settings.tsx`)
   - 1 modal route: `app/add-food-modal.tsx` (full-screen food/meal search)
 - **State**: React Context + useReducer in `context/AppContext.tsx`; access via `useApp()`
-- **Persistence**: auto-saves on every state change to AsyncStorage
+- **Persistence**: auto-saves on every state change to AsyncStorage; also writes a silent debounced auto-backup to `FileSystem.documentDirectory` via `writeAutoBackup()` in `storage/backupStorage.ts`
 - **Actions**: `LOAD_DATA`, `UPSERT_ENTRY`, `DELETE_ENTRY`, `SET_UNIT`, `SET_PROFILE`, `SET_MACRO_PRESET`, `ADD_FOOD_TO_MEAL`, `DELETE_FOOD_FROM_MEAL`, `UPDATE_FOOD_IN_MEAL`, `REORDER_MEAL_FOODS`, `ADD_CUSTOM_FOOD`, `DELETE_CUSTOM_FOOD`, `ADD_SAVED_MEAL`, `UPDATE_SAVED_MEAL`, `DELETE_SAVED_MEAL`, `ADD_ACTIVITY`, `DELETE_ACTIVITY`
 - **Activity state**: `activityLog: DayActivity[]` — one record per date, each with `activities: ActivityEntry[]`
 - **Units**: stored per-entry; display conversion done at render time via `convertWeight()`
@@ -47,6 +47,7 @@ No test runner or lint script exists in package.json.
 ## Runtime Requirements
 
 - **`GestureHandlerRootView`** wraps the entire app in `app/_layout.tsx` — required by `react-native-gesture-handler` and any library that depends on it (e.g., `react-native-draggable-flatlist`). Must be the outermost wrapper.
+- **Backup storage** (`storage/backupStorage.ts`): two separate export paths — `saveBackup()` opens the OS share sheet (iOS/Android) or triggers a browser download (web) for cross-device/cross-Codespace portability; `writeAutoBackup()` writes silently to `documentDirectory` (native only, used by AppContext auto-backup). `loadBackup()` opens the OS document picker on native and a file-input on web. `backupExists()` always returns `true` on both platforms — "Load Saved Data" is always shown on the welcome screen. Dependencies: `expo-sharing ~14.0.8`, `expo-document-picker ~14.0.8`.
 
 ## Skills
 

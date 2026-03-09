@@ -34,6 +34,7 @@ import {
   loadActivityLog,
   saveActivityLog,
 } from '../storage/storage';
+import { writeAutoBackup } from '../storage/backupStorage';
 
 // ─── State & Actions ─────────────────────────────────────────────────────────
 
@@ -319,6 +320,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveActivityLog(state.activityLog);
     }
   }, [state.activityLog, state.isLoading]);
+
+  // Auto-backup: silently keep a local backup file in sync after every state
+  // change (debounced). Used for same-session/same-Codespace quick recovery.
+  // Errors are swallowed — auto-backup is best-effort and must never crash.
+  useEffect(() => {
+    if (state.isLoading) return;
+    const timer = setTimeout(() => {
+      writeAutoBackup({
+        entries: state.entries,
+        preferences: state.preferences,
+        nutritionLog: state.nutritionLog,
+        customFoods: state.customFoods,
+        savedMeals: state.savedMeals,
+        activityLog: state.activityLog,
+      }).catch(() => {});
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [
+    state.isLoading,
+    state.entries,
+    state.preferences,
+    state.nutritionLog,
+    state.customFoods,
+    state.savedMeals,
+    state.activityLog,
+  ]);
 
   return (
     <AppContext.Provider value={{ ...state, dispatch }}>

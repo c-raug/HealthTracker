@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import {
   WeightEntry,
   UserPreferences,
@@ -42,23 +44,40 @@ async function saveBackupNative(
   data: Omit<BackupData, 'exportedAt'>,
 ): Promise<void> {
   const payload: BackupData = { ...data, exportedAt: new Date().toISOString() };
-  await FileSystem.writeAsStringAsync(BACKUP_PATH, JSON.stringify(payload));
+  // Write to cache dir first, then share via the OS share sheet so the user
+  // can save to Files, iCloud Drive, AirDrop, etc. — accessible across
+  // Codespace sessions and reinstalls.
+  const tempPath = FileSystem.cacheDirectory + BACKUP_FILENAME;
+  await FileSystem.writeAsStringAsync(tempPath, JSON.stringify(payload, null, 2));
+  await Sharing.shareAsync(tempPath, {
+    mimeType: 'application/json',
+    dialogTitle: 'Save HealthTracker Backup',
+    UTI: 'public.json',
+  });
 }
 
 async function loadBackupNative(): Promise<BackupData | null> {
-  const info = await FileSystem.getInfoAsync(BACKUP_PATH);
-  if (!info.exists) return null;
-  const raw = await FileSystem.readAsStringAsync(BACKUP_PATH);
+  // Use the OS document picker so the user can select the backup from Files,
+  // iCloud Drive, or any other accessible location — works across Codespace
+  // sessions and after reinstalls.
+  const result = await DocumentPicker.getDocumentAsync({
+    type: ['application/json', 'text/plain'],
+    copyToCacheDirectory: true,
+  });
+  if (result.canceled) return null;
+  const uri = result.assets[0].uri;
+  const raw = await FileSystem.readAsStringAsync(uri);
   const parsed = JSON.parse(raw);
   if (!validateBackupData(parsed)) {
-    throw new Error('Invalid backup file format.');
+    throw new Error('The selected file is not a valid HealthTracker backup.');
   }
   return parsed;
 }
 
 async function backupExistsNative(): Promise<boolean> {
-  const info = await FileSystem.getInfoAsync(BACKUP_PATH);
-  return info.exists;
+  // Loading uses the OS document picker, so the button is always relevant
+  // on native regardless of whether a local backup file exists.
+  return true;
 }
 
 // --- Web: browser download / file picker ---
@@ -145,6 +164,17 @@ export async function saveBackup(
   data: Omit<BackupData, 'exportedAt'>,
 ): Promise<void> {
   return isWeb ? saveBackupWeb(data) : saveBackupNative(data);
+}
+
+// Silent auto-backup: writes directly to documentDirectory with no share sheet.
+// Used by AppContext to keep a local backup in sync after every state change.
+// On web this is a no-op (no persistent FS access from the browser).
+export async function writeAutoBackup(
+  data: Omit<BackupData, 'exportedAt'>,
+): Promise<void> {
+  if (isWeb) return;
+  const payload: BackupData = { ...data, exportedAt: new Date().toISOString() };
+  await FileSystem.writeAsStringAsync(BACKUP_PATH, JSON.stringify(payload));
 }
 
 export async function loadBackup(): Promise<BackupData | null> {
