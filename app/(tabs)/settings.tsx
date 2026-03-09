@@ -116,7 +116,7 @@ export default function SettingsScreen() {
 
   const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
 
-  const activityMode: ActivityMode = preferences.activityMode ?? 'manual';
+  const activityMode: ActivityMode = preferences.activityMode ?? 'auto';
   const setActivityMode = (mode: ActivityMode) => dispatch({ type: 'SET_ACTIVITY_MODE', mode });
 
   // Compute goalCalories (same pattern as nutrition.tsx)
