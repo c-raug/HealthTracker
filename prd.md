@@ -1,5 +1,62 @@
 # HealthTracker — Product Requirements
 
+## Phase 10: Onboarding & Data Save/Load [IN PROGRESS]
+
+### 10.1 — Welcome/Login Screen
+
+New users currently land directly on the Weight tab with no guidance. A welcome screen now appears on first launch (before the tab navigator) with the app logo, title, and a "Start New Profile" button. When the test build flag is enabled and a saved backup exists, a secondary "Load Saved Data" button allows restoring a previous session.
+
+**Changes:**
+- `app/welcome.tsx` *(new)*: Full-screen welcome route. Checks `backupExists()` on mount when `isTestBuild`. "Start New Profile" navigates to `/onboarding`. "Load Saved Data" calls `loadBackup()` and dispatches `LOAD_DATA` with `onboardingComplete: true`, causing the root layout to redirect to tabs.
+
+### 10.2 — 5-Step Onboarding Wizard
+
+No onboarding flow existed — users had to manually discover Settings. A 5-step wizard now collects all required profile data before the user enters the app.
+
+**Steps:** (1) Unit + Name, (2) DOB + Sex + Height, (3) Activity Level + Weight Goal, (4) Macro Preset (skippable), (5) Starting Weight.
+
+**Changes:**
+- `app/onboarding.tsx` *(new)*: Single-file wizard with progress dots, local state for all fields, Back/Next navigation. On "Complete Setup": dispatches `SET_UNIT`, `SET_PROFILE`, `SET_MACRO_PRESET`, `UPSERT_ENTRY`, `SET_ONBOARDING_COMPLETE` in sequence. Reuses design patterns from `ProfileSection`, `GoalsSection`, and `MacroSection`.
+
+### 10.3 — Navigation Gating
+
+The app previously had no route protection. A navigation guard in the root layout now enforces that unauthenticated users (no `onboardingComplete` flag) cannot access the tabs.
+
+**Changes:**
+- `app/_layout.tsx`: Extracted `RootNavigator` component that uses `useApp()`, `useSegments()`, and `useRouter()`. Shows loading spinner during AsyncStorage load. `useEffect` redirects: onboarded users to `/(tabs)`, non-onboarded to `/welcome`. Registers `welcome` and `onboarding` as Stack screens.
+
+### 10.4 — State & Type Changes
+
+**Changes:**
+- `types/index.ts`: Added `onboardingComplete?: boolean` to `UserPreferences`.
+- `context/AppContext.tsx`: Added `SET_ONBOARDING_COMPLETE` action. Added migration in `LOAD_DATA` — existing users with profile + weight entries auto-get `onboardingComplete: true`.
+
+### 10.5 — Save/Load Data (Test Build Only)
+
+During testing via `npm run tunnel`, reinstalling the app wipes AsyncStorage. A file-system-based backup mechanism allows saving and restoring all app data. Gated behind `EXPO_PUBLIC_TEST_BUILD=true`.
+
+**Changes:**
+- `utils/featureFlags.ts` *(new)*: Exports `isTestBuild` constant from env var.
+- `.env` *(new)*: `EXPO_PUBLIC_TEST_BUILD=true`.
+- `storage/backupStorage.ts` *(new)*: Uses `expo-file-system` to save/load/check a JSON backup at `documentDirectory + 'healthtracker-backup.json'`. Exports `saveBackup()`, `loadBackup()`, `backupExists()`.
+- `app/(tabs)/settings.tsx`: Added "Developer Tools" card (visible when `isTestBuild`) with a "Save Data" button between Macros and footer. Calls `saveBackup(...)` with all state slices.
+
+---
+
+## Files Changed in Phase 10
+
+- `types/index.ts` — Added `onboardingComplete` to `UserPreferences`
+- `context/AppContext.tsx` — Added `SET_ONBOARDING_COMPLETE` action + existing user migration in `LOAD_DATA`
+- `utils/featureFlags.ts` *(new)* — Test build feature flag
+- `.env` *(new)* — Environment variables
+- `storage/backupStorage.ts` *(new)* — File-system backup save/load/check
+- `app/welcome.tsx` *(new)* — Welcome/login screen
+- `app/onboarding.tsx` *(new)* — 5-step onboarding wizard
+- `app/_layout.tsx` — Navigation gating with `RootNavigator` + loading screen
+- `app/(tabs)/settings.tsx` — Save Data card (test build only)
+
+---
+
 ## Phase 9: Cross-Page Polish & Settings Overhaul [IN PROGRESS]
 
 ### 9.1 — "Go to Today" quick-nav pill
