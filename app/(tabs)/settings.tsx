@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -8,6 +8,7 @@ import { ActivityMode } from '../../types';
 import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
+import { saveBackup } from '../../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: {
@@ -105,7 +106,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
 });
 
 export default function SettingsScreen() {
-  const { preferences, entries, dispatch } = useApp();
+  const { preferences, entries, nutritionLog, customFoods, savedMeals, activityLog, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
 
@@ -229,6 +230,28 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
         {macroExpanded && <MacroSection goalCalories={goalCalories} />}
+      </View>
+
+      {/* 5. Data Backup */}
+      <View style={styles.card}>
+        <Text style={styles.settingLabel}>Data Backup</Text>
+        <Text style={styles.settingDescription}>
+          Save all app data to a file that persists across reinstalls.
+        </Text>
+        <TouchableOpacity
+          style={[styles.toggleOption, styles.toggleOptionActive, { paddingVertical: Spacing.sm }]}
+          onPress={async () => {
+            try {
+              await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
+              Alert.alert('Success', 'Data saved successfully.');
+            } catch {
+              Alert.alert('Error', 'Failed to save data.');
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Footer */}

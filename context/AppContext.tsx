@@ -65,7 +65,8 @@ type Action =
   | { type: 'DELETE_SAVED_MEAL'; id: string }
   | { type: 'ADD_ACTIVITY'; date: string; activity: ActivityEntry }
   | { type: 'DELETE_ACTIVITY'; date: string; activityId: string }
-  | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode };
+  | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode }
+  | { type: 'SET_ONBOARDING_COMPLETE' };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -104,17 +105,25 @@ const initialState: State = {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'LOAD_DATA':
+    case 'LOAD_DATA': {
+      // Auto-migrate existing users: if they have a profile and weight entries
+      // but onboardingComplete is not set, mark it as complete so they skip onboarding.
+      const prefs = action.preferences;
+      const migratedPrefs =
+        prefs.profile && action.entries.length > 0 && !prefs.onboardingComplete
+          ? { ...prefs, onboardingComplete: true }
+          : prefs;
       return {
         ...state,
         entries: action.entries,
-        preferences: action.preferences,
+        preferences: migratedPrefs,
         nutritionLog: action.nutritionLog,
         customFoods: action.customFoods,
         savedMeals: action.savedMeals,
         activityLog: action.activityLog,
         isLoading: false,
       };
+    }
     case 'UPSERT_ENTRY': {
       const filtered = state.entries.filter(
         (e) => e.date !== action.entry.date,
@@ -234,6 +243,11 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, activityMode: action.mode },
+      };
+    case 'SET_ONBOARDING_COMPLETE':
+      return {
+        ...state,
+        preferences: { ...state.preferences, onboardingComplete: true },
       };
     default:
       return state;

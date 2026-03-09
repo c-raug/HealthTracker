@@ -1,5 +1,112 @@
 # HealthTracker — Product Requirements
 
+## Phase 11: Cross-Platform Data Persistence [IN PROGRESS]
+
+### 11.1 — Platform-aware backup storage (replaces expo-file-system)
+
+The current backup uses `expo-file-system` to write a JSON file to the server's document directory. This works on native (Android/iOS) but fails on web — when a Codespace is destroyed, the file is lost. The storage layer needs a platform-aware strategy:
+
+- **Native (Android/iOS):** Continue using `expo-file-system` to write `healthtracker-backup.json` to the device's document directory. This is a real file on the physical device that persists across app restarts.
+- **Web (Codespaces in phone/desktop browser):** Use the browser's File API. "Save Data" triggers a JSON file **download** to the user's device (e.g. Downloads folder). "Load Saved Data" opens a **file picker** so the user selects the previously downloaded backup file.
+
+This ensures the backup file always lives on the user's physical device regardless of how the app is hosted.
+
+**Changes:**
+- `storage/backupStorage.ts`: Rewrite with `Platform.OS` check.
+  - Keep `BackupData` interface as-is.
+  - `saveBackup(data)`: On native, write via `FileSystem.writeAsStringAsync()` (current behavior). On web, create a `Blob` from the JSON string, generate an object URL, create a temporary `<a>` element with `download="healthtracker-backup.json"`, click it programmatically, then revoke the URL.
+  - `loadBackup()`: On native, read via `FileSystem.readAsStringAsync()` (current behavior). On web, create a temporary `<input type="file" accept=".json">`, click it programmatically, read the selected file via `FileReader`, parse JSON, return `BackupData`.
+  - `backupExists()`: On native, check via `FileSystem.getInfoAsync()` (current behavior). On web, always return `true` — we can't check the user's filesystem, so the button is always shown and the user picks a file when they tap it.
+
+### 11.2 — Remove test build gate from save/load
+
+The save/load feature is currently gated behind `isTestBuild`. It should be available to all users on all platforms.
+
+**Changes:**
+- `app/welcome.tsx`: Remove `isTestBuild` import and condition. The "Load Saved Data" button appears whenever `hasBackup` is true (native) or always (web, since `backupExists()` returns `true`).
+- `app/(tabs)/settings.tsx`: Remove the `isTestBuild` condition wrapping the "Developer Tools" / "Save Data" card. Rename the card label from "Developer Tools" to "Data Backup" (or similar). Always render it.
+- `utils/featureFlags.ts`: Remove `isTestBuild` export (or keep for future use but no longer referenced by save/load code).
+
+### 11.3 — Handle load errors gracefully on web
+
+On web, the user might pick an invalid file, cancel the file picker, or select a non-JSON file. The `loadBackup()` web implementation should handle these cases:
+
+- If the user cancels the file picker, return `null` (no error).
+- If the file is not valid JSON or doesn't match the `BackupData` shape, throw an error.
+- `welcome.tsx` and any future callers should catch errors and show an `Alert` with a user-friendly message like "The selected file is not a valid HealthTracker backup."
+
+**Changes:**
+- `storage/backupStorage.ts`: Add validation in the web `loadBackup()` path — check that parsed JSON has expected top-level keys (`entries`, `preferences`, etc.) before returning.
+- `app/welcome.tsx`: Wrap `handleLoadData` in try/catch, show `Alert.alert('Error', ...)` on failure, reset `loadingBackup` state.
+
+---
+
+## Files Changed in Phase 11
+
+- `storage/backupStorage.ts` — Platform-aware rewrite: native keeps expo-file-system, web uses download/file-picker
+- `app/welcome.tsx` — Remove `isTestBuild` gate, add error handling for invalid backup files
+- `app/(tabs)/settings.tsx` — Remove `isTestBuild` gate, rename card to "Data Backup"
+- `utils/featureFlags.ts` — Remove or deprecate `isTestBuild` (no longer used by save/load)
+
+---
+
+## Phase 10: Onboarding & Data Save/Load [IN PROGRESS]
+
+### 10.1 — Welcome/Login Screen
+
+New users currently land directly on the Weight tab with no guidance. A welcome screen now appears on first launch (before the tab navigator) with the app logo, title, and a "Start New Profile" button. When the test build flag is enabled and a saved backup exists, a secondary "Load Saved Data" button allows restoring a previous session.
+
+**Changes:**
+- `app/welcome.tsx` *(new)*: Full-screen welcome route. Checks `backupExists()` on mount when `isTestBuild`. "Start New Profile" navigates to `/onboarding`. "Load Saved Data" calls `loadBackup()` and dispatches `LOAD_DATA` with `onboardingComplete: true`, causing the root layout to redirect to tabs.
+
+### 10.2 — 5-Step Onboarding Wizard
+
+No onboarding flow existed — users had to manually discover Settings. A 5-step wizard now collects all required profile data before the user enters the app.
+
+**Steps:** (1) Unit + Name, (2) DOB + Sex + Height, (3) Activity Level + Weight Goal, (4) Macro Preset (skippable), (5) Starting Weight.
+
+**Changes:**
+- `app/onboarding.tsx` *(new)*: Single-file wizard with progress dots, local state for all fields, Back/Next navigation. On "Complete Setup": dispatches `SET_UNIT`, `SET_PROFILE`, `SET_MACRO_PRESET`, `UPSERT_ENTRY`, `SET_ONBOARDING_COMPLETE` in sequence. Reuses design patterns from `ProfileSection`, `GoalsSection`, and `MacroSection`.
+
+### 10.3 — Navigation Gating
+
+The app previously had no route protection. A navigation guard in the root layout now enforces that unauthenticated users (no `onboardingComplete` flag) cannot access the tabs.
+
+**Changes:**
+- `app/_layout.tsx`: Extracted `RootNavigator` component that uses `useApp()`, `useSegments()`, and `useRouter()`. Shows loading spinner during AsyncStorage load. `useEffect` redirects: onboarded users to `/(tabs)`, non-onboarded to `/welcome`. Registers `welcome` and `onboarding` as Stack screens.
+
+### 10.4 — State & Type Changes
+
+**Changes:**
+- `types/index.ts`: Added `onboardingComplete?: boolean` to `UserPreferences`.
+- `context/AppContext.tsx`: Added `SET_ONBOARDING_COMPLETE` action. Added migration in `LOAD_DATA` — existing users with profile + weight entries auto-get `onboardingComplete: true`.
+
+### 10.5 — Save/Load Data (Test Build Only)
+
+During testing via `npm run tunnel`, reinstalling the app wipes AsyncStorage. A file-system-based backup mechanism allows saving and restoring all app data. Gated behind `EXPO_PUBLIC_TEST_BUILD=true`.
+
+**Changes:**
+- `utils/featureFlags.ts` *(new)*: Exports `isTestBuild` constant from env var.
+- `.env` *(new)*: `EXPO_PUBLIC_TEST_BUILD=true`.
+- `storage/backupStorage.ts` *(new)*: Uses `expo-file-system` to save/load/check a JSON backup at `documentDirectory + 'healthtracker-backup.json'`. Exports `saveBackup()`, `loadBackup()`, `backupExists()`.
+- `app/(tabs)/settings.tsx`: Added "Developer Tools" card (visible when `isTestBuild`) with a "Save Data" button between Macros and footer. Calls `saveBackup(...)` with all state slices.
+
+---
+
+## Files Changed in Phase 10
+
+- `types/index.ts` — Added `onboardingComplete` to `UserPreferences`
+- `context/AppContext.tsx` — Added `SET_ONBOARDING_COMPLETE` action + existing user migration in `LOAD_DATA`
+- `utils/featureFlags.ts` *(new)* — Test build feature flag
+- `.env` *(new)* — Environment variables
+- `storage/backupStorage.ts` *(new)* — File-system backup save/load/check
+- `app/welcome.tsx` *(new)* — Welcome/login screen
+- `app/onboarding.tsx` *(new)* — 5-step onboarding wizard
+- `app/_layout.tsx` — Navigation gating with `RootNavigator` + loading screen
+- `app/(tabs)/settings.tsx` — Save Data card (test build only)
+
+---
+
 ## Phase 9: Cross-Page Polish & Settings Overhaul [IN PROGRESS]
 
 ### 9.1 — "Go to Today" quick-nav pill
