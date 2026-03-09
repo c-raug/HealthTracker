@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { useColors, LightColors, Typography, Spacing, Radius } from '../constants/theme';
-import { isTestBuild } from '../utils/featureFlags';
 import { backupExists, loadBackup } from '../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) =>
@@ -85,9 +84,7 @@ export default function WelcomeScreen() {
   const [loadingBackup, setLoadingBackup] = useState(false);
 
   useEffect(() => {
-    if (isTestBuild) {
-      backupExists().then(setHasBackup);
-    }
+    backupExists().then(setHasBackup);
   }, []);
 
   const handleLoadData = async () => {
@@ -104,9 +101,12 @@ export default function WelcomeScreen() {
           savedMeals: data.savedMeals,
           activityLog: data.activityLog,
         });
+      } else {
+        setLoadingBackup(false);
       }
-    } catch {
+    } catch (e) {
       setLoadingBackup(false);
+      Alert.alert('Error', e instanceof Error ? e.message : 'Failed to load backup data.');
     }
   };
 
@@ -131,7 +131,7 @@ export default function WelcomeScreen() {
           <Text style={styles.primaryButtonText}>Start New Profile</Text>
         </TouchableOpacity>
 
-        {isTestBuild && hasBackup && (
+        {hasBackup && (
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={handleLoadData}

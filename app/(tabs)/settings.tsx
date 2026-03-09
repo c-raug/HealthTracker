@@ -8,7 +8,6 @@ import { ActivityMode } from '../../types';
 import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
-import { isTestBuild } from '../../utils/featureFlags';
 import { saveBackup } from '../../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
@@ -233,29 +232,27 @@ export default function SettingsScreen() {
         {macroExpanded && <MacroSection goalCalories={goalCalories} />}
       </View>
 
-      {/* 5. Save Data — test build only */}
-      {isTestBuild && (
-        <View style={styles.card}>
-          <Text style={styles.settingLabel}>Developer Tools</Text>
-          <Text style={styles.settingDescription}>
-            Save all app data to a file that persists across reinstalls.
-          </Text>
-          <TouchableOpacity
-            style={[styles.toggleOption, styles.toggleOptionActive, { paddingVertical: Spacing.sm }]}
-            onPress={async () => {
-              try {
-                await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
-                Alert.alert('Success', 'Data saved successfully.');
-              } catch {
-                Alert.alert('Error', 'Failed to save data.');
-              }
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* 5. Data Backup */}
+      <View style={styles.card}>
+        <Text style={styles.settingLabel}>Data Backup</Text>
+        <Text style={styles.settingDescription}>
+          Save all app data to a file that persists across reinstalls.
+        </Text>
+        <TouchableOpacity
+          style={[styles.toggleOption, styles.toggleOptionActive, { paddingVertical: Spacing.sm }]}
+          onPress={async () => {
+            try {
+              await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
+              Alert.alert('Success', 'Data saved successfully.');
+            } catch {
+              Alert.alert('Error', 'Failed to save data.');
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Footer */}
       <Text style={styles.footer}>HealthTracker v1.0.0</Text>

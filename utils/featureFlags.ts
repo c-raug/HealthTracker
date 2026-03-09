@@ -1,1 +1,1 @@
-export const isTestBuild = true;
+// Feature flags — currently unused, kept for future use.
