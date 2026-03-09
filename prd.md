@@ -1,5 +1,55 @@
 # HealthTracker — Product Requirements
 
+## Phase 12: Activity & Nutrition Workflow Improvements [IN PROGRESS]
+
+### 12.1 — Default onboarding activity mode: auto
+
+New users complete onboarding with no `activityMode` set, causing a fallback to `'manual'`. The intended default is `'auto'` so exercise logging is for reference and doesn't double-count with the TDEE activity level.
+
+**Changes:**
+- `app/onboarding.tsx`: In `handleComplete`, dispatch `SET_ACTIVITY_MODE` with `'auto'` after the other dispatches
+- `app/(tabs)/activities.tsx`: Change fallback default from `'manual'` to `'auto'`
+
+### 12.2 — Activity page: link to tracking mode settings
+
+Users have no quick path to change their tracking mode from the Activities tab. A "Change tracking mode →" link now appears below the mode-specific banner, navigating to the Settings tab.
+
+**Changes:**
+- `app/(tabs)/activities.tsx`: Import `useRouter`; add `changeModeLinkRow`/`changeModeLink` styles; render a `TouchableOpacity` link below the auto-mode warning banner that calls `router.navigate('/(tabs)/settings')`
+
+### 12.3 — Per-activity warning when tracking mode changes
+
+When activities are logged under mode X and the user switches to mode Y, previously logged entries show a persistent amber warning strip until dismissed. Each warning shows the mode it was logged under and has an `×` dismiss button.
+
+**Changes:**
+- `types/index.ts`: Add `loggedWithMode?: ActivityMode` and `warningDismissed?: boolean` to `ActivityEntry`
+- `context/AppContext.tsx`: In `ADD_ACTIVITY` reducer, stamp `loggedWithMode` from `state.preferences.activityMode ?? 'auto'`; add `DISMISS_ACTIVITY_WARNING` action and reducer case (sets `warningDismissed: true` on the matching entry)
+- `app/(tabs)/activities.tsx`: In the activity list map, render an amber `activityWarningRow` below each entry when `loggedWithMode !== activityMode && !warningDismissed`; dismiss button dispatches `DISMISS_ACTIVITY_WARNING`
+
+### 12.4 — Pin saved meals to meal categories (multi-select)
+
+Users can pin saved meals to one or more categories. When opening the Add Meal sheet for a category, pinned meals for that category appear first in a "Pinned" section.
+
+**Changes:**
+- `types/index.ts`: Add `pinnedCategories?: MealCategory[]` to `SavedMeal`
+- `components/nutrition/AddMealTab.tsx`: Replace `FlatList` with `SectionList` (sections: "Pinned" filtered to current `category`, then "All Meals"); add bookmark pin button per row; pin button opens a `Modal` with multi-select checkboxes for all 4 categories; on save dispatches `UPDATE_SAVED_MEAL` with updated `pinnedCategories`
+
+### 12.5 — Backup/export completeness
+
+The existing `BackupData` interface already includes `savedMeals`, `customFoods`, `preferences`, and all logs. The new `pinnedCategories` field on `SavedMeal` serializes automatically. No code changes required.
+
+---
+
+## Files Changed in Phase 12
+
+- `types/index.ts` — Add `loggedWithMode?`/`warningDismissed?` to `ActivityEntry`; add `pinnedCategories?` to `SavedMeal`
+- `context/AppContext.tsx` — Stamp `loggedWithMode` on `ADD_ACTIVITY`; add `DISMISS_ACTIVITY_WARNING` action and reducer
+- `app/onboarding.tsx` — Dispatch `SET_ACTIVITY_MODE: 'auto'` in `handleComplete`
+- `app/(tabs)/activities.tsx` — Default mode fallback `'auto'`; "Change tracking mode" link; per-entry dismissible mode-change warnings
+- `components/nutrition/AddMealTab.tsx` — `SectionList` with Pinned/All sections; bookmark pin button; category multi-select modal
+
+---
+
 ## Phase 11: Cross-Platform Data Persistence [IN PROGRESS]
 
 ### 11.1 — Platform-aware backup storage (replaces expo-file-system)
