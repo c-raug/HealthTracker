@@ -129,6 +129,8 @@ adjuster. Installed at `4.5.5` which is compatible with React Native 0.81.x.
 | `expo-asset` | `~12.0.12` | dep |
 | `expo-linking` | `~8.0.11` | dep |
 | `expo-status-bar` | `~3.0.9` | dep |
+| `expo-sharing` | `~14.0.8` | dep |
+| `expo-document-picker` | `~14.0.8` | dep |
 | `react` | `19.1.0` | dep |
 | `react-native` | `0.81.5` | dep |
 | `@expo/vector-icons` | `^15.0.0` | dep |

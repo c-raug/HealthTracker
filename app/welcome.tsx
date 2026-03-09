@@ -84,7 +84,7 @@ export default function WelcomeScreen() {
   const [loadingBackup, setLoadingBackup] = useState(false);
 
   useEffect(() => {
-    backupExists().then(setHasBackup);
+    backupExists().then(setHasBackup).catch(() => setHasBackup(true));
   }, []);
 
   const handleLoadData = async () => {
@@ -103,6 +103,10 @@ export default function WelcomeScreen() {
         });
       } else {
         setLoadingBackup(false);
+        Alert.alert(
+          'No Backup Selected',
+          'No backup file was selected. To create a backup, go to Settings → Save Data after setting up your profile.',
+        );
       }
     } catch (e) {
       setLoadingBackup(false);
