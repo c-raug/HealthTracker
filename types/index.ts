@@ -82,6 +82,7 @@ export interface SavedMeal {
   name: string;
   foods: NutritionFoodItem[];
   createdAt: string;
+  pinnedCategories?: MealCategory[];
 }
 
 export interface UserPreferences {
@@ -102,6 +103,8 @@ export interface ActivityEntry {
   durationMinutes?: number;
   steps?: number;
   caloriesBurned: number;
+  loggedWithMode?: ActivityMode;
+  warningDismissed?: boolean;
 }
 
 export interface DayActivity {

@@ -497,6 +497,7 @@ export default function OnboardingScreen() {
     dispatch({ type: 'SET_PROFILE', profile });
     dispatch({ type: 'SET_MACRO_PRESET', preset: macroPreset, split: macroSplit });
     dispatch({ type: 'UPSERT_ENTRY', entry });
+    dispatch({ type: 'SET_ACTIVITY_MODE', mode: 'auto' });
     dispatch({ type: 'SET_ONBOARDING_COMPLETE' });
   };
 

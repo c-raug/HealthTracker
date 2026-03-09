@@ -14,6 +14,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -326,6 +327,34 @@ const makeStyles = (colors: typeof LightColors) =>
       flex: 1,
       lineHeight: 17,
     },
+    changeModeLinkRow: {
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+    },
+    changeModeLink: {
+      ...Typography.small,
+      color: colors.primary,
+    },
+    activityWarningRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.dangerLight,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    activityWarningText: {
+      ...Typography.small,
+      color: colors.danger,
+      flex: 1,
+      lineHeight: 17,
+    },
+    activityWarningDismiss: {
+      padding: Spacing.xs,
+      marginLeft: Spacing.xs,
+    },
     // iOS date picker modal
     modalOverlay: {
       flex: 1,
@@ -353,10 +382,17 @@ const makeStyles = (colors: typeof LightColors) =>
     iosPicker: { height: 200 },
   });
 
+const MODE_LABELS: Record<string, string> = {
+  auto: 'Auto',
+  manual: 'Manual',
+  smartwatch: 'Smart Watch',
+};
+
 export default function ActivitiesScreen() {
   const { entries, preferences, activityLog, dispatch, isLoading } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const router = useRouter();
 
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -380,7 +416,7 @@ export default function ActivitiesScreen() {
   const today = getToday();
   const isForwardDisabled = selectedDate >= today;
 
-  const activityMode = preferences.activityMode ?? 'manual';
+  const activityMode = preferences.activityMode ?? 'auto';
 
   const goBack = () => setSelectedDate(addDays(selectedDate, -1));
   const goForward = () => {
@@ -607,6 +643,13 @@ export default function ActivitiesScreen() {
           </View>
         )}
 
+        {/* Change tracking mode link */}
+        <View style={styles.changeModeLinkRow}>
+          <TouchableOpacity onPress={() => router.navigate('/(tabs)/settings')} activeOpacity={0.7}>
+            <Text style={styles.changeModeLink}>Change tracking mode →</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Calories burned summary */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
@@ -804,33 +847,56 @@ export default function ActivitiesScreen() {
           {!dayActivity || dayActivity.activities.length === 0 ? (
             <Text style={styles.emptyText}>No activities logged</Text>
           ) : (
-            dayActivity.activities.map((activity, index) => (
-              <View
-                key={activity.id}
-                style={[
-                  styles.activityRow,
-                  index === dayActivity.activities.length - 1 && { borderBottomWidth: 0 },
-                ]}
-              >
-                <View style={styles.activityInfo}>
-                  <Text style={styles.activityName}>{getActivityLabel(activity)}</Text>
-                  <Text style={styles.activityDetail}>{getActivityDetail(activity)}</Text>
+            dayActivity.activities.map((activity, index) => {
+              const showWarning =
+                activity.loggedWithMode !== undefined &&
+                activity.loggedWithMode !== activityMode &&
+                !activity.warningDismissed;
+              const isLast = index === dayActivity.activities.length - 1;
+              return (
+                <View key={activity.id}>
+                  <View
+                    style={[
+                      styles.activityRow,
+                      !showWarning && isLast && { borderBottomWidth: 0 },
+                    ]}
+                  >
+                    <View style={styles.activityInfo}>
+                      <Text style={styles.activityName}>{getActivityLabel(activity)}</Text>
+                      <Text style={styles.activityDetail}>{getActivityDetail(activity)}</Text>
+                    </View>
+                    {activityMode === 'auto' && (
+                      <Text style={styles.refOnlyLabel}>ref</Text>
+                    )}
+                    <Text style={activityMode === 'auto' ? styles.activityCaloriesRef : styles.activityCalories}>
+                      {activity.caloriesBurned} cal
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.deleteBtn}
+                      onPress={() => handleDelete(activity.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                    </TouchableOpacity>
+                  </View>
+                  {showWarning && (
+                    <View style={[styles.activityWarningRow, isLast && { borderBottomWidth: 0 }]}>
+                      <Text style={styles.activityWarningText}>
+                        ⚠ Logged under {MODE_LABELS[activity.loggedWithMode!]} mode — data may no longer be accurate
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.activityWarningDismiss}
+                        onPress={() => dispatch({ type: 'DISMISS_ACTIVITY_WARNING', date: selectedDate, activityId: activity.id })}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="close" size={14} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
-                {activityMode === 'auto' && (
-                  <Text style={styles.refOnlyLabel}>ref</Text>
-                )}
-                <Text style={activityMode === 'auto' ? styles.activityCaloriesRef : styles.activityCalories}>
-                  {activity.caloriesBurned} cal
-                </Text>
-                <TouchableOpacity
-                  style={styles.deleteBtn}
-                  onPress={() => handleDelete(activity.id)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                </TouchableOpacity>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
       </ScrollView>

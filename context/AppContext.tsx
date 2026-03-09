@@ -66,6 +66,7 @@ type Action =
   | { type: 'DELETE_SAVED_MEAL'; id: string }
   | { type: 'ADD_ACTIVITY'; date: string; activity: ActivityEntry }
   | { type: 'DELETE_ACTIVITY'; date: string; activityId: string }
+  | { type: 'DISMISS_ACTIVITY_WARNING'; date: string; activityId: string }
   | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode }
   | { type: 'SET_ONBOARDING_COMPLETE' };
 
@@ -226,9 +227,13 @@ function reducer(state: State, action: Action): State {
       };
     case 'ADD_ACTIVITY': {
       const day = getOrCreateActivityDay(state.activityLog, action.date);
+      const activityWithMode: ActivityEntry = {
+        ...action.activity,
+        loggedWithMode: state.preferences.activityMode ?? 'auto',
+      };
       const updatedDay: DayActivity = {
         ...day,
-        activities: [...day.activities, action.activity],
+        activities: [...day.activities, activityWithMode],
       };
       return { ...state, activityLog: upsertActivityDay(state.activityLog, updatedDay) };
     }
@@ -237,6 +242,16 @@ function reducer(state: State, action: Action): State {
       const updatedDay: DayActivity = {
         ...day,
         activities: day.activities.filter((a) => a.id !== action.activityId),
+      };
+      return { ...state, activityLog: upsertActivityDay(state.activityLog, updatedDay) };
+    }
+    case 'DISMISS_ACTIVITY_WARNING': {
+      const day = getOrCreateActivityDay(state.activityLog, action.date);
+      const updatedDay: DayActivity = {
+        ...day,
+        activities: day.activities.map((a) =>
+          a.id === action.activityId ? { ...a, warningDismissed: true } : a,
+        ),
       };
       return { ...state, activityLog: upsertActivityDay(state.activityLog, updatedDay) };
     }
