@@ -1,5 +1,55 @@
 # HealthTracker — Product Requirements
 
+## Phase 11: Cross-Platform Data Persistence [IN PROGRESS]
+
+### 11.1 — Platform-aware backup storage (replaces expo-file-system)
+
+The current backup uses `expo-file-system` to write a JSON file to the server's document directory. This works on native (Android/iOS) but fails on web — when a Codespace is destroyed, the file is lost. The storage layer needs a platform-aware strategy:
+
+- **Native (Android/iOS):** Continue using `expo-file-system` to write `healthtracker-backup.json` to the device's document directory. This is a real file on the physical device that persists across app restarts.
+- **Web (Codespaces in phone/desktop browser):** Use the browser's File API. "Save Data" triggers a JSON file **download** to the user's device (e.g. Downloads folder). "Load Saved Data" opens a **file picker** so the user selects the previously downloaded backup file.
+
+This ensures the backup file always lives on the user's physical device regardless of how the app is hosted.
+
+**Changes:**
+- `storage/backupStorage.ts`: Rewrite with `Platform.OS` check.
+  - Keep `BackupData` interface as-is.
+  - `saveBackup(data)`: On native, write via `FileSystem.writeAsStringAsync()` (current behavior). On web, create a `Blob` from the JSON string, generate an object URL, create a temporary `<a>` element with `download="healthtracker-backup.json"`, click it programmatically, then revoke the URL.
+  - `loadBackup()`: On native, read via `FileSystem.readAsStringAsync()` (current behavior). On web, create a temporary `<input type="file" accept=".json">`, click it programmatically, read the selected file via `FileReader`, parse JSON, return `BackupData`.
+  - `backupExists()`: On native, check via `FileSystem.getInfoAsync()` (current behavior). On web, always return `true` — we can't check the user's filesystem, so the button is always shown and the user picks a file when they tap it.
+
+### 11.2 — Remove test build gate from save/load
+
+The save/load feature is currently gated behind `isTestBuild`. It should be available to all users on all platforms.
+
+**Changes:**
+- `app/welcome.tsx`: Remove `isTestBuild` import and condition. The "Load Saved Data" button appears whenever `hasBackup` is true (native) or always (web, since `backupExists()` returns `true`).
+- `app/(tabs)/settings.tsx`: Remove the `isTestBuild` condition wrapping the "Developer Tools" / "Save Data" card. Rename the card label from "Developer Tools" to "Data Backup" (or similar). Always render it.
+- `utils/featureFlags.ts`: Remove `isTestBuild` export (or keep for future use but no longer referenced by save/load code).
+
+### 11.3 — Handle load errors gracefully on web
+
+On web, the user might pick an invalid file, cancel the file picker, or select a non-JSON file. The `loadBackup()` web implementation should handle these cases:
+
+- If the user cancels the file picker, return `null` (no error).
+- If the file is not valid JSON or doesn't match the `BackupData` shape, throw an error.
+- `welcome.tsx` and any future callers should catch errors and show an `Alert` with a user-friendly message like "The selected file is not a valid HealthTracker backup."
+
+**Changes:**
+- `storage/backupStorage.ts`: Add validation in the web `loadBackup()` path — check that parsed JSON has expected top-level keys (`entries`, `preferences`, etc.) before returning.
+- `app/welcome.tsx`: Wrap `handleLoadData` in try/catch, show `Alert.alert('Error', ...)` on failure, reset `loadingBackup` state.
+
+---
+
+## Files Changed in Phase 11
+
+- `storage/backupStorage.ts` — Platform-aware rewrite: native keeps expo-file-system, web uses download/file-picker
+- `app/welcome.tsx` — Remove `isTestBuild` gate, add error handling for invalid backup files
+- `app/(tabs)/settings.tsx` — Remove `isTestBuild` gate, rename card to "Data Backup"
+- `utils/featureFlags.ts` — Remove or deprecate `isTestBuild` (no longer used by save/load)
+
+---
+
 ## Phase 10: Onboarding & Data Save/Load [IN PROGRESS]
 
 ### 10.1 — Welcome/Login Screen
