@@ -180,7 +180,10 @@ export default function SettingsScreen() {
       }
       return 0; // 'auto' mode — activity already baked into TDEE
     });
-    return dailyBurned.reduce((s, v) => s + v, 0) / 7;
+    const activeDays = dailyBurned.filter((v) => v > 0);
+    return activeDays.length > 0
+      ? activeDays.reduce((s, v) => s + v, 0) / activeDays.length
+      : 0;
   })();
   const adjustedGoalCalories: number | null =
     goalCalories !== null ? goalCalories + Math.round(avgActivityCalories) : null;

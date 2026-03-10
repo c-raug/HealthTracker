@@ -279,6 +279,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         sections={sections}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         keyboardShouldPersistTaps="handled"
+        stickySectionHeadersEnabled={false}
         renderSectionHeader={({ section: { title } }) => (
           <Text style={styles.sectionHeader}>{title}</Text>
         )}

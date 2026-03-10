@@ -56,9 +56,9 @@ interface GoalsSectionProps {
 
 // ─── Weight goal drum constants ───────────────────────────────────────────────
 const ITEM_HEIGHT = 44;
-const VISIBLE_ITEMS = 5;
+const VISIBLE_ITEMS = 3;
 const DRUM_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
-const PAD_COUNT = Math.floor(VISIBLE_ITEMS / 2); // 2
+const PAD_COUNT = Math.floor(VISIBLE_ITEMS / 2); // 1
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({

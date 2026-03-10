@@ -4,7 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  SectionList,
   StyleSheet,
   Alert,
   Modal,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { NutritionFoodItem, SavedMeal } from '../../types';
+import { NutritionFoodItem, SavedMeal, CustomFood } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import PortionSelector from './PortionSelector';
@@ -59,6 +59,7 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingHorizontal: Spacing.md,
       paddingTop: Spacing.md,
       paddingBottom: Spacing.xs,
+      backgroundColor: colors.background,
     },
     foodRow: {
       flexDirection: 'row',
@@ -197,6 +198,11 @@ interface Props {
   onDone: () => void;
 }
 
+// Discriminated union so SectionList can render both meal foods and custom foods
+type SectionItem =
+  | { kind: 'meal'; food: NutritionFoodItem }
+  | { kind: 'custom'; food: CustomFood };
+
 export default function EditMealFlow({ meal, onDone }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
@@ -205,7 +211,6 @@ export default function EditMealFlow({ meal, onDone }: Props) {
   const [mealName, setMealName] = useState(meal.name);
   const [foods, setFoods] = useState<NutritionFoodItem[]>(meal.foods);
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<NutritionFoodItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);
 
@@ -213,36 +218,46 @@ export default function EditMealFlow({ meal, onDone }: Props) {
   const [editingFood, setEditingFood] = useState<NutritionFoodItem | null>(null);
   const [editingServings, setEditingServings] = useState<number>(1);
 
-  const toNutritionItem = (f: (typeof customFoods)[0]): NutritionFoodItem => ({
-    id: f.id,
-    name: f.name,
-    calories: f.calories,
-    protein: f.protein,
-    carbs: f.carbs,
-    fat: f.fat,
-    servingSize: f.servingSize,
-    servings: 1,
-  });
+  const handleSearch = useCallback((text: string) => {
+    setQuery(text);
+    setSelectedItem(null);
+  }, []);
 
-  const handleSearch = useCallback(
-    (text: string) => {
-      setQuery(text);
-      setSelectedItem(null);
+  // Build sections: "In Meal" only when not searching; Pinned/My Foods always
+  const trimmed = query.trim().toLowerCase();
+  const filtered =
+    trimmed.length === 0
+      ? customFoods
+      : customFoods.filter((f) => f.name.toLowerCase().includes(trimmed));
+  const pinnedCustom = filtered.filter((f) => f.pinned);
+  const unpinnedCustom = filtered.filter((f) => !f.pinned);
 
-      const trimmedText = text.trim().toLowerCase();
-      const results = (
-        trimmedText.length === 0
-          ? customFoods
-          : customFoods.filter((f) => f.name.toLowerCase().includes(trimmedText))
-      ).map(toNutritionItem);
-      setSearchResults(results);
-    },
-    [customFoods],
-  );
+  const sections: { title: string; data: SectionItem[] }[] = [];
+  if (trimmed.length === 0 && foods.length > 0) {
+    sections.push({
+      title: `In Meal (${foods.length})`,
+      data: foods.map((f) => ({ kind: 'meal', food: f })),
+    });
+  }
+  if (pinnedCustom.length > 0) {
+    sections.push({ title: 'Pinned', data: pinnedCustom.map((f) => ({ kind: 'custom', food: f })) });
+  }
+  if (unpinnedCustom.length > 0) {
+    sections.push({ title: 'My Foods', data: unpinnedCustom.map((f) => ({ kind: 'custom', food: f })) });
+  }
 
-  const handleSelectItem = (item: NutritionFoodItem) => {
+  const handleSelectItem = (customFood: CustomFood) => {
     Keyboard.dismiss();
-    setSelectedItem(item);
+    setSelectedItem({
+      id: customFood.id,
+      name: customFood.name,
+      calories: customFood.calories,
+      protein: customFood.protein,
+      carbs: customFood.carbs,
+      fat: customFood.fat,
+      servingSize: customFood.servingSize,
+      servings: 1,
+    });
     setServings(1);
   };
 
@@ -262,7 +277,6 @@ export default function EditMealFlow({ meal, onDone }: Props) {
     setSelectedItem(null);
     setServings(1);
     setQuery('');
-    setSearchResults([]);
   };
 
   const handleRemoveFood = (id: string) => {
@@ -338,33 +352,62 @@ export default function EditMealFlow({ meal, onDone }: Props) {
         />
       </View>
 
-      {searchResults.length > 0 && (
-        <>
-          <Text style={styles.sectionLabel}>
-            {query.trim().length === 0 ? 'My Foods' : 'Search Results'}
-          </Text>
-          <FlatList
-            data={searchResults.slice(0, 10)}
-            keyExtractor={(item, i) => `${item.id}-${i}`}
-            keyboardShouldPersistTaps="handled"
-            style={{ maxHeight: 200 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.resultItem,
-                  selectedItem?.id === item.id && { backgroundColor: colors.primaryLight },
-                ]}
-                onPress={() => handleSelectItem(item)}
-              >
-                <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.resultInfo}>
-                  {item.calories} cal{item.servingSize ? ` · ${item.servingSize}` : ''}
-                </Text>
+      <SectionList
+        sections={sections}
+        keyExtractor={(item, i) =>
+          item.kind === 'meal' ? `meal-${item.food.id}-${i}` : `custom-${item.food.id}-${i}`
+        }
+        keyboardShouldPersistTaps="handled"
+        stickySectionHeadersEnabled={false}
+        style={{ flex: 1 }}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionLabel}>{section.title}</Text>
+        )}
+        renderItem={({ item }) => {
+          if (item.kind === 'meal') {
+            return (
+              <TouchableOpacity style={styles.foodRow} onPress={() => handleOpenEditPortion(item.food)}>
+                <View style={styles.foodInfo}>
+                  <Text style={styles.foodName} numberOfLines={1}>{item.food.name}</Text>
+                  <Text style={styles.foodCal}>
+                    {item.food.calories} cal
+                    {item.food.servings != null && item.food.servings !== 1
+                      ? ` · ${item.food.servings} servings`
+                      : ''}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.removeBtn}
+                  onPress={() => handleRemoveFood(item.food.id)}
+                >
+                  <Ionicons name="close-circle" size={20} color={colors.danger} />
+                </TouchableOpacity>
               </TouchableOpacity>
-            )}
-          />
-        </>
-      )}
+            );
+          }
+          return (
+            <TouchableOpacity
+              style={[
+                styles.resultItem,
+                selectedItem?.id === item.food.id && { backgroundColor: colors.primaryLight },
+              ]}
+              onPress={() => handleSelectItem(item.food)}
+            >
+              <Text style={styles.resultName} numberOfLines={1}>{item.food.name}</Text>
+              <Text style={styles.resultInfo}>
+                {item.food.calories} cal{item.food.servingSize ? ` · ${item.food.servingSize}` : ''}
+              </Text>
+            </TouchableOpacity>
+          );
+        }}
+        ListEmptyComponent={
+          <Text style={styles.empty}>
+            {trimmed.length > 0
+              ? 'No results found'
+              : 'No custom foods saved yet'}
+          </Text>
+        }
+      />
 
       {selectedItem && (
         <View style={styles.portionPanel}>
@@ -382,36 +425,6 @@ export default function EditMealFlow({ meal, onDone }: Props) {
             <Text style={styles.confirmText}>Add to Meal</Text>
           </TouchableOpacity>
         </View>
-      )}
-
-      <Text style={styles.sectionLabel}>
-        Foods in Meal ({foods.length})
-      </Text>
-
-      {foods.length === 0 ? (
-        <Text style={styles.empty}>Search and tap foods above to add them</Text>
-      ) : (
-        <FlatList
-          data={foods}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.foodRow} onPress={() => handleOpenEditPortion(item)}>
-              <View style={styles.foodInfo}>
-                <Text style={styles.foodName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.foodCal}>
-                  {item.calories} cal
-                  {item.servings != null && item.servings !== 1 ? ` · ${item.servings} servings` : ''}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.removeBtn}
-                onPress={() => handleRemoveFood(item.id)}
-              >
-                <Ionicons name="close-circle" size={20} color={colors.danger} />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          )}
-        />
       )}
 
       <View style={styles.btnRow}>
