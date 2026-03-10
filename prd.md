@@ -1,5 +1,41 @@
 # HealthTracker — Product Requirements
 
+## Phase 14: UX Polish — Pinned Foods, Drum Picker & Active Macros [IN PROGRESS]
+
+### 14.1 — Show Pinned Foods in CreateMealFlow
+
+Pinned custom foods are now visible when creating a saved meal, in a dedicated "Pinned" section above "My Foods". Rows are tap-to-select only (no management buttons). Search query filters both sections simultaneously.
+
+**Changes:**
+- `components/nutrition/CreateMealFlow.tsx`: Replace `FlatList` with `SectionList`; compute `pinnedResults`/`unpinnedResults` from `searchResults` by looking up `customFoods.find(f => f.id === item.id)?.pinned`; render section headers using existing `sectionLabel` style.
+
+### 14.2 — Weight Goal Drum Scroll Wheel in GoalsSection
+
+Replaced the 9-button vertical grid with a compact drum scroll wheel (same `ScrollView` snap pattern as the hour/minute drums in `activities.tsx`). Takes significantly less vertical space.
+
+**Changes:**
+- `components/settings/GoalsSection.tsx`: Add `ScrollView`, `NativeSyntheticEvent`, `NativeScrollEvent` imports; add drum constants (`ITEM_HEIGHT=44`, `VISIBLE_ITEMS=5`, `PAD_COUNT=2`); add `goalScrollRef`, `handleGoalScroll`, mount `useEffect` to snap to current goal; add drum styles (`drumWrapper`, `drumContainer`, `drumHighlight`, `drumItem`, `drumItemText`, `drumItemTextSelected`); replace `optionGrid` button block with drum `ScrollView`.
+
+### 14.3 — Macro Grams Reflect 7-day Average Activity + Tooltip
+
+`settings.tsx` now computes a 7-day average of daily activity calories (filtered by `activityMode`) and adds it to TDEE before passing to `MacroSection`. An ⓘ icon reveals an `Alert` explaining that grams factor in profile, weight, and average activity.
+
+**Changes:**
+- `app/(tabs)/settings.tsx`: After computing `goalCalories`, build `last7Dates` array; sum `caloriesBurned` per day filtered by `activityMode` (same logic as `nutrition.tsx`); compute `avgActivityCalories` (mean over 7 days); pass `adjustedGoalCalories = goalCalories + Math.round(avgActivityCalories)` and `activityAdjusted: boolean` to `MacroSection`.
+- `components/settings/MacroSection.tsx`: Accept `activityAdjusted?: boolean` prop; add `Alert` + `Ionicons` imports; wrap split preview in `splitPreviewRow` flex row with ⓘ `TouchableOpacity` that shows an `Alert.alert()` explaining the calculation.
+
+---
+
+## Files Changed in Phase 14
+
+- `components/nutrition/CreateMealFlow.tsx` — SectionList with Pinned + My Foods sections in food search
+- `components/settings/GoalsSection.tsx` — Weight goal drum scroll wheel replacing button grid
+- `app/(tabs)/settings.tsx` — 7-day avg activity calories added to goalCalories; new props to MacroSection
+- `components/settings/MacroSection.tsx` — `activityAdjusted` prop; ⓘ tooltip on gram summary
+- `CLAUDE.md` — Updated CreateMealFlow, MacroSection, and Settings screen notes
+
+---
+
 ## Phase 13: UX Polish & API Removal [IN PROGRESS]
 
 ### 13.1 — Weight Tab: Single Scrollable Screen

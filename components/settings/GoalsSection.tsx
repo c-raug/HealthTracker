@@ -1,5 +1,14 @@
-import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -44,6 +53,12 @@ interface GoalsSectionProps {
   activityMode: ActivityMode;
   onActivityModeChange: (mode: ActivityMode) => void;
 }
+
+// ─── Weight goal drum constants ───────────────────────────────────────────────
+const ITEM_HEIGHT = 44;
+const VISIBLE_ITEMS = 5;
+const DRUM_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
+const PAD_COUNT = Math.floor(VISIBLE_ITEMS / 2); // 2
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -163,6 +178,44 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.primary,
       lineHeight: 17,
     },
+    // Weight goal drum picker
+    drumWrapper: {
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+    },
+    drumContainer: {
+      width: 220,
+      height: DRUM_HEIGHT,
+      overflow: 'hidden',
+      borderRadius: Radius.md,
+      backgroundColor: colors.background,
+    },
+    drumHighlight: {
+      position: 'absolute',
+      top: ITEM_HEIGHT * PAD_COUNT,
+      left: 0,
+      right: 0,
+      height: ITEM_HEIGHT,
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.sm,
+    },
+    drumItem: {
+      height: ITEM_HEIGHT,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    drumItemText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+    },
+    drumItemTextSelected: {
+      ...Typography.body,
+      color: colors.text,
+      fontWeight: '700',
+    },
   });
 
 export default function GoalsSection({ activityMode, onActivityModeChange }: GoalsSectionProps) {
@@ -183,6 +236,8 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
   const [fitnessGoal, setFitnessGoal] = useState(profile?.fitnessGoal ?? '');
   const [infoModal, setInfoModal] = useState<{ title: string; description: string } | null>(null);
   const [modeInfoModal, setModeInfoModal] = useState<{ title: string; description: string } | null>(null);
+
+  const goalScrollRef = useRef<ScrollView>(null);
 
   const GOAL_LABELS: { value: WeightGoal; label: string }[] = isImperial
     ? [
@@ -230,6 +285,25 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
     patchProfile({ weightGoal: val });
   };
 
+  const handleGoalScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const clamped = Math.max(0, Math.min(GOAL_LABELS.length - 1, index));
+    const goal = GOAL_LABELS[clamped];
+    if (goal && goal.value !== weightGoal) {
+      handleGoalChange(goal.value);
+    }
+  };
+
+  // Scroll to current goal on mount
+  useEffect(() => {
+    const index = GOAL_LABELS.findIndex((g) => g.value === weightGoal);
+    const t = setTimeout(() => {
+      goalScrollRef.current?.scrollTo({ y: index * ITEM_HEIGHT, animated: false });
+    }, 50);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleFitnessGoalChange = (val: string) => {
     setFitnessGoal(val);
     patchProfile({ fitnessGoal: val || undefined });
@@ -245,19 +319,34 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
     <View style={styles.card}>
       {/* Weight Goal */}
       <Text style={styles.inputLabel}>Weight Goal</Text>
-      <View style={styles.optionGrid}>
-        {GOAL_LABELS.map((item) => (
-          <TouchableOpacity
-            key={item.value}
-            style={[styles.optionBtn, weightGoal === item.value && styles.optionBtnActive]}
-            onPress={() => handleGoalChange(item.value)}
-            activeOpacity={0.8}
+      <View style={styles.drumWrapper}>
+        <View style={styles.drumContainer}>
+          <View style={styles.drumHighlight} pointerEvents="none" />
+          <ScrollView
+            ref={goalScrollRef}
+            showsVerticalScrollIndicator={false}
+            snapToInterval={ITEM_HEIGHT}
+            decelerationRate="fast"
+            scrollEventThrottle={16}
+            onMomentumScrollEnd={handleGoalScroll}
+            onScrollEndDrag={handleGoalScroll}
+            contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
           >
-            <Text style={[styles.optionText, weightGoal === item.value && styles.optionTextActive]}>
-              {item.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+            {GOAL_LABELS.map((item) => (
+              <View key={item.value} style={styles.drumItem}>
+                <Text
+                  style={
+                    weightGoal === item.value
+                      ? styles.drumItemTextSelected
+                      : styles.drumItemText
+                  }
+                >
+                  {item.label}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
       </View>
 
       {/* Activity Tracking Mode */}

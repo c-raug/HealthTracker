@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
+  SectionList,
   StyleSheet,
   Alert,
   Keyboard,
@@ -288,36 +289,50 @@ export default function CreateMealFlow({ onDone }: Props) {
 
       {isSearchMode ? (
         <>
-          <Text style={styles.sectionLabel}>
-            {query.trim().length === 0 ? 'My Foods' : 'Search Results'}
-          </Text>
-          <FlatList
-            data={searchResults.slice(0, 10)}
-            keyExtractor={(item, i) => `${item.id}-${i}`}
-            keyboardShouldPersistTaps="handled"
-            style={{ flex: 1 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.resultItem,
-                  selectedItem?.id === item.id && { backgroundColor: colors.primaryLight },
-                ]}
-                onPress={() => handleSelectItem(item)}
-              >
-                <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.resultInfo}>
-                  {item.calories} cal{item.servingSize ? ` · ${item.servingSize}` : ''}
-                </Text>
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={
-              <Text style={styles.empty}>
-                {query.trim().length === 0
-                  ? 'No custom foods saved yet'
-                  : 'No results found'}
-              </Text>
-            }
-          />
+          {(() => {
+            const pinnedResults = searchResults.filter(
+              (item) => customFoods.find((f) => f.id === item.id)?.pinned,
+            );
+            const unpinnedResults = searchResults.filter(
+              (item) => !customFoods.find((f) => f.id === item.id)?.pinned,
+            );
+            const sections = [
+              ...(pinnedResults.length > 0 ? [{ title: 'Pinned', data: pinnedResults }] : []),
+              ...(unpinnedResults.length > 0 ? [{ title: 'My Foods', data: unpinnedResults }] : []),
+            ];
+            return (
+              <SectionList
+                sections={sections}
+                keyExtractor={(item, i) => `${item.id}-${i}`}
+                keyboardShouldPersistTaps="handled"
+                style={{ flex: 1 }}
+                renderSectionHeader={({ section }) => (
+                  <Text style={styles.sectionLabel}>{section.title}</Text>
+                )}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.resultItem,
+                      selectedItem?.id === item.id && { backgroundColor: colors.primaryLight },
+                    ]}
+                    onPress={() => handleSelectItem(item)}
+                  >
+                    <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.resultInfo}>
+                      {item.calories} cal{item.servingSize ? ` · ${item.servingSize}` : ''}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                ListEmptyComponent={
+                  <Text style={styles.empty}>
+                    {query.trim().length === 0
+                      ? 'No custom foods saved yet'
+                      : 'No results found'}
+                  </Text>
+                }
+              />
+            );
+          })()}
           {selectedItem && (
             <View style={styles.portionPanel}>
               <PortionSelector

@@ -5,7 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import {
   useColors,
@@ -131,19 +133,26 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       marginTop: Spacing.xs,
     },
+    splitPreviewRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.xs,
+      marginTop: Spacing.xs,
+    },
     splitPreview: {
       ...Typography.small,
       color: colors.textSecondary,
       textAlign: 'center',
-      marginTop: Spacing.xs,
     },
   });
 
 interface Props {
   goalCalories: number | null;
+  activityAdjusted?: boolean;
 }
 
-export default function MacroSection({ goalCalories }: Props) {
+export default function MacroSection({ goalCalories, activityAdjusted }: Props) {
   const { preferences, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
@@ -334,9 +343,27 @@ export default function MacroSection({ goalCalories }: Props) {
         </>
       )}
 
-      <Text style={styles.splitPreview}>
-        P: {currentSplit.protein}% ({gramsFor(currentSplit.protein, goalCalories, 4)}) · C: {currentSplit.carbs}% ({gramsFor(currentSplit.carbs, goalCalories, 4)}) · F: {currentSplit.fat}% ({gramsFor(currentSplit.fat, goalCalories, 9)})
-      </Text>
+      <View style={styles.splitPreviewRow}>
+        <Text style={styles.splitPreview}>
+          P: {currentSplit.protein}% ({gramsFor(currentSplit.protein, goalCalories, 4)}) · C: {currentSplit.carbs}% ({gramsFor(currentSplit.carbs, goalCalories, 4)}) · F: {currentSplit.fat}% ({gramsFor(currentSplit.fat, goalCalories, 9)})
+        </Text>
+        {goalCalories !== null && (
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert(
+                'How are these calculated?',
+                activityAdjusted
+                  ? 'Gram targets are based on your profile, latest weight, and your average calories burned over the last 7 days.'
+                  : 'Gram targets are based on your profile and latest weight. Log activity to include exercise calories.',
+              )
+            }
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.6}
+          >
+            <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
