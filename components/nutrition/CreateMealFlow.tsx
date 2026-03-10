@@ -283,6 +283,24 @@ export default function CreateMealFlow({ onDone }: Props) {
         />
       </View>
 
+      {selectedItem && (
+        <View style={styles.portionPanel}>
+          <PortionSelector
+            value={servings}
+            onChange={setServings}
+            baseCalories={selectedItem.calories ?? 0}
+            baseProtein={selectedItem.protein ?? 0}
+            baseCarbs={selectedItem.carbs ?? 0}
+            baseFat={selectedItem.fat ?? 0}
+            servingSize={selectedItem.servingSize ?? '1 serving'}
+            baseServings={selectedItem.servings ?? 1}
+          />
+          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
+            <Text style={styles.confirmText}>Add to Meal</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <SectionList
         sections={sections}
         keyExtractor={(item, i) =>
@@ -332,24 +350,6 @@ export default function CreateMealFlow({ onDone }: Props) {
           </Text>
         }
       />
-
-      {selectedItem && (
-        <View style={styles.portionPanel}>
-          <PortionSelector
-            value={servings}
-            onChange={setServings}
-            baseCalories={selectedItem.calories ?? 0}
-            baseProtein={selectedItem.protein ?? 0}
-            baseCarbs={selectedItem.carbs ?? 0}
-            baseFat={selectedItem.fat ?? 0}
-            servingSize={selectedItem.servingSize ?? '1 serving'}
-            baseServings={selectedItem.servings ?? 1}
-          />
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
-            <Text style={styles.confirmText}>Add to Meal</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <View style={styles.btnRow}>
         <TouchableOpacity style={styles.cancelBtn} onPress={onDone} activeOpacity={0.8}>
