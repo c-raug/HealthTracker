@@ -353,7 +353,7 @@ export default function MacroSection({ goalCalories, activityAdjusted }: Props) 
               Alert.alert(
                 'How are these calculated?',
                 activityAdjusted
-                  ? 'Gram targets are based on your profile, latest weight, and your average calories burned over the last 7 days.'
+                  ? 'Gram targets are based on your profile, latest weight, and your average calories burned across days with activity in the last 7 days.'
                   : 'Gram targets are based on your profile and latest weight. Log activity to include exercise calories.',
               )
             }
