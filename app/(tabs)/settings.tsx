@@ -158,6 +158,34 @@ export default function SettingsScreen() {
         )
       : null;
 
+  // Compute 7-day average activity calories (same filtering logic as nutrition.tsx)
+  const last7Dates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+  const avgActivityCalories: number = (() => {
+    if (goalCalories === null) return 0;
+    const dailyBurned = last7Dates.map((date) => {
+      const dayActivity = activityLog.find((d) => d.date === date);
+      if (!dayActivity) return 0;
+      if (activityMode === 'manual') {
+        return dayActivity.activities
+          .filter((a) => a.type !== 'smartwatch')
+          .reduce((s, a) => s + a.caloriesBurned, 0);
+      } else if (activityMode === 'smartwatch') {
+        return dayActivity.activities
+          .filter((a) => a.type === 'smartwatch')
+          .reduce((s, a) => s + a.caloriesBurned, 0);
+      }
+      return 0; // 'auto' mode — activity already baked into TDEE
+    });
+    return dailyBurned.reduce((s, v) => s + v, 0) / 7;
+  })();
+  const adjustedGoalCalories: number | null =
+    goalCalories !== null ? goalCalories + Math.round(avgActivityCalories) : null;
+  const activityAdjusted = avgActivityCalories > 0;
+
   return (
     <ScrollView style={styles.container} ref={scrollRef}>
       {/* 1. Profile — biometrics only */}
@@ -244,7 +272,9 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Macros</Text>
           </View>
         </TouchableOpacity>
-        {macroExpanded && <MacroSection goalCalories={goalCalories} />}
+        {macroExpanded && (
+          <MacroSection goalCalories={adjustedGoalCalories} activityAdjusted={activityAdjusted} />
+        )}
       </View>
 
       {/* 5. Data Backup */}
