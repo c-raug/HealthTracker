@@ -13,7 +13,7 @@ import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import { CustomFood } from '../../types';
 
-const PORTION_UNITS = ['g', 'oz', 'qty'] as const;
+const PORTION_UNITS = ['g', 'oz', 'cup', 'qty'] as const;
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -158,9 +158,10 @@ interface Props {
   onDone: () => void;
   initialFood?: CustomFood;
   mode?: 'create' | 'edit';
+  initialName?: string;
 }
 
-export default function CustomFoodForm({ onDone, initialFood, mode = 'create' }: Props) {
+export default function CustomFoodForm({ onDone, initialFood, mode = 'create', initialName }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { dispatch } = useApp();
@@ -170,7 +171,7 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create' }:
   const parsedRawUnit = initialFood ? (initialFood.servingSize.split(' ')[1] ?? 'g') : 'g';
   const parsedUnit = (PORTION_UNITS as readonly string[]).includes(parsedRawUnit) ? parsedRawUnit : 'g';
 
-  const [name, setName] = useState(initialFood?.name ?? '');
+  const [name, setName] = useState(initialFood?.name ?? initialName ?? '');
   const [calories, setCalories] = useState(initialFood ? initialFood.calories.toString() : '');
   const [protein, setProtein] = useState(initialFood ? initialFood.protein.toString() : '');
   const [carbs, setCarbs] = useState(initialFood ? initialFood.carbs.toString() : '');
