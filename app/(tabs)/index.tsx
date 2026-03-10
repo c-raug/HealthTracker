@@ -38,35 +38,6 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: Spacing.md, paddingTop: Spacing.md },
 
-  // Toggle
-  toggleRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
-    padding: 4,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  toggleBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-  },
-  toggleBtnActive: {
-    backgroundColor: colors.primary,
-  },
-  toggleText: {
-    ...Typography.body,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  toggleTextActive: {
-    color: colors.white,
-    fontWeight: '600',
-  },
-
   // Today pill
   todayPill: {
     alignSelf: 'center',
@@ -202,7 +173,6 @@ export default function WeightScreen() {
   const colors = useColors();
   const styles = makeStyles(colors);
 
-  const [activeSection, setActiveSection] = useState<'log' | 'history'>('log');
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
@@ -309,128 +279,85 @@ export default function WeightScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Section toggle */}
-        <View style={styles.toggleRow}>
-          <TouchableOpacity
-            style={[
-              styles.toggleBtn,
-              activeSection === 'log' && styles.toggleBtnActive,
-            ]}
-            onPress={() => setActiveSection('log')}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                activeSection === 'log' && styles.toggleTextActive,
-              ]}
-            >
-              Log
-            </Text>
+        {/* Today pill */}
+        {selectedDate !== today && (
+          <TouchableOpacity style={styles.todayPill} onPress={() => setSelectedDate(today)} activeOpacity={0.7}>
+            <Text style={styles.todayPillText}>Today</Text>
           </TouchableOpacity>
+        )}
+
+        {/* Date navigation bar */}
+        <View style={styles.dateNav}>
+          <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
+            <Ionicons name="chevron-back" size={22} color={colors.primary} />
+          </TouchableOpacity>
+
           <TouchableOpacity
-            style={[
-              styles.toggleBtn,
-              activeSection === 'history' && styles.toggleBtnActive,
-            ]}
-            onPress={() => setActiveSection('history')}
-            activeOpacity={0.8}
+            style={styles.dateCenter}
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.7}
           >
-            <Text
-              style={[
-                styles.toggleText,
-                activeSection === 'history' && styles.toggleTextActive,
-              ]}
-            >
-              History
+            <Text style={styles.dateText}>
+              {formatDisplayDate(selectedDate)}
             </Text>
+            <Ionicons
+              name="calendar-outline"
+              size={16}
+              color={colors.textSecondary}
+              style={styles.calendarIcon}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={goForward}
+            style={styles.arrowBtn}
+            disabled={isForwardDisabled}
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={22}
+              color={isForwardDisabled ? colors.border : colors.primary}
+            />
           </TouchableOpacity>
         </View>
 
-        {activeSection === 'log' ? (
-          <>
-            {/* Today pill */}
-            {selectedDate !== today && (
-              <TouchableOpacity style={styles.todayPill} onPress={() => setSelectedDate(today)} activeOpacity={0.7}>
-                <Text style={styles.todayPillText}>Today</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Date navigation bar */}
-            <View style={styles.dateNav}>
-              <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
-                <Ionicons name="chevron-back" size={22} color={colors.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.dateCenter}
-                onPress={() => setShowDatePicker(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.dateText}>
-                  {formatDisplayDate(selectedDate)}
-                </Text>
-                <Ionicons
-                  name="calendar-outline"
-                  size={16}
-                  color={colors.textSecondary}
-                  style={styles.calendarIcon}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={goForward}
-                style={styles.arrowBtn}
-                disabled={isForwardDisabled}
-              >
-                <Ionicons
-                  name="chevron-forward"
-                  size={22}
-                  color={isForwardDisabled ? colors.border : colors.primary}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {existingEntry && (
-              <Text style={styles.existingNote}>
-                Existing entry: {existingEntry.weight} {existingEntry.unit} — saving will replace it.
-              </Text>
-            )}
-
-            {/* Weight input */}
-            <Text style={styles.sectionLabel}>
-              Weight ({preferences.unit})
-            </Text>
-            <TextInput
-              style={styles.input}
-              value={weightInput}
-              onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
-              keyboardType="decimal-pad"
-              placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
-              placeholderTextColor={colors.textSecondary}
-              returnKeyType="done"
-              onSubmitEditing={handleSave}
-            />
-
-            {/* Save button */}
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSave}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.saveButtonText}>Save Entry</Text>
-            </TouchableOpacity>
-
-            {savedMessage && (
-              <Text style={styles.savedMessage}>{savedMessage}</Text>
-            )}
-          </>
-        ) : (
-          <>
-            <WeightChart />
-            <WeightInsights />
-          </>
+        {existingEntry && (
+          <Text style={styles.existingNote}>
+            Existing entry: {existingEntry.weight} {existingEntry.unit} — saving will replace it.
+          </Text>
         )}
+
+        {/* Weight input */}
+        <Text style={styles.sectionLabel}>
+          Weight ({preferences.unit})
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={weightInput}
+          onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
+          keyboardType="decimal-pad"
+          placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
+          placeholderTextColor={colors.textSecondary}
+          returnKeyType="done"
+          onSubmitEditing={handleSave}
+        />
+
+        {/* Save button */}
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSave}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.saveButtonText}>Save Entry</Text>
+        </TouchableOpacity>
+
+        {savedMessage && (
+          <Text style={styles.savedMessage}>{savedMessage}</Text>
+        )}
+
+        {/* History & Insights — always visible below entry */}
+        <WeightChart />
+        <WeightInsights />
       </ScrollView>
 
       {/* Date picker — Android renders inline, iOS uses a modal */}

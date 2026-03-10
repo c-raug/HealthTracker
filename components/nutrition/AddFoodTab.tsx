@@ -1,18 +1,16 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  SectionList,
   StyleSheet,
-  ActivityIndicator,
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { NutritionFoodItem, MealCategory } from '../../types';
-import { searchFoods } from '../../api/usdaFoodData';
+import { NutritionFoodItem, MealCategory, CustomFood } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import CustomFoodForm from './CustomFoodForm';
@@ -46,9 +44,14 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingHorizontal: Spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
+      flexDirection: 'row',
+      alignItems: 'center',
     },
     resultSelected: {
       backgroundColor: colors.primaryLight,
+    },
+    foodInfo: {
+      flex: 1,
     },
     resultName: {
       ...Typography.body,
@@ -59,14 +62,13 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.small,
       color: colors.textSecondary,
     },
-    customBadge: {
-      ...Typography.small,
-      color: colors.primary,
-      fontWeight: '600',
-    },
-    inlineLoader: {
-      paddingVertical: Spacing.sm,
+    actionBtns: {
+      flexDirection: 'row',
       alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    actionBtn: {
+      padding: Spacing.xs,
     },
     empty: {
       ...Typography.body,
@@ -131,26 +133,25 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const { customFoods, dispatch } = useApp();
 
   const [query, setQuery] = useState('');
-  const [offResults, setOffResults] = useState<NutritionFoodItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const [editingFood, setEditingFood] = useState<CustomFood | null>(null);
 
-  // Filter custom foods by query — show all when empty, filter at 1+ chars
-  const trimmed = query.trim();
-  const filteredCustomFoods =
-    trimmed.length === 0
-      ? customFoods
-      : customFoods.filter((f) =>
-          f.name.toLowerCase().includes(trimmed.toLowerCase()),
-        );
+  // Filter custom foods by query
+  const trimmed = query.trim().toLowerCase();
+  const filtered = trimmed.length === 0
+    ? customFoods
+    : customFoods.filter((f) => f.name.toLowerCase().includes(trimmed));
 
-  // Convert custom foods to NutritionFoodItem format for display
-  const customResults: NutritionFoodItem[] = filteredCustomFoods.map((f) => ({
+  const pinned = filtered.filter((f) => f.pinned);
+  const unpinned = filtered.filter((f) => !f.pinned);
+
+  const sections: { title: string; data: CustomFood[] }[] = [];
+  if (pinned.length > 0) sections.push({ title: 'Pinned', data: pinned });
+  if (unpinned.length > 0) sections.push({ title: 'My Foods', data: unpinned });
+
+  const toNutritionItem = useCallback((f: CustomFood): NutritionFoodItem => ({
     id: f.id,
     name: f.name,
     calories: f.calories,
@@ -159,55 +160,33 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
     fat: f.fat,
     servingSize: f.servingSize,
     servings: 1,
-  }));
+  }), []);
 
-  const allResults = [...customResults, ...offResults];
+  const handleTogglePin = (food: CustomFood) => {
+    dispatch({ type: 'UPDATE_CUSTOM_FOOD', food: { ...food, pinned: !food.pinned } });
+  };
 
-  const handleSearch = useCallback(
-    (text: string) => {
-      setQuery(text);
-      setSelectedItem(null);
+  const handleDelete = (id: string) => {
+    dispatch({ type: 'DELETE_CUSTOM_FOOD', id });
+    if (selectedItem?.id === id) setSelectedItem(null);
+  };
 
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-
-      if (text.trim().length < 2) {
-        setOffResults([]);
-        setSearched(false);
-        return;
-      }
-
-      debounceRef.current = setTimeout(async () => {
-        if (abortRef.current) abortRef.current.abort();
-        const controller = new AbortController();
-        abortRef.current = controller;
-
-        setLoading(true);
-        try {
-          const { items } = await searchFoods(text.trim(), 1, controller.signal);
-          setOffResults(items);
-          setSearched(true);
-        } catch (e: unknown) {
-          if (e instanceof Error && e.name === 'AbortError') return;
-          setOffResults([]);
-          setSearched(true);
-        }
-        setLoading(false);
-      }, 300);
-    },
-    [customFoods],
-  );
+  const handleSelectFood = (food: CustomFood) => {
+    Keyboard.dismiss();
+    setSelectedItem(toNutritionItem(food));
+    setServings(1);
+  };
 
   const handleConfirmAdd = () => {
     if (!selectedItem) return;
 
-    const baseServings = selectedItem.servings ?? 1;
     const food: NutritionFoodItem = {
       ...selectedItem,
       id: generateId(),
-      calories: Math.round((selectedItem.calories ?? 0) * servings / baseServings),
-      protein: Math.round(((selectedItem.protein ?? 0) * servings / baseServings) * 10) / 10,
-      carbs: Math.round(((selectedItem.carbs ?? 0) * servings / baseServings) * 10) / 10,
-      fat: Math.round(((selectedItem.fat ?? 0) * servings / baseServings) * 10) / 10,
+      calories: Math.round((selectedItem.calories ?? 0) * servings),
+      protein: Math.round(((selectedItem.protein ?? 0) * servings) * 10) / 10,
+      carbs: Math.round(((selectedItem.carbs ?? 0) * servings) * 10) / 10,
+      fat: Math.round(((selectedItem.fat ?? 0) * servings) * 10) / 10,
       servings,
     };
 
@@ -219,7 +198,15 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
     return <CustomFoodForm onDone={() => setShowCreateForm(false)} />;
   }
 
-  const isCustom = (id: string) => customFoods.some((f) => f.id === id);
+  if (editingFood) {
+    return (
+      <CustomFoodForm
+        initialFood={editingFood}
+        mode="edit"
+        onDone={() => setEditingFood(null)}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -227,7 +214,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         <TextInput
           style={styles.searchInput}
           value={query}
-          onChangeText={handleSearch}
+          onChangeText={setQuery}
           placeholder="Search foods..."
           placeholderTextColor={colors.textSecondary}
           autoFocus
@@ -253,7 +240,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
             baseCarbs={selectedItem.carbs ?? 0}
             baseFat={selectedItem.fat ?? 0}
             servingSize={selectedItem.servingSize ?? '1 serving'}
-            baseServings={selectedItem.servings ?? 1}
+            baseServings={1}
           />
           <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
             <Text style={styles.confirmText}>Add to {category}</Text>
@@ -261,52 +248,65 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         </View>
       )}
 
-      {loading && (
-        <View style={styles.inlineLoader}>
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      )}
-
-      <FlatList
-        data={allResults}
+      <SectionList
+        sections={sections}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         keyboardShouldPersistTaps="handled"
+        renderSectionHeader={({ section: { title } }) => (
+          <Text style={styles.sectionHeader}>{title}</Text>
+        )}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
               styles.resultItem,
               selectedItem?.id === item.id && styles.resultSelected,
             ]}
-            onPress={() => {
-              Keyboard.dismiss();
-              setSelectedItem(item);
-              setServings(1);
-            }}
+            onPress={() => handleSelectFood(item)}
+            activeOpacity={0.7}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
-              <Text style={styles.resultName} numberOfLines={1}>
-                {item.name}
+            <View style={styles.foodInfo}>
+              <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
+              <Text style={styles.resultInfo}>
+                {item.calories} cal
+                {item.servingSize ? ` · ${item.servingSize}` : ''}
+                {item.protein != null ? ` · P: ${item.protein}g` : ''}
               </Text>
-              {isCustom(item.id) && (
-                <Text style={styles.customBadge}>Custom</Text>
-              )}
             </View>
-            <Text style={styles.resultInfo}>
-              {item.calories} cal
-              {item.servingSize ? ` · ${item.servingSize}` : ''}
-              {item.protein != null ? ` · P: ${item.protein}g` : ''}
-            </Text>
+            <View style={styles.actionBtns}>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => handleTogglePin(item)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                  size={18}
+                  color={item.pinned ? colors.primary : colors.textSecondary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => { setSelectedItem(null); setEditingFood(item); }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => handleDelete(item.id)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
         )}
-        ListHeaderComponent={
-          trimmed.length === 0 && filteredCustomFoods.length > 0 ? (
-            <Text style={styles.sectionHeader}>My Foods</Text>
-          ) : null
-        }
         ListEmptyComponent={
-          searched && !loading && trimmed.length >= 2 ? (
-            <Text style={styles.empty}>No results found</Text>
-          ) : null
+          <Text style={styles.empty}>
+            {trimmed.length > 0
+              ? 'No matching foods found'
+              : 'No custom foods yet. Tap "Create Custom Food" to add one.'}
+          </Text>
         }
       />
     </View>

@@ -75,6 +75,7 @@ export interface CustomFood {
   fat: number;
   servingSize: string;
   createdAt: string;
+  pinned?: boolean;
 }
 
 export interface SavedMeal {

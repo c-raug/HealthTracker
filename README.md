@@ -6,7 +6,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Weight Tracking
 - Log your weight for any date with date navigation arrows and a native date picker
-- Toggle between **Log** and **History** views within the same screen — no separate tab
+- Single scrollable screen — weight entry at the top, history chart and insights always visible below
 - View your history as a line chart (last 30 entries) and a scrollable list
 - Delete any past entry with a confirmation prompt
 - Switch between **lbs** and **kg** — preference saved locally
@@ -16,8 +16,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **Calorie ring chart** (SVG donut) showing consumed vs target with color indicators (green/yellow/red)
 - **Macro progress bars** for protein, carbs, and fat with configurable splits (Balanced, High Protein, Keto, or Custom)
 - **Four meal categories**: Breakfast, Lunch, Dinner, Snacks — each collapsible with calorie totals
-- **Food search** via USDA FoodData Central API (Foundation + SR Legacy data types; requires free API key in `.env`)
-- **Custom foods** — create and save personal foods with full nutritional info; calories auto-computed from macros
+- **Custom food library** — create, edit, pin, and delete personal foods with full nutritional info; calories auto-computed from macros; pinned foods surface at the top of search results
 - **Saved meals** — group foods into reusable meals that can be added with one tap
 - **Portion selector** — dual sliders (whole 0–250 + fraction in ⅛ increments) with keypad toggle and live calorie/macro preview; available before adding a food and when editing an already-logged item
 - **Drag-to-reorder** food items within meal categories
@@ -29,7 +28,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **Macro gram display** — computed grams shown alongside each percentage (e.g. 150g protein) for all presets and custom inputs; requires a completed profile and weight entry
 
 ### General
-- All data stored on-device (no accounts required; USDA food search requires internet + API key)
+- All data stored on-device (no accounts or internet connection required)
 - Dark mode support throughout
 
 ---
@@ -44,7 +43,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 | Storage | AsyncStorage (`@react-native-async-storage/async-storage`) |
 | Charts | react-native-chart-kit + react-native-svg (weight) / custom SVG (calorie ring) |
 | State | React Context + useReducer |
-| Food Data | USDA FoodData Central API (free key in `.env`) + local custom foods |
+| Food Data | Local custom food library (no external API) |
 | Drag & Drop | react-native-draggable-flatlist |
 | Icons | @expo/vector-icons (Ionicons) |
 
@@ -57,20 +56,20 @@ app/
 ├── _layout.tsx              # Root Stack layout (wraps AppProvider, modal route)
 ├── add-food-modal.tsx       # Full-screen modal: Add Food / Add Meal tabs
 └── (tabs)/
-    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Settings) + Ionicons
-    ├── index.tsx            # Weight screen — Log/History toggle, date picker, chart
+    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Settings) + Ionicons
+    ├── index.tsx            # Weight screen — date picker, entry, chart + insights (single scroll)
     ├── nutrition.tsx        # Nutrition screen — calorie ring, macro bars, meal categories
-    └── settings.tsx         # Settings screen (collapsible profile, macros, units)
-
-api/
-└── usdaFoodData.ts          # USDA FoodData Central API search client
+    ├── activities.tsx       # Activities screen — exercise/steps logging, calorie burn summary
+    └── settings.tsx         # Settings screen (collapsible profile, goals, macros, units)
 
 components/
 ├── WeightChart.tsx          # Line chart (react-native-chart-kit)
+├── WeightInsights.tsx       # Weight stats and trend summary
 ├── WeightEntryList.tsx      # FlatList of all entries, newest first
 ├── WeightEntryItem.tsx      # Single entry row with delete + confirmation
 ├── settings/
 │   ├── ProfileSection.tsx   # Profile form (age, sex, height, activity, goal)
+│   ├── GoalsSection.tsx     # Activity mode, activity level (auto only), weight goal, fitness goal
 │   └── MacroSection.tsx     # Macro split presets + custom % + live gram display
 └── nutrition/
     ├── CalorieRing.tsx      # SVG donut chart (consumed vs target)
@@ -78,10 +77,11 @@ components/
     ├── MealCategory.tsx     # Collapsible meal section with header + food list
     ├── FoodItem.tsx         # Food row with drag handle, swipe-to-delete, tap-to-edit
     ├── PortionSelector.tsx  # Dual sliders + keypad toggle + live macro preview
-    ├── AddFoodTab.tsx       # Food search (USDA + custom foods) + create custom
-    ├── AddMealTab.tsx       # Saved meals list + create new meal
-    ├── CustomFoodForm.tsx   # Form to create a custom food (qty/unit + auto-calories)
-    ├── CreateMealFlow.tsx   # Name meal + search/add foods to it
+    ├── AddFoodTab.tsx       # Custom food search + create/edit/pin/delete management
+    ├── AddMealTab.tsx       # Saved meals list + pin/edit/delete + create new meal
+    ├── CustomFoodForm.tsx   # Form to create or edit a custom food (qty/unit + auto-calories)
+    ├── CreateMealFlow.tsx   # Name meal + search/add custom foods to it
+    ├── EditMealFlow.tsx     # Edit an existing saved meal template
     └── ProfilePrompt.tsx    # CTA card when profile or weight is missing
 
 context/AppContext.tsx       # Global state (weight, nutrition, custom foods, saved meals)
@@ -94,19 +94,6 @@ utils/
 ├── generateId.ts            # Shared UUID v4 generator
 └── tdeeCalculation.ts       # Mifflin-St Jeor BMR, TDEE, goal calorie calculation
 ```
-
----
-
-## USDA API Key Setup
-
-Food search uses the USDA FoodData Central API. A free key is required:
-
-1. Register at [https://fdc.nal.usda.gov/api-key-signup.html](https://fdc.nal.usda.gov/api-key-signup.html)
-2. Create a `.env` file in the project root:
-   ```
-   EXPO_PUBLIC_USDA_API_KEY=your_key_here
-   ```
-3. Restart Metro after adding the key
 
 ---
 
