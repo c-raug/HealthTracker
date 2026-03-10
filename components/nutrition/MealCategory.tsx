@@ -144,12 +144,14 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
           )}
 
           {foods.length > 0 && (
-            <NestableDraggableFlatList
-              data={foods}
-              keyExtractor={(item) => item.id}
-              renderItem={renderItem}
-              onDragEnd={({ data }) => handleReorder(data)}
-            />
+            <View>
+              <NestableDraggableFlatList
+                data={foods}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                onDragEnd={({ data }) => handleReorder(data)}
+              />
+            </View>
           )}
         </>
       )}

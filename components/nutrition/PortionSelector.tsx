@@ -8,6 +8,7 @@ import {
   ScrollView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -182,6 +183,7 @@ export default function PortionSelector({
 
   const wholeScrollRef = useRef<ScrollView>(null);
   const fracScrollRef = useRef<ScrollView>(null);
+  const keypadInputRef = useRef<TextInput>(null);
 
   // Notify parent whenever drums change
   useEffect(() => {
@@ -238,6 +240,9 @@ export default function PortionSelector({
       const total = wholeValue + FRACTIONS[fractionIndex];
       setKeypadInput(total % 1 === 0 ? total.toString() : total.toFixed(4).replace(/0+$/, ''));
       setKeypadMode(true);
+      // Delay focus so the layout settles before the keyboard appears,
+      // preventing spurious onChangeText events on sibling TextInputs (Android).
+      setTimeout(() => keypadInputRef.current?.focus(), Platform.OS === 'android' ? 100 : 50);
     }
   };
 
@@ -280,13 +285,13 @@ export default function PortionSelector({
 
       {keypadMode ? (
         <TextInput
+          ref={keypadInputRef}
           style={styles.keypadInput}
           value={keypadInput}
           onChangeText={handleKeypadChange}
           keyboardType="decimal-pad"
           placeholder="e.g. 1.5"
           placeholderTextColor={colors.textSecondary}
-          autoFocus
           selectTextOnFocus
         />
       ) : (
