@@ -1,5 +1,22 @@
 # HealthTracker — Product Requirements
 
+## Phase 15: UX Simplification — Portion Input [IN PROGRESS]
+
+### 15.1 — Remove Keypad from PortionSelector
+
+The `PortionSelector` offered a toggle between drum scroll wheels and a decimal keypad. The keypad option has been removed — users now exclusively use the drum scroll wheels (whole number + fraction) to set portion sizes. This simplifies the UI and removes the mode-switching button.
+
+**Changes:**
+- `components/nutrition/PortionSelector.tsx`: Remove `keypadMode`, `keypadInput` state; remove `keypadInputRef`; remove `handleKeypadChange`, `toggleMode` functions; remove the toggle button from the header row; remove the `TextInput` keypad branch from the render; remove `toggleBtn`, `toggleBtnText`, `keypadInput` styles; remove unused `TextInput`, `TouchableOpacity`, `Platform`, and `Ionicons` imports. Drums always render unconditionally.
+
+---
+
+## Files Changed in Phase 15
+
+- `components/nutrition/PortionSelector.tsx` — keypad toggle and TextInput input removed; drums-only mode
+
+---
+
 ## Phase 14: UX Polish — Pinned Foods, Drum Picker & Active Macros [IN PROGRESS]
 
 ### 14.1 — Show Pinned Foods in CreateMealFlow
