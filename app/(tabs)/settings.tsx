@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
@@ -110,9 +111,23 @@ export default function SettingsScreen() {
   const colors = useColors();
   const styles = makeStyles(colors);
 
+  const { focusActivityMode } = useLocalSearchParams<{ focusActivityMode?: string }>();
+  const scrollRef = useRef<ScrollView>(null);
+  const [goalsSectionY, setGoalsSectionY] = useState(0);
+
   const [profileExpanded, setProfileExpanded] = useState(true);
   const [goalsExpanded, setGoalsExpanded] = useState(true);
   const [macroExpanded, setMacroExpanded] = useState(true);
+
+  // When deep-linked from Activity page, auto-expand Goals and scroll to it
+  useEffect(() => {
+    if (focusActivityMode) {
+      setGoalsExpanded(true);
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
+      }, 150);
+    }
+  }, [focusActivityMode, goalsSectionY]);
 
   const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
 
@@ -144,7 +159,7 @@ export default function SettingsScreen() {
       : null;
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} ref={scrollRef}>
       {/* 1. Profile — biometrics only */}
       <View style={styles.collapsibleCard}>
         <TouchableOpacity
@@ -165,7 +180,7 @@ export default function SettingsScreen() {
       </View>
 
       {/* 2. Goals & Calorie Target */}
-      <View style={styles.collapsibleCard}>
+      <View style={styles.collapsibleCard} onLayout={(e) => setGoalsSectionY(e.nativeEvent.layout.y)}>
         <TouchableOpacity
           style={styles.collapsibleHeader}
           onPress={() => setGoalsExpanded((v) => !v)}

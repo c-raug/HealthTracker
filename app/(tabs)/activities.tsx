@@ -645,7 +645,7 @@ export default function ActivitiesScreen() {
 
         {/* Change tracking mode link */}
         <View style={styles.changeModeLinkRow}>
-          <TouchableOpacity onPress={() => router.navigate('/(tabs)/settings')} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.navigate('/(tabs)/settings?focusActivityMode=1')} activeOpacity={0.7}>
             <Text style={styles.changeModeLink}>Change tracking mode →</Text>
           </TouchableOpacity>
         </View>

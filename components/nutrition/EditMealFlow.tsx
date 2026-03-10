@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   FlatList,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   Modal,
   Keyboard,
 } from 'react-native';
@@ -16,7 +15,6 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../../const
 import { NutritionFoodItem, SavedMeal } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
-import { searchFoods } from '../../api/usdaFoodData';
 import PortionSelector from './PortionSelector';
 
 const makeStyles = (colors: typeof LightColors) =>
@@ -99,10 +97,6 @@ const makeStyles = (colors: typeof LightColors) =>
     resultInfo: {
       ...Typography.small,
       color: colors.textSecondary,
-    },
-    loading: {
-      paddingVertical: Spacing.sm,
-      alignItems: 'center',
     },
     portionPanel: {
       backgroundColor: colors.card,
@@ -212,16 +206,12 @@ export default function EditMealFlow({ meal, onDone }: Props) {
   const [foods, setFoods] = useState<NutritionFoodItem[]>(meal.foods);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NutritionFoodItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);
 
   // For editing portions of already-added foods
   const [editingFood, setEditingFood] = useState<NutritionFoodItem | null>(null);
   const [editingServings, setEditingServings] = useState<number>(1);
-
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
   const toNutritionItem = (f: (typeof customFoods)[0]): NutritionFoodItem => ({
     id: f.id,
@@ -239,43 +229,13 @@ export default function EditMealFlow({ meal, onDone }: Props) {
       setQuery(text);
       setSelectedItem(null);
 
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-
-      const trimmedText = text.trim();
-
-      if (trimmedText.length === 0) {
-        setSearchResults(customFoods.map(toNutritionItem));
-        return;
-      }
-
-      if (trimmedText.length === 1) {
-        setSearchResults(
-          customFoods
-            .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-            .map(toNutritionItem),
-        );
-        return;
-      }
-
-      debounceRef.current = setTimeout(async () => {
-        if (abortRef.current) abortRef.current.abort();
-        const controller = new AbortController();
-        abortRef.current = controller;
-
-        const matchingCustom = customFoods
-          .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-          .map(toNutritionItem);
-
-        setLoading(true);
-        try {
-          const { items } = await searchFoods(trimmedText, 1, controller.signal);
-          setSearchResults([...matchingCustom, ...items]);
-        } catch (e: unknown) {
-          if (e instanceof Error && e.name === 'AbortError') return;
-          setSearchResults(matchingCustom);
-        }
-        setLoading(false);
-      }, 300);
+      const trimmedText = text.trim().toLowerCase();
+      const results = (
+        trimmedText.length === 0
+          ? customFoods
+          : customFoods.filter((f) => f.name.toLowerCase().includes(trimmedText))
+      ).map(toNutritionItem);
+      setSearchResults(results);
     },
     [customFoods],
   );
@@ -377,12 +337,6 @@ export default function EditMealFlow({ meal, onDone }: Props) {
           placeholderTextColor={colors.textSecondary}
         />
       </View>
-
-      {loading && (
-        <View style={styles.loading}>
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      )}
 
       {searchResults.length > 0 && (
         <>

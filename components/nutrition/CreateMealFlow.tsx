@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   FlatList,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +14,6 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../../const
 import { NutritionFoodItem } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
-import { searchFoods } from '../../api/usdaFoodData';
 import PortionSelector from './PortionSelector';
 
 const makeStyles = (colors: typeof LightColors) =>
@@ -98,10 +96,6 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.small,
       color: colors.textSecondary,
     },
-    loading: {
-      padding: Spacing.md,
-      alignItems: 'center',
-    },
     btnRow: {
       flexDirection: 'row',
       gap: Spacing.sm,
@@ -172,12 +166,9 @@ export default function CreateMealFlow({ onDone }: Props) {
   const [foods, setFoods] = useState<NutritionFoodItem[]>([]);
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NutritionFoodItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
   // Show all custom foods on initial mount (query is empty)
   useEffect(() => {
@@ -199,73 +190,22 @@ export default function CreateMealFlow({ onDone }: Props) {
       setQuery(text);
       setSelectedItem(null);
 
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-
-      const trimmedText = text.trim();
-
-      // When empty: show all custom foods immediately, no USDA call
-      if (trimmedText.length === 0) {
-        const allCustom: NutritionFoodItem[] = customFoods.map((f) => ({
-          id: f.id,
-          name: f.name,
-          calories: f.calories,
-          protein: f.protein,
-          carbs: f.carbs,
-          fat: f.fat,
-          servingSize: f.servingSize,
-          servings: 1,
-        }));
-        setSearchResults(allCustom);
-        return;
-      }
-
-      // When 1 char: filter custom foods only, no USDA call
-      if (trimmedText.length === 1) {
-        const matchingCustom: NutritionFoodItem[] = customFoods
-          .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-          .map((f) => ({
-            id: f.id,
-            name: f.name,
-            calories: f.calories,
-            protein: f.protein,
-            carbs: f.carbs,
-            fat: f.fat,
-            servingSize: f.servingSize,
-            servings: 1,
-          }));
-        setSearchResults(matchingCustom);
-        return;
-      }
-
-      // 2+ chars: filter custom + USDA
-      debounceRef.current = setTimeout(async () => {
-        if (abortRef.current) abortRef.current.abort();
-        const controller = new AbortController();
-        abortRef.current = controller;
-
-        const matchingCustom: NutritionFoodItem[] = customFoods
-          .filter((f) => f.name.toLowerCase().includes(trimmedText.toLowerCase()))
-          .map((f) => ({
-            id: f.id,
-            name: f.name,
-            calories: f.calories,
-            protein: f.protein,
-            carbs: f.carbs,
-            fat: f.fat,
-            servingSize: f.servingSize,
-            servings: 1,
-          }));
-
-        setLoading(true);
-        try {
-          const { items } = await searchFoods(trimmedText, 1, controller.signal);
-          setSearchResults([...matchingCustom, ...items]);
-        } catch (e: unknown) {
-          if (e instanceof Error && e.name === 'AbortError') return;
-          setSearchResults(matchingCustom);
-        }
-        setLoading(false);
-      }, 300);
+      const trimmedText = text.trim().toLowerCase();
+      const matching: NutritionFoodItem[] = (
+        trimmedText.length === 0
+          ? customFoods
+          : customFoods.filter((f) => f.name.toLowerCase().includes(trimmedText))
+      ).map((f) => ({
+        id: f.id,
+        name: f.name,
+        calories: f.calories,
+        protein: f.protein,
+        carbs: f.carbs,
+        fat: f.fat,
+        servingSize: f.servingSize,
+        servings: 1,
+      }));
+      setSearchResults(matching);
     },
     [customFoods],
   );
@@ -348,11 +288,6 @@ export default function CreateMealFlow({ onDone }: Props) {
 
       {isSearchMode ? (
         <>
-          {loading && (
-            <View style={styles.loading}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
-          )}
           <Text style={styles.sectionLabel}>
             {query.trim().length === 0 ? 'My Foods' : 'Search Results'}
           </Text>
@@ -376,13 +311,11 @@ export default function CreateMealFlow({ onDone }: Props) {
               </TouchableOpacity>
             )}
             ListEmptyComponent={
-              !loading ? (
-                <Text style={styles.empty}>
-                  {query.trim().length === 0
-                    ? 'No custom foods saved yet'
-                    : 'No results found'}
-                </Text>
-              ) : null
+              <Text style={styles.empty}>
+                {query.trim().length === 0
+                  ? 'No custom foods saved yet'
+                  : 'No results found'}
+              </Text>
             }
           />
           {selectedItem && (

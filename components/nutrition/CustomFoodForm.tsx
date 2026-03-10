@@ -11,6 +11,7 @@ import {
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
+import { CustomFood } from '../../types';
 
 const PORTION_UNITS = ['g', 'oz', 'qty'] as const;
 
@@ -155,21 +156,29 @@ const makeStyles = (colors: typeof LightColors) =>
 
 interface Props {
   onDone: () => void;
+  initialFood?: CustomFood;
+  mode?: 'create' | 'edit';
 }
 
-export default function CustomFoodForm({ onDone }: Props) {
+export default function CustomFoodForm({ onDone, initialFood, mode = 'create' }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { dispatch } = useApp();
 
-  const [name, setName] = useState('');
-  const [calories, setCalories] = useState('');
-  const [protein, setProtein] = useState('');
-  const [carbs, setCarbs] = useState('');
-  const [fat, setFat] = useState('');
-  const [portionQty, setPortionQty] = useState('1');
-  const [portionUnit, setPortionUnit] = useState<string>('g');
-  const [isCaloriesManual, setIsCaloriesManual] = useState(false);
+  // Parse serving size from initialFood (format: "qty unit")
+  const parsedQty = initialFood ? (initialFood.servingSize.split(' ')[0] ?? '1') : '1';
+  const parsedRawUnit = initialFood ? (initialFood.servingSize.split(' ')[1] ?? 'g') : 'g';
+  const parsedUnit = (PORTION_UNITS as readonly string[]).includes(parsedRawUnit) ? parsedRawUnit : 'g';
+
+  const [name, setName] = useState(initialFood?.name ?? '');
+  const [calories, setCalories] = useState(initialFood ? initialFood.calories.toString() : '');
+  const [protein, setProtein] = useState(initialFood ? initialFood.protein.toString() : '');
+  const [carbs, setCarbs] = useState(initialFood ? initialFood.carbs.toString() : '');
+  const [fat, setFat] = useState(initialFood ? initialFood.fat.toString() : '');
+  const [portionQty, setPortionQty] = useState(parsedQty);
+  const [portionUnit, setPortionUnit] = useState<string>(parsedUnit);
+  // In edit mode start as manual so we don't clobber the stored calories
+  const [isCaloriesManual, setIsCaloriesManual] = useState(mode === 'edit');
 
   // Auto-compute calories from macros when not in manual mode
   useEffect(() => {
@@ -210,26 +219,45 @@ export default function CustomFoodForm({ onDone }: Props) {
       return;
     }
 
-    dispatch({
-      type: 'ADD_CUSTOM_FOOD',
-      food: {
-        id: generateId(),
-        name: name.trim(),
-        calories: cal,
-        protein: parseFloat(protein) || 0,
-        carbs: parseFloat(carbs) || 0,
-        fat: parseFloat(fat) || 0,
-        servingSize: `${portionQty.trim() || '1'} ${portionUnit}`,
-        createdAt: new Date().toISOString(),
-      },
-    });
+    const servingSize = `${portionQty.trim() || '1'} ${portionUnit}`;
+
+    if (mode === 'edit' && initialFood) {
+      dispatch({
+        type: 'UPDATE_CUSTOM_FOOD',
+        food: {
+          ...initialFood,
+          name: name.trim(),
+          calories: cal,
+          protein: parseFloat(protein) || 0,
+          carbs: parseFloat(carbs) || 0,
+          fat: parseFloat(fat) || 0,
+          servingSize,
+        },
+      });
+    } else {
+      dispatch({
+        type: 'ADD_CUSTOM_FOOD',
+        food: {
+          id: generateId(),
+          name: name.trim(),
+          calories: cal,
+          protein: parseFloat(protein) || 0,
+          carbs: parseFloat(carbs) || 0,
+          fat: parseFloat(fat) || 0,
+          servingSize,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    }
 
     onDone();
   };
 
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Create Custom Food</Text>
+      <Text style={styles.title}>
+        {mode === 'edit' ? 'Edit Custom Food' : 'Create Custom Food'}
+      </Text>
 
       <Text style={styles.label}>Name *</Text>
       <TextInput
@@ -238,7 +266,7 @@ export default function CustomFoodForm({ onDone }: Props) {
         onChangeText={setName}
         placeholder="e.g. Homemade Granola"
         placeholderTextColor={colors.textSecondary}
-        autoFocus
+        autoFocus={mode === 'create'}
       />
 
       <Text style={styles.label}>Serving Size</Text>
@@ -280,7 +308,6 @@ export default function CustomFoodForm({ onDone }: Props) {
             keyboardType="decimal-pad"
             placeholder="0"
             placeholderTextColor={colors.textSecondary}
-            autoFocus
           />
         ) : (
           <TouchableOpacity
@@ -349,7 +376,9 @@ export default function CustomFoodForm({ onDone }: Props) {
       </View>
 
       <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-        <Text style={styles.saveBtnText}>Save Custom Food</Text>
+        <Text style={styles.saveBtnText}>
+          {mode === 'edit' ? 'Save Changes' : 'Save Custom Food'}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.cancelBtn} onPress={onDone} activeOpacity={0.8}>

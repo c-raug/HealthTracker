@@ -60,6 +60,7 @@ type Action =
   | { type: 'REORDER_MEAL_FOODS'; date: string; category: MealCategory; foods: NutritionFoodItem[] }
   | { type: 'SET_MACRO_PRESET'; preset: MacroPreset; split: MacroSplit }
   | { type: 'ADD_CUSTOM_FOOD'; food: CustomFood }
+  | { type: 'UPDATE_CUSTOM_FOOD'; food: CustomFood }
   | { type: 'DELETE_CUSTOM_FOOD'; id: string }
   | { type: 'ADD_SAVED_MEAL'; meal: SavedMeal }
   | { type: 'UPDATE_SAVED_MEAL'; meal: SavedMeal }
@@ -206,6 +207,8 @@ function reducer(state: State, action: Action): State {
     }
     case 'ADD_CUSTOM_FOOD':
       return { ...state, customFoods: [action.food, ...state.customFoods] };
+    case 'UPDATE_CUSTOM_FOOD':
+      return { ...state, customFoods: state.customFoods.map((f) => f.id === action.food.id ? action.food : f) };
     case 'DELETE_CUSTOM_FOOD':
       return {
         ...state,

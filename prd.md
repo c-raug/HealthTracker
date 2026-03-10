@@ -1,5 +1,75 @@
 # HealthTracker — Product Requirements
 
+## Phase 13: UX Polish & API Removal [IN PROGRESS]
+
+### 13.1 — Weight Tab: Single Scrollable Screen
+
+Removed the Log/History toggle. Now a single ScrollView with weight entry at top, WeightChart and WeightInsights always visible below.
+
+**Changes:**
+- `app/(tabs)/index.tsx`: Remove `activeSection` state, toggle button row JSX, and toggle styles. Render weight entry + WeightChart + WeightInsights sequentially in the ScrollView.
+
+### 13.2 — Activity Tab: Deep-Link to Activity Tracking Mode
+
+"Change tracking mode →" now navigates with `?focusActivityMode=1` param. Settings auto-expands the Goals section and scrolls to it.
+
+**Changes:**
+- `app/(tabs)/activities.tsx`: Add `?focusActivityMode=1` to navigate call.
+- `app/(tabs)/settings.tsx`: Import `useLocalSearchParams`, add ScrollView ref + `goalsSectionY` state + `onLayout` on Goals card + `useEffect` to expand and scroll when param is present.
+
+### 13.3 — Nutrition: Edit, Pin, Delete Custom Foods
+
+Custom food rows in AddFoodTab now show inline bookmark/pencil/trash buttons (matching the AddMealTab meal row pattern). Pinned foods appear in a "Pinned" section above "My Foods". Edit opens CustomFoodForm in edit mode.
+
+**Changes:**
+- `types/index.ts`: Add `pinned?: boolean` to `CustomFood`.
+- `context/AppContext.tsx`: Add `UPDATE_CUSTOM_FOOD` action + reducer case (maps over customFoods, replaces by id).
+- `components/nutrition/CustomFoodForm.tsx`: Add `initialFood?: CustomFood` and `mode?: 'create' | 'edit'` props. Edit mode pre-populates fields, starts in manual calorie mode, dispatches `UPDATE_CUSTOM_FOOD`.
+- `components/nutrition/AddFoodTab.tsx`: Convert FlatList to SectionList with Pinned + My Foods sections; add bookmark/pencil/trash icon buttons per row; add `editingFood` state to switch to edit form.
+
+### 13.4 — Settings: Activity Tracking Mode Before Activity Level
+
+Activity Tracking Mode now appears before Activity Level in GoalsSection. Activity Level is only rendered when mode is `'auto'`.
+
+**Changes:**
+- `components/settings/GoalsSection.tsx`: Move Activity Tracking Mode block above Activity Level block. Wrap Activity Level in `{activityLevelActive && (...)}`.
+
+### 13.5 — Remove USDA API, Keep Custom Food Search
+
+Deleted the USDA FoodData Central API integration. Food search now filters only user-created custom foods.
+
+**Changes:**
+- `api/usdaFoodData.ts`: Deleted.
+- `components/nutrition/AddFoodTab.tsx`: Remove `searchFoods` import, `offResults` state, `loading`, `abortRef`, `debounceRef`. Search is now synchronous filtering of `customFoods`.
+- `components/nutrition/CreateMealFlow.tsx`: Same cleanup — synchronous custom food filter only.
+- `components/nutrition/EditMealFlow.tsx`: Same cleanup.
+
+### 13.6 — Update Documentation
+
+**Changes:**
+- `README.md`: Remove USDA API Key Setup section, update Features (Weight tab no longer has toggle, food search is custom-only), update Tech Stack, update project structure.
+- `CLAUDE.md`: Add `UPDATE_CUSTOM_FOOD` to Actions list, update Food Search description, update CustomFoodForm note, add AddFoodTab note, add Settings deep-link note, update GoalsSection field order.
+
+---
+
+## Files Changed in Phase 13
+
+- `app/(tabs)/index.tsx` — Remove tab toggle, single scrollable screen
+- `app/(tabs)/activities.tsx` — Add `?focusActivityMode=1` param to settings navigation
+- `app/(tabs)/settings.tsx` — Read param, auto-expand Goals, ScrollView ref + scroll
+- `components/settings/GoalsSection.tsx` — Reorder fields, Activity Level conditional on auto mode
+- `types/index.ts` — Add `pinned?: boolean` to `CustomFood`
+- `context/AppContext.tsx` — Add `UPDATE_CUSTOM_FOOD` action + reducer case
+- `components/nutrition/CustomFoodForm.tsx` — Support edit mode via `initialFood` + `mode` props
+- `components/nutrition/AddFoodTab.tsx` — Remove USDA, SectionList w/ Pinned+MyFoods, inline manage buttons
+- `components/nutrition/CreateMealFlow.tsx` — Remove USDA API call, custom food search only
+- `components/nutrition/EditMealFlow.tsx` — Remove USDA API call, custom food search only
+- `api/usdaFoodData.ts` — Deleted
+- `README.md` — Remove USDA setup, update features and project structure
+- `CLAUDE.md` — Remove USDA references, update component and action notes
+
+---
+
 ## Phase 12: Activity & Nutrition Workflow Improvements [IN PROGRESS]
 
 ### 12.1 — Default onboarding activity mode: auto

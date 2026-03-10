@@ -260,37 +260,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
         ))}
       </View>
 
-      {/* Activity Level */}
-      <Text style={styles.inputLabel}>Activity Level</Text>
-      <View style={[styles.optionGrid, !activityLevelActive && { opacity: 0.4 }]}>
-        {ACTIVITY_LABELS.map((item) => (
-          <View key={item.value} style={styles.optionRow}>
-            <TouchableOpacity
-              style={[styles.optionBtn, activityLevel === item.value && styles.optionBtnActive]}
-              onPress={() => handleActivityChange(item.value)}
-              activeOpacity={activityLevelActive ? 0.8 : 1}
-            >
-              <Text style={[styles.optionText, activityLevel === item.value && styles.optionTextActive]}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setInfoModal({ title: item.label, description: ACTIVITY_INFO[item.value] })}
-              style={styles.infoIcon}
-              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-              activeOpacity={0.6}
-            >
-              <Ionicons name="information-circle-outline" size={17} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-      {!activityLevelActive && (
-        <Text style={styles.disabledNote}>
-          Activity level has no effect in Manual or Smart Watch mode.
-        </Text>
-      )}
-
       {/* Activity Tracking Mode */}
       <Text style={styles.inputLabel}>Activity Tracking Mode</Text>
       <Text style={styles.modeDescription}>
@@ -340,6 +309,36 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
             Enter your smart watch's daily calorie burn on the Activity tab. No activity is assumed in your base calculation.
           </Text>
         </View>
+      )}
+
+      {/* Activity Level — only shown in Auto mode */}
+      {activityLevelActive && (
+        <>
+          <Text style={styles.inputLabel}>Activity Level</Text>
+          <View style={styles.optionGrid}>
+            {ACTIVITY_LABELS.map((item) => (
+              <View key={item.value} style={styles.optionRow}>
+                <TouchableOpacity
+                  style={[styles.optionBtn, activityLevel === item.value && styles.optionBtnActive]}
+                  onPress={() => handleActivityChange(item.value)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.optionText, activityLevel === item.value && styles.optionTextActive]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setInfoModal({ title: item.label, description: ACTIVITY_INFO[item.value] })}
+                  style={styles.infoIcon}
+                  hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="information-circle-outline" size={17} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        </>
       )}
 
       {/* Fitness Goal */}
