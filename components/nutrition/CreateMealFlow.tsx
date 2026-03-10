@@ -311,13 +311,11 @@ export default function CreateMealFlow({ onDone }: Props) {
               </TouchableOpacity>
             )}
             ListEmptyComponent={
-              !loading ? (
-                <Text style={styles.empty}>
-                  {query.trim().length === 0
-                    ? 'No custom foods saved yet'
-                    : 'No results found'}
-                </Text>
-              ) : null
+              <Text style={styles.empty}>
+                {query.trim().length === 0
+                  ? 'No custom foods saved yet'
+                  : 'No results found'}
+              </Text>
             }
           />
           {selectedItem && (

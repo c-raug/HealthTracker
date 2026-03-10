@@ -90,13 +90,31 @@ const makeStyles = (colors: typeof LightColors) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
+    confirmRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      marginHorizontal: Spacing.md,
+      marginBottom: Spacing.md,
+    },
+    cancelSelectBtn: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cancelSelectText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
     confirmBtn: {
+      flex: 2,
       backgroundColor: colors.primary,
       borderRadius: Radius.md,
       paddingVertical: Spacing.sm,
-      paddingHorizontal: Spacing.lg,
-      marginHorizontal: Spacing.md,
-      marginBottom: Spacing.md,
       alignItems: 'center',
     },
     confirmText: {
@@ -242,9 +260,18 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
             servingSize={selectedItem.servingSize ?? '1 serving'}
             baseServings={1}
           />
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
-            <Text style={styles.confirmText}>Add to {category}</Text>
-          </TouchableOpacity>
+          <View style={styles.confirmRow}>
+            <TouchableOpacity
+              style={styles.cancelSelectBtn}
+              onPress={() => setSelectedItem(null)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.cancelSelectText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
+              <Text style={styles.confirmText}>Add to {category}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
