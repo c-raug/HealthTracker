@@ -523,3 +523,40 @@ After saving a weight entry the app showed `Alert.alert('Saved', ...)`. Replaced
 - `components/nutrition/AddMealTab.tsx` — add edit button, wire up EditMealFlow
 - `app/(tabs)/index.tsx` — call `Keyboard.dismiss()` in `handleSave()`
 - `prd.md` — this file
+
+
+---
+
+## Phase 16: Android APK Release Automation [IN PROGRESS]
+
+### 16.1 — GitHub Actions CI/CD: Automated Android APK Build & Release
+
+The app had no way to distribute builds to testers. Added a fully automated pipeline: pushing a git tag triggers an EAS cloud build, produces a downloadable debug APK, and attaches it to a GitHub Release — all without committing any binary to the repository.
+
+**Changes:**
+- `eas.json` *(new)*: EAS build configuration. Defines a `preview` profile with `distribution: "internal"` and `buildType: "apk"`. EAS auto-manages debug signing credentials — no keystore required.
+- `.github/workflows/release-android.yml` *(new)*: GitHub Actions workflow triggered on tags matching `v*.*.*`. Steps: checkout → Node 20 setup → `npm ci` → setup EAS CLI via `expo/expo-github-action@v8` (authenticated with `EXPO_TOKEN` secret) → `eas build --platform android --profile preview --wait --json` → parse artifact URL with `jq` → `curl` download → create GitHub Release with APK attached via `softprops/action-gh-release@v2`.
+
+**One-time manual prerequisites (run locally once before first tag):**
+1. `npm install -g eas-cli`
+2. `eas login` (Expo account required — free at expo.dev)
+3. `eas init` → adds `extra.eas.projectId` to `app.json`; commit this change
+4. Generate token at expo.dev → Account Settings → Access Tokens
+5. Add `EXPO_TOKEN` secret: GitHub repo → Settings → Secrets and variables → Actions
+
+**Releasing a new version:**
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+GitHub Actions builds (~10–20 min) and publishes the Release automatically.
+
+**Friend installs via:**
+GitHub repo → Releases → download `.apk` → Android Settings → enable "Install unknown apps" → tap APK to install.
+
+---
+
+## Files Changed in Phase 16
+
+- `eas.json` *(new)* — EAS build profile: internal APK distribution, debug signing
+- `.github/workflows/release-android.yml` *(new)* — tag-triggered GitHub Actions workflow: EAS build → download APK → create GitHub Release
