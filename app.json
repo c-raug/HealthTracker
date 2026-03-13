@@ -26,6 +26,13 @@
     ],
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "53a81a1a-0304-45db-82f5-a78d921278af"
+      }
+    },
+    "owner": "c-raug"
   }
 }
