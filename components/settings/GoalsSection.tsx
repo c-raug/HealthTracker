@@ -328,6 +328,7 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
             snapToInterval={ITEM_HEIGHT}
             decelerationRate="fast"
             scrollEventThrottle={16}
+            nestedScrollEnabled={true}
             onMomentumScrollEnd={handleGoalScroll}
             onScrollEndDrag={handleGoalScroll}
             contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AppProvider, useApp } from '../context/AppContext';
 import { Colors } from '../constants/theme';
@@ -56,9 +57,11 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AppProvider>
-        <RootNavigator />
-      </AppProvider>
+      <SafeAreaProvider>
+        <AppProvider>
+          <RootNavigator />
+        </AppProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

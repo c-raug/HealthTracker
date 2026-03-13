@@ -727,6 +727,7 @@ export default function ActivitiesScreen() {
                           snapToInterval={ITEM_HEIGHT}
                           decelerationRate="fast"
                           scrollEventThrottle={16}
+                          nestedScrollEnabled={true}
                           onMomentumScrollEnd={handleHoursScroll}
                           onScrollEndDrag={handleHoursScroll}
                           contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
@@ -754,6 +755,7 @@ export default function ActivitiesScreen() {
                           snapToInterval={ITEM_HEIGHT}
                           decelerationRate="fast"
                           scrollEventThrottle={16}
+                          nestedScrollEnabled={true}
                           onMomentumScrollEnd={handleMinutesScroll}
                           onScrollEndDrag={handleMinutesScroll}
                           contentContainerStyle={{ paddingVertical: ITEM_HEIGHT * PAD_COUNT }}
