@@ -59,6 +59,7 @@ No test runner or lint script exists in package.json.
 - **`/interview`** — Invoke automatically whenever the user mentions planning, update ideas, new features, or improvements to the app. Conducts a structured interview using `AskUserQuestion` and rewrites `prd.md` with a complete, phased implementation plan.
 - **`/push-changes`** — Invoke automatically after completing any code change (feature, fix, or refactor). Updates affected documentation, creates a new `claude/<description>-<id>` sub-branch off the current branch, commits all changes, and pushes to GitHub.
 - **`/dependency-check`** — For all version constraints, compatibility rules, and install commands.
+- **`/create-github-issues`** — Invoke automatically when user says "create github issues", "sync issues", "push to board", "sync roadmap", or "create project board". Reads `future_plans.md`, creates labelled GitHub issues for each idea not already tracked, and adds them to a "HealthTracker Roadmap" GitHub project (creating the project if it doesn't exist). Idempotent — safe to re-run.
 
 ## Dependency Management
 
