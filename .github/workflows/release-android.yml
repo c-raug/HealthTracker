@@ -6,7 +6,7 @@ on:
       - 'v*.*.*'
 
 permissions:
-  contents: write  # required to create GitHub Releases
+  contents: write
 
 jobs:
   build-and-release:
@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -31,22 +31,13 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build Android APK via EAS
-        id: build
         run: |
-          BUILD_JSON=$(eas build \
+          eas build \
             --platform android \
             --profile preview \
             --non-interactive \
             --wait \
-            --json \
-            2>/dev/null)
-          BUILD_URL=$(echo "$BUILD_JSON" | jq -r '.[0].artifacts.buildUrl')
-          echo "build_url=$BUILD_URL" >> $GITHUB_OUTPUT
-
-      - name: Download APK
-        run: |
-          curl -L "${{ steps.build.outputs.build_url }}" \
-            -o "health-tracker-${{ github.ref_name }}.apk"
+            --output "health-tracker-${{ github.ref_name }}.apk"
 
       - name: Create GitHub Release with APK
         uses: softprops/action-gh-release@v2
