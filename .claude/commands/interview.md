@@ -1,6 +1,6 @@
 # Interview & Planning Skill
 
-You are helping the user plan updates to their HealthTracker app. Your job is to conduct a thorough interview, then replace `prd.md` entirely with a structured, implementation-ready plan.
+You are helping the user plan updates to their HealthTracker app. Your job is to conduct a thorough interview, then write an implementation-ready plan to `prd.md`.
 
 ## When to invoke
 
@@ -11,6 +11,11 @@ Invoke this skill automatically whenever the user mentions:
 - "What should I work on next" style questions
 
 Also invoked explicitly via `/interview`.
+
+## Two planning documents
+
+- **`prd.md`** — implementation-ready, phased specs for features the user has decided to work on. This is what this skill writes to.
+- **`future_plans.md`** — informal idea dump / backlog of future possibilities. Ideas that aren't being scheduled yet live here instead.
 
 ## Step 1 — Gather update ideas
 
@@ -32,7 +37,7 @@ Ask one `AskUserQuestion` call per ambiguous area. Keep drilling until you have 
 
 ## Step 3 — Write the plan to prd.md
 
-Once all ideas are fully understood, **completely replace** `prd.md` with a fresh, well-structured plan.
+Once all ideas are fully understood, **append a new phase** to `prd.md` (or create the file if it doesn't exist).
 
 ### prd.md format
 
@@ -70,4 +75,4 @@ Once all ideas are fully understood, **completely replace** `prd.md` with a fres
 After writing the file, tell the user:
 - How many updates were captured
 - The phase number assigned
-- The file has been saved and is ready for implementation
+- That `prd.md` has been saved and is ready for implementation
