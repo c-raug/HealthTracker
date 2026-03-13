@@ -1,6 +1,6 @@
 # Interview & Planning Skill
 
-You are helping the user plan updates to their HealthTracker app. Your job is to conduct a thorough interview, then update `future_plans.md` with well-described, implementation-ready idea entries.
+You are helping the user plan updates to their HealthTracker app. Your job is to conduct a thorough interview, then write an implementation-ready plan to `prd.md`.
 
 ## When to invoke
 
@@ -11,6 +11,11 @@ Invoke this skill automatically whenever the user mentions:
 - "What should I work on next" style questions
 
 Also invoked explicitly via `/interview`.
+
+## Two planning documents
+
+- **`prd.md`** — implementation-ready, phased specs for features the user has decided to work on. This is what this skill writes to.
+- **`future_plans.md`** — informal idea dump / backlog of future possibilities. Ideas that aren't being scheduled yet live here instead.
 
 ## Step 1 — Gather update ideas
 
@@ -30,70 +35,44 @@ For each idea the user provides, use `AskUserQuestion` to ask targeted follow-up
 
 Ask one `AskUserQuestion` call per ambiguous area. Keep drilling until you have no open questions.
 
-## Step 3 — Write the ideas to future_plans.md
+## Step 3 — Write the plan to prd.md
 
-Once all ideas are fully understood, **append new ideas** to `future_plans.md` (or create the file if it doesn't exist). Do not remove existing entries — only add new ones or update entries that were directly discussed.
+Once all ideas are fully understood, **append a new phase** to `prd.md` (or create the file if it doesn't exist).
 
-### future_plans.md format
+### prd.md format
 
 ```
-# HealthTracker — Future Plans
+# HealthTracker — Product Requirements
 
-[Brief intro describing the app vision and that this is a living roadmap.]
+## Phase N: [Theme of this batch of updates] [IN PROGRESS]
 
----
+### N.1 — [Update title]
 
-## Short-Term Ideas
+[2-4 sentence description of the problem or missing feature]
 
-[Low-complexity improvements that add meaningful daily value.]
+**Changes:**
+- `ComponentName.tsx`: specific change
+- `OtherFile.tsx`: specific change
 
----
-
-### [Idea Title]
-
-**Goal:** [One sentence describing what this adds or fixes.]
-
-**UX:**
-- [Bullet describing what the user sees/taps/experiences]
-- [Additional UX details, edge cases, empty states]
-
-**Technical notes:**
-- [Affected files]
-- [New state fields or reducer actions]
-- [New utilities or components]
-
----
-
-## Medium-Term Ideas
-
-[Moderate complexity — meaningful UX lift, well-scoped.]
-
----
-
-### [Idea Title]
+### N.2 — [Update title]
 
 ...
 
 ---
 
-## Long-Term Ideas
+## Files Changed in Phase N
 
-[High complexity — major new capabilities.]
-
----
-
-### [Idea Title]
-
-...
+- `path/to/file.tsx` — description of what changes
+- `path/to/other.tsx` — description of what changes
 ```
 
-**Priority tiers:** Assign each idea to Short-Term, Medium-Term, or Long-Term based on scope and complexity. Short = a few files, low risk. Medium = new component or state changes. Long = new infrastructure, external APIs, or major new flows.
+**Phase numbering:** Read the existing `prd.md` to find the highest phase number used, then increment by 1. If the file is empty or has no phases, start at Phase 1.
 
-**One section per idea.** Be specific — reference exact component names, prop names, state variable names, and action types from the codebase where known.
+**One sub-section per update idea.** Be specific — reference exact component names, prop names, state variable names, and action types from the codebase where known.
 
 ## Step 4 — Confirm
 
 After writing the file, tell the user:
-- How many ideas were captured or updated
-- Which priority tier each idea was placed in
-- That `future_plans.md` has been saved and is ready for review
+- How many updates were captured
+- The phase number assigned
+- That `prd.md` has been saved and is ready for implementation
