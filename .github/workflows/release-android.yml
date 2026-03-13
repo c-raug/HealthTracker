@@ -36,8 +36,17 @@ jobs:
             --platform android \
             --profile preview \
             --non-interactive \
-            --wait \
-            --output "health-tracker-${{ github.ref_name }}.apk"
+            --wait
+
+      - name: Download APK artifact
+        run: |
+          DOWNLOAD_URL=$(eas build:list \
+            --platform android \
+            --status finished \
+            --limit 1 \
+            --json \
+            --non-interactive | jq -r '.[0].artifacts.buildUrl')
+          curl -L -o "health-tracker-${{ github.ref_name }}.apk" "$DOWNLOAD_URL"
 
       - name: Create GitHub Release with APK
         uses: softprops/action-gh-release@v2
