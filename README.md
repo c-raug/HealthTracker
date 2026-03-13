@@ -1,35 +1,59 @@
 # HealthTracker
 
-A cross-platform mobile app (iOS & Android) built with React Native (Expo) for tracking daily weight and nutrition, inspired by MyFitnessPal.
+A cross-platform mobile app (iOS & Android) built with React Native (Expo) for tracking weight, nutrition, and activity — inspired by MyFitnessPal.
 
 ## Features
 
-### Weight Tracking
-- Log your weight for any date with date navigation arrows and a native date picker
-- Single scrollable screen — weight entry at the top, history chart and insights always visible below
-- View your history as a line chart (last 30 entries) and a scrollable list
-- Delete any past entry with a confirmation prompt
+### Weight Tab
+- Log your weight for any date with date navigation arrows
+- Inline save confirmation (no popup) with timestamp
+- Single scrollable screen — entry at top, chart and insights always visible below
+- **Line chart** (last 30 entries, linear interpolation) with history list and delete support
+- **Progress insights card** — 7-day change, estimated weekly rate, and on-track/behind/ahead status badge vs. your weight goal
+- **"Go to Today" pill** — appears when you're viewing a past date; taps back to today
 - Switch between **lbs** and **kg** — preference saved locally
 
-### Nutrition Tracking
-- **TDEE calculation** based on user profile (age, sex, height, activity level, weight goal) using the Mifflin-St Jeor equation
-- **Calorie ring chart** (SVG donut) showing consumed vs target with color indicators (green/yellow/red)
+### Nutrition Tab
+- **TDEE-based calorie target** using the Mifflin-St Jeor equation; exercise calories from the Activities tab are added when applicable
+- **Calorie ring** (SVG donut) — consumed vs target; shows "+N cal from exercise" when activity is logged
 - **Macro progress bars** for protein, carbs, and fat with configurable splits (Balanced, High Protein, Keto, or Custom)
 - **Four meal categories**: Breakfast, Lunch, Dinner, Snacks — each collapsible with calorie totals
-- **Custom food library** — create, edit, pin, and delete personal foods with full nutritional info; calories auto-computed from macros; pinned foods surface at the top of search results
-- **Saved meals** — group foods into reusable meals that can be added with one tap
-- **Portion selector** — dual sliders (whole 0–250 + fraction in ⅛ increments) with keypad toggle and live calorie/macro preview; available before adding a food and when editing an already-logged item
+- **Custom food library** — create, edit, pin, and delete personal foods; calories auto-computed from macros; pinned foods surface first in search results
+- **Saved meal templates** — group foods into reusable meals; pin meals to specific categories so they appear first
+- **Portion selector** — dual drum scroll wheels (whole 0–250 + fraction in ⅛ increments) with live calorie/macro preview; available when adding a food and when editing an already-logged item
 - **Drag-to-reorder** food items within meal categories
 - **Swipe-to-delete** food items
+- **"Go to Today" pill** — same pattern as Weight tab
 - Date navigation matching the Weight screen pattern
 
-### Settings
-- **Collapsible sections** — Profile and Macro Split sections expand/collapse with a chevron header
-- **Macro gram display** — computed grams shown alongside each percentage (e.g. 150g protein) for all presets and custom inputs; requires a completed profile and weight entry
+### Activities Tab
+- Log exercise and steps for any date with date navigation
+- **Three tracking modes** — Auto (exercise is reference-only; TDEE activity level handles the burn), Manual (all logged calories add to your nutrition target), Smartwatch (only smartwatch entries add to target)
+- **Exercise logging** — category/type selection with hour + minute drum pickers; live calorie burn preview
+- **Step logging** — numeric input with calorie preview
+- **Calories burned summary card** — total for the selected day
+- **Dismissible mode-change warnings** — amber strip on entries logged under a different mode
+- **"Go to Today" pill** and **"Change tracking mode →"** deep-link to Settings
+- Requires a profile + weight entry (shows a prompt otherwise)
+
+### Settings Tab
+- **Profile** (collapsible) — name, date of birth, sex, height
+- **Goals & Calorie Target** (collapsible) — weight goal drum wheel, activity level (auto mode only), activity tracking mode with info buttons, fitness goal; deep-linkable from Activities tab
+- **Units** — lbs / kg toggle
+- **Macros** (collapsible) — preset buttons + custom % inputs; gram equivalents shown for each preset; ⓘ icon explains how grams factor in activity average
+
+### Onboarding
+- **5-step wizard** on first launch: (1) unit + name, (2) DOB + sex + height, (3) activity level + weight goal, (4) macro preset (skippable), (5) starting weight
+- **Welcome screen** with "Start New Profile" and "Load Saved Data" options
+
+### Data Backup
+- **Save backup** — opens the OS share sheet on native (iOS/Android) or downloads a `.json` file on web
+- **Load backup** — opens the OS document picker on native or a file picker on web
+- Available via the Settings tab; also accessible from the Welcome screen on first launch
 
 ### General
 - All data stored on-device (no accounts or internet connection required)
-- Dark mode support throughout
+- Full **dark mode** support throughout via `useColors()` and `constants/theme.ts`
 
 ---
 
@@ -39,13 +63,16 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 |---|---|
 | Framework | React Native + Expo SDK 54 (managed workflow) |
 | Language | TypeScript |
-| Routing | Expo Router v6 (file-based) |
+| Routing | Expo Router v6 (file-based tabs + modal routes) |
 | Storage | AsyncStorage (`@react-native-async-storage/async-storage`) |
 | Charts | react-native-chart-kit + react-native-svg (weight) / custom SVG (calorie ring) |
 | State | React Context + useReducer |
+| Gestures | react-native-gesture-handler + react-native-reanimated |
 | Food Data | Local custom food library (no external API) |
 | Drag & Drop | react-native-draggable-flatlist |
+| Date Picker | @react-native-community/datetimepicker |
 | Icons | @expo/vector-icons (Ionicons) |
+| Backup | expo-sharing + expo-document-picker |
 
 ---
 
@@ -53,46 +80,54 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ```
 app/
-├── _layout.tsx              # Root Stack layout (wraps AppProvider, modal route)
+├── _layout.tsx              # Root Stack layout (GestureHandlerRootView, AppProvider, nav gating)
+├── welcome.tsx              # Welcome screen — Start New Profile / Load Saved Data
+├── onboarding.tsx           # 5-step onboarding wizard
 ├── add-food-modal.tsx       # Full-screen modal: Add Food / Add Meal tabs
 └── (tabs)/
     ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Settings) + Ionicons
-    ├── index.tsx            # Weight screen — date picker, entry, chart + insights (single scroll)
+    ├── index.tsx            # Weight screen — entry, chart, insights (single scroll)
     ├── nutrition.tsx        # Nutrition screen — calorie ring, macro bars, meal categories
     ├── activities.tsx       # Activities screen — exercise/steps logging, calorie burn summary
-    └── settings.tsx         # Settings screen (collapsible profile, goals, macros, units)
+    └── settings.tsx         # Settings screen (Profile, Goals, Units, Macros)
 
 components/
-├── WeightChart.tsx          # Line chart (react-native-chart-kit)
-├── WeightInsights.tsx       # Weight stats and trend summary
+├── WeightChart.tsx          # Line chart (react-native-chart-kit, linear)
+├── WeightInsights.tsx       # 7-day progress insights card (rate, on-track badge)
 ├── WeightEntryList.tsx      # FlatList of all entries, newest first
 ├── WeightEntryItem.tsx      # Single entry row with delete + confirmation
+├── InfoModal.tsx            # Reusable info/help overlay modal
+├── activities/
+│   └── (activity-specific components)
 ├── settings/
-│   ├── ProfileSection.tsx   # Profile form (age, sex, height, activity, goal)
-│   ├── GoalsSection.tsx     # Activity mode, activity level (auto only), weight goal, fitness goal
-│   └── MacroSection.tsx     # Macro split presets + custom % + live gram display
+│   ├── ProfileSection.tsx   # Name, DOB picker, sex toggle, height input
+│   ├── GoalsSection.tsx     # Weight goal drum, activity level, tracking mode, fitness goal
+│   └── MacroSection.tsx     # Macro preset buttons + custom % + gram equivalents + ⓘ tooltip
 └── nutrition/
     ├── CalorieRing.tsx      # SVG donut chart (consumed vs target)
     ├── MacroProgressBars.tsx # Protein/Carbs/Fat horizontal progress bars
     ├── MealCategory.tsx     # Collapsible meal section with header + food list
-    ├── FoodItem.tsx         # Food row with drag handle, swipe-to-delete, tap-to-edit
-    ├── PortionSelector.tsx  # Dual sliders + keypad toggle + live macro preview
-    ├── AddFoodTab.tsx       # Custom food search + create/edit/pin/delete management
-    ├── AddMealTab.tsx       # Saved meals list + pin/edit/delete + create new meal
-    ├── CustomFoodForm.tsx   # Form to create or edit a custom food (qty/unit + auto-calories)
-    ├── CreateMealFlow.tsx   # Name meal + search/add custom foods to it
+    ├── FoodItem.tsx         # Food row with drag handle, swipe-to-delete, tap-to-edit bottom sheet
+    ├── PortionSelector.tsx  # Dual drum wheels (whole + fraction) + live macro preview
+    ├── AddFoodTab.tsx       # Custom food search + create/edit/pin/delete + SectionList (Pinned/MyFoods)
+    ├── AddMealTab.tsx       # Saved meals list + pin to categories / edit / delete
+    ├── CustomFoodForm.tsx   # Create or edit a custom food (qty/unit picker + auto-calories)
+    ├── CreateMealFlow.tsx   # Name meal + search/add custom foods (SectionList)
     ├── EditMealFlow.tsx     # Edit an existing saved meal template
-    └── ProfilePrompt.tsx    # CTA card when profile or weight is missing
+    └── ProfilePrompt.tsx    # CTA card when profile or weight entry is missing
 
-context/AppContext.tsx       # Global state (weight, nutrition, custom foods, saved meals)
-storage/storage.ts           # AsyncStorage read/write helpers
+context/AppContext.tsx       # Global state (weight entries, nutrition log, activity log, custom foods, saved meals, preferences)
+storage/
+├── storage.ts               # AsyncStorage read/write helpers
+└── backupStorage.ts         # Cross-platform backup: share sheet / file picker
 types/index.ts               # All TypeScript interfaces and type unions
-constants/theme.ts           # Colors, Typography, Spacing, Radius tokens
+constants/theme.ts           # Colors, Typography, Spacing, Radius design tokens
 utils/
 ├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays
-├── unitConversion.ts        # lbsToKg, kgToLbs, convertWeight
+├── unitConversion.ts        # lbsToKg, kgToLbs, convertWeight, weightToKg
 ├── generateId.ts            # Shared UUID v4 generator
-└── tdeeCalculation.ts       # Mifflin-St Jeor BMR, TDEE, goal calorie calculation
+├── tdeeCalculation.ts       # Mifflin-St Jeor BMR/TDEE, goal calorie offset, ageFromDob
+└── activityCalculation.ts   # calculateExerciseCalories (MET-based), calculateStepCalories
 ```
 
 ---
@@ -102,17 +137,48 @@ utils/
 ```ts
 interface WeightEntry {
   id: string;        // UUID
-  date: string;      // ISO date "YYYY-MM-DD"
-  weight: number;    // stored in the user's selected unit
+  date: string;      // "YYYY-MM-DD"
+  weight: number;    // stored in user's selected unit
   unit: 'lbs' | 'kg';
   createdAt: string; // ISO timestamp
 }
 
+interface UserProfile {
+  name?: string;
+  dob?: string;            // "YYYY-MM-DD"
+  age?: number;            // legacy fallback
+  sex?: 'male' | 'female';
+  height?: number;         // cm
+  activityLevel?: ActivityLevel;
+  weightGoal?: WeightGoal;
+  fitnessGoal?: string;
+}
+
 interface UserPreferences {
   unit: 'lbs' | 'kg';
-  profile?: UserProfile;       // age, sex, height, activity, goal
-  macroPreset?: MacroPreset;   // 'balanced' | 'high_protein' | 'keto' | 'custom'
-  macroSplit?: MacroSplit;     // { protein, carbs, fat } percentages
+  profile?: UserProfile;
+  macroPreset?: MacroPreset;
+  macroSplit?: MacroSplit;       // { protein, carbs, fat } percentages
+  activityMode?: ActivityMode;  // 'auto' | 'manual' | 'smartwatch'
+  onboardingComplete?: boolean;
+}
+
+type ActivityMode = 'auto' | 'manual' | 'smartwatch';
+
+interface ActivityEntry {
+  id: string;
+  type: 'exercise' | 'steps' | 'smartwatch';
+  date: string;
+  durationMinutes?: number;
+  steps?: number;
+  caloriesBurned: number;
+  loggedWithMode?: ActivityMode;
+  warningDismissed?: boolean;
+}
+
+interface DayActivity {
+  date: string;
+  activities: ActivityEntry[];
 }
 
 interface NutritionFoodItem {
@@ -129,24 +195,36 @@ interface DayNutrition {
   meals: Record<MealCategory, NutritionFoodItem[]>;
 }
 
-interface CustomFood { /* id, name, calories, protein, carbs, fat, servingSize, createdAt */ }
-interface SavedMeal  { /* id, name, foods: NutritionFoodItem[], createdAt */ }
+interface CustomFood {
+  id: string; name: string;
+  calories: number; protein: number; carbs: number; fat: number;
+  servingSize?: string;
+  pinned?: boolean;
+  createdAt: string;
+}
+
+interface SavedMeal {
+  id: string; name: string;
+  foods: NutritionFoodItem[];
+  pinnedCategories?: MealCategory[];
+  createdAt: string;
+}
 ```
 
-AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custom_foods`, `saved_meals`
+AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custom_foods`, `saved_meals`, `activity_log`
 
 ---
 
 ## Local Development (Mac)
 
-All dependencies and scripts work identically on a local Mac — none of the Codespace fixes were environment-specific.
-
 ### Prerequisites
 
 - **Node.js 20+** — required by Expo SDK 54. Check with `node -v`; install from [nodejs.org](https://nodejs.org/) if needed
-- **Expo Go (SDK 54)** on your phone — the same app used for Codespace development
-- **Xcode** (optional) — for iOS Simulator; install from the Mac App Store
-- **Android Studio** (optional) — for Android Emulator; install from [developer.android.com](https://developer.android.com/studio)
+- **Expo Go (SDK 54)** on your phone
+  - iOS: [App Store → Expo Go](https://apps.apple.com/app/expo-go/id982107779)
+  - Android: [Google Play → Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent)
+- **Xcode** (optional) — for iOS Simulator
+- **Android Studio** (optional) — for Android Emulator
 
 ### Setup
 
@@ -172,9 +250,9 @@ Metro starts and shows a QR code. Then choose your target:
 | iOS Simulator | Press `i` in the terminal (requires Xcode installed) |
 | Android Emulator | Press `a` in the terminal (requires Android Studio + emulator already running) |
 
-> **Different network?** If your phone isn't on the same Wi-Fi as your Mac, use `npm run tunnel` instead of `npm start`. This spins up an ngrok tunnel exactly like the Codespace workflow.
+> **Different network?** Use `npm run tunnel` instead of `npm start`.
 
-### Live development (same as Codespace)
+### Live development
 
 | Key | Action |
 |-----|--------|
@@ -193,44 +271,49 @@ This is the no-install workflow — runs entirely in the browser with no local s
 
 ### How it works
 
-**GitHub Codespaces** runs the Expo development server in the cloud. **Expo tunnel** (`--tunnel`) creates a public URL via ngrok so your phone can reach that server from anywhere. **Expo Go** (free app) connects to that URL and renders the app natively.
+**GitHub Codespaces** runs the Expo development server in the cloud. **Expo tunnel** (`--tunnel`) creates a public URL via ngrok so your phone can reach that server from anywhere. **Expo Go** connects to that URL and renders the app natively.
 
 ### Prerequisites
 
 1. **GitHub account** with this repository
-2. **Expo Go** installed on your phone — must be **SDK 54**:
-   - iOS: [App Store → Expo Go](https://apps.apple.com/app/expo-go/id982107779)
-   - Android: [Google Play → Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent)
+2. **Expo Go (SDK 54)** installed on your phone
 
 ### Starting a dev session
 
 1. Go to `github.com/[your-username]/HealthTracker`
 2. Tap **Code** → **Codespaces** tab → **Create codespace on main**
-   - If you have an existing Codespace, reopen it instead
-3. Wait ~30 seconds for the Codespace to finish setting up (the `postCreateCommand` runs `npm install --legacy-peer-deps` automatically)
-4. Open the **Terminal** panel (hamburger menu → Terminal → New Terminal)
-5. Run:
+3. Wait ~30 seconds for setup (the `postCreateCommand` runs `npm install --legacy-peer-deps` automatically)
+4. Open the **Terminal** panel and run:
    ```bash
    npm run tunnel
    ```
-6. Wait ~20–30 seconds for a QR code and a URL starting with `exp://`
-7. Open **Expo Go** → tap **Scan QR Code** → point at the QR code in the terminal
+5. Wait ~20–30 seconds for a QR code, then scan it in Expo Go
 
-> **If reopening an existing Codespace** (not creating fresh): `postCreateCommand` does not re-run. Just open the terminal and run `npm run tunnel` directly — packages are already installed.
-
-### Live development
-
-- **Hot reload**: code changes apply automatically within a few seconds
-- **Force full reload**: press `r` in the terminal
-- **Open JS debugger**: press `j` in the terminal
-- **Redisplay QR code**: press `c` in the terminal
+> **Reopening an existing Codespace:** `postCreateCommand` does not re-run. Just open the terminal and run `npm run tunnel` — packages are already installed.
 
 ### Ending a session
 
 1. Press `Ctrl+C` to stop Expo
 2. To pause billing: GitHub profile → **Codespaces** → `...` → **Stop codespace**
 
-> **Free tier:** GitHub Free gets ~60 core-hours/month (roughly 60 hours on a 2-core Codespace). You'll receive an email warning before hitting the limit.
+> **Free tier:** GitHub Free gets ~60 core-hours/month.
+
+---
+
+## Android APK Distribution
+
+Tagged releases trigger an automated GitHub Actions pipeline that builds a debug APK via EAS and attaches it to a GitHub Release.
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+**One-time setup required** — see `.github/workflows/release-android.yml` and `eas.json` for prerequisites (EAS CLI, Expo account, `EXPO_TOKEN` secret).
+
+**Installing on Android:** GitHub repo → Releases → download `.apk` → enable "Install unknown apps" in Android Settings → tap APK.
+
+---
 
 ## Troubleshooting
 
@@ -238,7 +321,7 @@ This is the no-install workflow — runs entirely in the browser with no local s
 |---------|-----|
 | QR code won't scan | Press `c` in the terminal to redisplay it |
 | App not updating after a change | Press `r` in terminal, or shake your phone → **Reload** |
-| Tunnel is slow to start | Wait up to 60 seconds — ngrok can take a moment to initialise |
-| `@expo/ngrok` not found | Run `npm install --legacy-peer-deps` first, then retry `npm run tunnel` |
-| Codespace went to sleep | Reopen it at github.com → Codespaces, then run `npm run tunnel` again |
-| "Something went wrong" in Expo Go | Stop Expo (`Ctrl+C`), run `npm run tunnel` again, rescan QR code |
+| Tunnel is slow to start | Wait up to 60 seconds — ngrok can take a moment |
+| `@expo/ngrok` not found | Run `npm install --legacy-peer-deps` first, then retry |
+| Codespace went to sleep | Reopen at github.com → Codespaces, then run `npm run tunnel` |
+| "Something went wrong" in Expo Go | Stop Expo (`Ctrl+C`), run `npm run tunnel` again, rescan QR |
