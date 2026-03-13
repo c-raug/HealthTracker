@@ -52,6 +52,8 @@ No test runner or lint script exists in package.json.
 ## Runtime Requirements
 
 - **`GestureHandlerRootView`** wraps the entire app in `app/_layout.tsx` — required by `react-native-gesture-handler` and any library that depends on it (e.g., `react-native-draggable-flatlist`). Must be the outermost wrapper.
+- **`SafeAreaProvider`** (from `react-native-safe-area-context`) is nested directly inside `GestureHandlerRootView` in `app/_layout.tsx`. Required for React Navigation headers to correctly offset below the Android status bar. `add-food-modal.tsx` uses `SafeAreaView` from `react-native-safe-area-context` (not from `react-native`) for the same reason.
+- **Nested drum ScrollViews**: All drum pickers (scroll wheels) that sit inside a page-level `ScrollView` must include `nestedScrollEnabled={true}` — required on Android to prevent the outer scroll view from capturing touch events. Applies to the exercise duration drums in `activities.tsx` and the Weight Goal drum in `GoalsSection.tsx`. The `PortionSelector` drums are exempt as they render inside a `Modal`.
 - **Backup storage** (`storage/backupStorage.ts`): two separate export paths — `saveBackup()` opens the OS share sheet (iOS/Android) or triggers a browser download (web) for cross-device/cross-Codespace portability; `writeAutoBackup()` writes silently to `documentDirectory` (native only, used by AppContext auto-backup). `loadBackup()` opens the OS document picker on native and a file-input on web. `backupExists()` always returns `true` on both platforms — "Load Saved Data" is always shown on the welcome screen. Dependencies: `expo-sharing ~14.0.8`, `expo-document-picker ~14.0.8`.
 
 ## Skills
