@@ -2,18 +2,8 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 
-// ─── Google Form config ───────────────────────────────────────────────────────
-// To fill these in:
-//   1. Open https://forms.gle/QkGKdSwg3yAN176c9 in a browser
-//   2. View Page Source (Ctrl+U / Cmd+U)
-//   3. Search for "FB_PUBLIC_LOAD_DATA_" and look for the form's action URL —
-//      it will look like: /forms/d/e/1FAIpQLSe.../formResponse
-//      Copy the full form ID (everything between /d/e/ and /formResponse)
-//   4. Search for "entry." to find the field ID for your feedback text question
-//      It will look like: entry.1234567890
-// ─────────────────────────────────────────────────────────────────────────────
-const GOOGLE_FORM_ID = 'YOUR_FORM_E_ID_HERE'; // e.g. 1FAIpQLSe...
-const GOOGLE_FORM_ENTRY = 'entry.YOUR_FIELD_ID_HERE'; // e.g. entry.1234567890
+const GOOGLE_FORM_ID = '1FAIpQLSd9Ul_u4gcdkK5UI68Kak-3nO7DS8xIrFsIzFmszSvYlfljgw';
+const GOOGLE_FORM_ENTRY = 'entry.1302979453';
 
 const FORM_URL = `https://docs.google.com/forms/d/e/${GOOGLE_FORM_ID}/formResponse`;
 
