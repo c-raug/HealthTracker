@@ -296,7 +296,7 @@ export default function NutritionScreen() {
           <>
             <View style={styles.ringRow}>
               <CalorieRing consumed={consumed} target={calorieTarget} />
-              <WaterBottleVisual onPress={() => setWaterExpandKey((k) => k + 1)} />
+              <WaterBottleVisual date={selectedDate} onPress={() => setWaterExpandKey((k) => k + 1)} />
             </View>
             {caloriesBurned > 0 && (
               <Text style={styles.exerciseBurnedLabel}>

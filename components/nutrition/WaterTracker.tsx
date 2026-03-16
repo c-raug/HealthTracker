@@ -52,31 +52,6 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingHorizontal: Spacing.md,
       paddingBottom: Spacing.md,
     },
-    progressRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: Spacing.sm,
-      gap: Spacing.sm,
-    },
-    barContainer: {
-      flex: 1,
-      height: 8,
-      backgroundColor: colors.border,
-      borderRadius: 4,
-      overflow: 'hidden',
-    },
-    barFill: {
-      height: '100%',
-      borderRadius: 4,
-      backgroundColor: '#3B82F6',
-    },
-    progressLabel: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      width: 100,
-      textAlign: 'right',
-      flexShrink: 0,
-    },
     presetsRow: {
       flexDirection: 'row',
       gap: Spacing.xs,
@@ -220,8 +195,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
     }
   }
 
-  const pct = waterGoal > 0 ? Math.min(totalConsumed / waterGoal, 1) * 100 : 0;
-
   const handlePresetAdd = (amount: number) => {
     dispatch({
       type: 'ADD_WATER_ENTRY',
@@ -279,23 +252,10 @@ export default function WaterTracker({ date, expandKey }: Props) {
           />
           <Text style={styles.headerTitle}>Water</Text>
         </View>
-        <Text style={{ ...Typography.small, color: colors.textSecondary }}>
-          {Math.round(totalConsumed)} / {waterGoal} {unit}
-        </Text>
       </TouchableOpacity>
 
       {!collapsed && (
         <View style={styles.body}>
-          {/* Progress bar */}
-          <View style={styles.progressRow}>
-            <View style={styles.barContainer}>
-              <View style={[styles.barFill, { width: `${pct}%` }]} />
-            </View>
-            <Text style={styles.progressLabel} numberOfLines={1}>
-              {Math.round(totalConsumed)}{unit} / {waterGoal}{unit}
-            </Text>
-          </View>
-
           {/* 3 Preset buttons */}
           <View style={styles.presetsRow}>
             {([0, 1, 2] as const).map((idx) => (

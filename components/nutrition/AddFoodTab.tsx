@@ -85,16 +85,28 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.xs,
       backgroundColor: colors.background,
     },
-    portionPanel: {
-      backgroundColor: colors.card,
+    portionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
+      backgroundColor: colors.card,
+      gap: Spacing.sm,
     },
-    confirmRow: {
+    backBtn: {
+      padding: Spacing.xs,
+    },
+    portionTitle: {
+      ...Typography.h3,
+      color: colors.text,
+      flex: 1,
+    },
+    portionActions: {
       flexDirection: 'row',
       gap: Spacing.sm,
-      marginHorizontal: Spacing.md,
-      marginBottom: Spacing.md,
+      padding: Spacing.md,
     },
     cancelSelectBtn: {
       flex: 1,
@@ -226,6 +238,46 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
     );
   }
 
+  if (selectedItem) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.portionHeader}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => setSelectedItem(null)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.primary} />
+          </TouchableOpacity>
+          <Text style={styles.portionTitle} numberOfLines={1}>{selectedItem.name}</Text>
+        </View>
+        <PortionSelector
+          value={servings}
+          onChange={setServings}
+          baseCalories={selectedItem.calories ?? 0}
+          baseProtein={selectedItem.protein ?? 0}
+          baseCarbs={selectedItem.carbs ?? 0}
+          baseFat={selectedItem.fat ?? 0}
+          servingSize={selectedItem.servingSize ?? '1 serving'}
+          baseServings={1}
+          foodName={selectedItem.name}
+        />
+        <View style={styles.portionActions}>
+          <TouchableOpacity
+            style={styles.cancelSelectBtn}
+            onPress={() => setSelectedItem(null)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cancelSelectText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd} activeOpacity={0.8}>
+            <Text style={styles.confirmText}>Add to {category}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
@@ -247,34 +299,6 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         <Ionicons name="add-circle" size={20} color={colors.primary} />
         <Text style={styles.createText}>Create Custom Food</Text>
       </TouchableOpacity>
-
-      {selectedItem && (
-        <View style={styles.portionPanel}>
-          <PortionSelector
-            value={servings}
-            onChange={setServings}
-            baseCalories={selectedItem.calories ?? 0}
-            baseProtein={selectedItem.protein ?? 0}
-            baseCarbs={selectedItem.carbs ?? 0}
-            baseFat={selectedItem.fat ?? 0}
-            servingSize={selectedItem.servingSize ?? '1 serving'}
-            baseServings={1}
-            foodName={selectedItem.name}
-          />
-          <View style={styles.confirmRow}>
-            <TouchableOpacity
-              style={styles.cancelSelectBtn}
-              onPress={() => setSelectedItem(null)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.cancelSelectText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
-              <Text style={styles.confirmText}>Add to {category}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
       <SectionList
         sections={sections}

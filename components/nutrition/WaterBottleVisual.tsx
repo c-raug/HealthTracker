@@ -4,7 +4,6 @@ import { useColors, LightColors, Typography, Spacing } from '../../constants/the
 import { useApp } from '../../context/AppContext';
 import { calculateWaterGoal } from '../../utils/waterCalculation';
 import { ageFromDob } from '../../utils/tdeeCalculation';
-import { getToday } from '../../utils/dateUtils';
 
 const BOTTLE_WIDTH = 52;
 const BOTTLE_BODY_HEIGHT = 90;
@@ -70,18 +69,17 @@ const makeStyles = (colors: typeof LightColors) =>
   });
 
 interface Props {
+  date: string;
   onPress: () => void;
 }
 
-export default function WaterBottleVisual({ onPress }: Props) {
+export default function WaterBottleVisual({ date, onPress }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { preferences, entries, waterLog } = useApp();
 
-  const today = getToday();
-
-  // Get today's water
-  const dayWater = waterLog?.find((d) => d.date === today);
+  // Get water entries for the selected date
+  const dayWater = waterLog?.find((d) => d.date === date);
   const entries_water = dayWater?.entries ?? [];
   const totalConsumed = entries_water.reduce((sum, e) => sum + e.amount, 0);
 
