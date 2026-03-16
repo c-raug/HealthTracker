@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -69,15 +68,6 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.small,
       color: colors.textSecondary,
       marginBottom: Spacing.xs,
-    },
-    input: {
-      backgroundColor: colors.background,
-      borderRadius: Radius.sm,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      ...Typography.body,
-      color: colors.text,
-      marginBottom: Spacing.md,
     },
     optionGrid: {
       gap: Spacing.xs,
@@ -233,7 +223,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
   const [weightGoal, setWeightGoal] = useState<WeightGoal>(
     profile?.weightGoal ?? 'maintain',
   );
-  const [fitnessGoal, setFitnessGoal] = useState(profile?.fitnessGoal ?? '');
   const [infoModal, setInfoModal] = useState<{ title: string; description: string } | null>(null);
   const [modeInfoModal, setModeInfoModal] = useState<{ title: string; description: string } | null>(null);
 
@@ -263,7 +252,7 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
         { value: 'gain_2', label: 'Gain 0.9 kg/wk' },
       ];
 
-  const patchProfile = (overrides: Partial<{ activityLevel: ActivityLevel; weightGoal: WeightGoal; fitnessGoal: string }>) => {
+  const patchProfile = (overrides: Partial<{ activityLevel: ActivityLevel; weightGoal: WeightGoal }>) => {
     if (!profile) return;
     dispatch({
       type: 'SET_PROFILE',
@@ -303,11 +292,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleFitnessGoalChange = (val: string) => {
-    setFitnessGoal(val);
-    patchProfile({ fitnessGoal: val || undefined });
-  };
 
   const modeLabels: Record<ActivityMode, string> = {
     auto: 'Auto',
@@ -430,17 +414,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
           </View>
         </>
       )}
-
-      {/* Fitness Goal */}
-      <Text style={styles.inputLabel}>Fitness Goal (optional)</Text>
-      <TextInput
-        style={styles.input}
-        value={fitnessGoal}
-        onChangeText={handleFitnessGoalChange}
-        placeholder="e.g. Run a 5K, lose 20 lbs by summer"
-        placeholderTextColor={colors.textSecondary}
-        returnKeyType="done"
-      />
 
       <InfoModal
         visible={infoModal !== null}
