@@ -26,30 +26,48 @@ Use this context to ask informed follow-up questions and to avoid proposing idea
 
 ## Step 2 — Opening question
 
-Ask the user what areas they want to brainstorm ideas for. Use `AskUserQuestion` with multi-select options covering:
+If the user has NOT already supplied a list of ideas, ask what areas they want to brainstorm. Use `AskUserQuestion` with multi-select options covering:
 
 > "What areas of the app do you want to brainstorm ideas for?"
 
 Options: Weight tracking, Nutrition & meals, Activity logging, Settings & goals, UI/UX & animations, Data & backup, Something else
 
-## Step 3 — Drill into each area
+**If the user already provided a list of ideas in their message, skip this step and go directly to Step 3 for each of those ideas.**
 
-For each area or idea the user raises, use `AskUserQuestion` to ask targeted follow-up questions:
+## Step 3 — Flesh out each idea interactively
 
-- **UX behavior**: What does the user see/tap/experience? What changes?
-- **Scope**: Is this a small polish, a new component, or a major new capability?
-- **Priority**: Is this something they want soon, eventually, or just someday?
-- **Edge cases**: What happens in empty/zero/cancel states?
+**This step is mandatory for every idea — whether the user supplied ideas upfront or they emerged during brainstorming. Never skip it.**
 
-Keep the tone exploratory — it's fine to capture a half-formed idea. The goal is breadth, not depth.
+For each idea, use `AskUserQuestion` to ask up to 3 targeted follow-up questions before moving on. You may batch multiple questions about the same idea in a single `AskUserQuestion` call (up to 4 questions per call). Choose the most relevant from:
 
-Suggest ideas proactively when relevant. If the user mentions the Weight tab, you might ask: "Would you want to see a body measurements tracker alongside weight?" Use your knowledge of the app (from Step 1) to make relevant suggestions they may not have thought of.
+- **UX flow**: "Walk me through the interaction — what does the user tap, and what do they see?"
+- **Problem being solved**: "What's the specific pain point this addresses?"
+- **Scope / edge cases**: "What should happen in empty, cancel, or error states?"
+- **Technical angle**: "Are there constraints I should know about — existing components to reuse, state changes needed, etc.?"
 
-Accumulate all ideas internally as a list — do NOT write anything to `future_plans.md` or any file.
+After gathering answers, summarize the fleshed-out idea internally before moving on to the next one.
 
-## Step 4 — Ask if done
+Suggest related ideas proactively when relevant, using your knowledge of the app from Step 1. Accumulate all ideas internally — do NOT write to any file.
 
-After covering the areas the user selected, use `AskUserQuestion`:
+## Step 3b — Confirm tier per item
+
+After all ideas are fleshed out, ask the user to assign a priority tier for each one. Use a single `AskUserQuestion` call with one question per idea (batch up to 4 questions per call; use multiple calls if there are more than 4 ideas):
+
+```
+Question: "What tier should '[Idea Title]' be?"
+Options:
+  - Short-term — a few file changes, low risk, adds immediate daily value
+  - Medium-term — new component or state changes, moderate effort
+  - Long-term — major new flow, external APIs, or large infrastructure
+```
+
+**Claude must NOT pre-select or suggest a tier.** Present all three options neutrally and record the user's choice for each idea.
+
+## Step 4 — Ask if done brainstorming
+
+**This step MUST happen before any issue creation (Steps 5–8).** Even if the user said "create issues" in their original message, this gate must still be asked.
+
+Use `AskUserQuestion`:
 
 > "Are you done brainstorming, or would you like to explore more areas?"
 
@@ -79,12 +97,7 @@ Only run `gh label create` for labels not already present.
 
 For each accumulated idea that is NOT already an open issue (case-insensitive title match against the list fetched in Step 1):
 
-Assign a priority tier:
-- **Short-Term** — a few file changes, low risk, adds daily value
-- **Medium-Term** — new component or state changes, moderate effort
-- **Long-Term** — new infrastructure, external APIs, or major new flows
-
-Construct the issue body:
+Use the tier the user assigned in Step 3b. Construct the issue body using the details gathered in Step 3:
 
 ```
 ## Goal
@@ -118,18 +131,30 @@ Capture the URL returned by each `gh issue create` call. Record skipped duplicat
 
 ## Step 7 — Add to project board and set Backlog status
 
-For each newly created issue URL, add it to the HealthTracker Project:
+For each newly created issue URL, add it to the HealthTracker Project using the GraphQL API:
 ```
-gh project item-add 3 --owner c-raug --url {issue-url}
+gh api graphql -f query='mutation {
+  addProjectV2ItemById(input: {projectId: "PVT_kwHODcEpUs4BRrsp", contentId: "{node_id}"}) {
+    item { id }
+  }
+}'
 ```
 
-The output includes the item ID. Use it to set the Status to **Backlog**:
+Get the issue node_id via:
 ```
-gh project item-edit \
-  --id {item-id} \
-  --project-id PVT_kwHODcEpUs4BRrsp \
-  --field-id PVTSSF_lAHODcEpUs4BRrspzg_cIC4 \
-  --single-select-option-id f75ad846
+gh api repos/c-raug/HealthTracker/issues/{number} --jq .node_id
+```
+
+Use the returned item ID to set the Status to **Backlog**:
+```
+gh api graphql -f query='mutation {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: "PVT_kwHODcEpUs4BRrsp",
+    itemId: "{item-id}",
+    fieldId: "PVTSSF_lAHODcEpUs4BRrspzg_cIC4",
+    value: { singleSelectOptionId: "f75ad846" }
+  }) { projectV2Item { id } }
+}'
 ```
 
 (These IDs are stable for the HealthTracker Project board.)
