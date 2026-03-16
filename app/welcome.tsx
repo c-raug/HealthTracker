@@ -100,6 +100,7 @@ export default function WelcomeScreen() {
           customFoods: data.customFoods,
           savedMeals: data.savedMeals,
           activityLog: data.activityLog,
+          waterLog: (data as any).waterLog ?? [],
         });
       } else {
         setLoadingBackup(false);

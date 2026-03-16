@@ -23,6 +23,7 @@ import CalorieRing from '../../components/nutrition/CalorieRing';
 import MacroProgressBars from '../../components/nutrition/MacroProgressBars';
 import MealCategoryComponent from '../../components/nutrition/MealCategory';
 import WaterTracker from '../../components/nutrition/WaterTracker';
+import WaterBottleVisual from '../../components/nutrition/WaterBottleVisual';
 
 const MEAL_CATEGORIES: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
@@ -80,6 +81,11 @@ const makeStyles = (colors: typeof LightColors) =>
     promptContainer: {
       marginTop: Spacing.xl,
     },
+    ringRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     exerciseBurnedLabel: {
       ...Typography.small,
       color: colors.primary,
@@ -123,6 +129,7 @@ export default function NutritionScreen() {
 
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [waterExpandKey, setWaterExpandKey] = useState(0);
 
   const today = getToday();
   const isForwardDisabled = selectedDate >= today;
@@ -287,7 +294,10 @@ export default function NutritionScreen() {
           </View>
         ) : (
           <>
-            <CalorieRing consumed={consumed} target={calorieTarget} />
+            <View style={styles.ringRow}>
+              <CalorieRing consumed={consumed} target={calorieTarget} />
+              <WaterBottleVisual date={selectedDate} onPress={() => setWaterExpandKey((k) => k + 1)} />
+            </View>
             {caloriesBurned > 0 && (
               <Text style={styles.exerciseBurnedLabel}>
                 +{caloriesBurned} cal from {activityMode === 'smartwatch' ? 'smart watch' : 'exercise'}
@@ -298,7 +308,7 @@ export default function NutritionScreen() {
               goalCalories={calorieTarget}
               macroSplit={macroSplit}
             />
-            <WaterTracker date={selectedDate} />
+            <WaterTracker date={selectedDate} expandKey={waterExpandKey} />
             {MEAL_CATEGORIES.map((cat) => (
               <MealCategoryComponent
                 key={cat}

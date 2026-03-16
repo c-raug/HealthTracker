@@ -96,6 +96,9 @@ export interface UserPreferences {
   themeColor?: string;
   defaultTab?: 'weight' | 'nutrition' | 'activity';
   waterGoalOverride?: number;
+  waterGoalMode?: 'auto' | 'manual';
+  waterCreatineAdjustment?: boolean;
+  waterPresets?: [number, number, number];
 }
 
 export type ExerciseType = 'weight_lifting';

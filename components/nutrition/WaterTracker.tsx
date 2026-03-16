@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,9 @@ import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import { calculateWaterGoal } from '../../utils/waterCalculation';
 import { ageFromDob } from '../../utils/tdeeCalculation';
+
+const DEFAULT_PRESETS_OZ: [number, number, number] = [8, 16, 32];
+const DEFAULT_PRESETS_ML: [number, number, number] = [250, 500, 750];
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -45,55 +48,47 @@ const makeStyles = (colors: typeof LightColors) =>
       letterSpacing: 0.8,
       fontWeight: '600',
     },
-    summaryText: {
-      ...Typography.small,
-      color: colors.textSecondary,
-    },
     body: {
       paddingHorizontal: Spacing.md,
       paddingBottom: Spacing.md,
     },
-    progressRow: {
+    presetsRow: {
       flexDirection: 'row',
+      gap: Spacing.xs,
+      marginBottom: Spacing.sm,
+    },
+    presetWrapper: {
+      flex: 1,
       alignItems: 'center',
-      marginBottom: Spacing.sm,
-      gap: Spacing.sm,
     },
-    barContainer: {
-      flex: 1,
-      height: 8,
-      backgroundColor: colors.border,
-      borderRadius: 4,
-      overflow: 'hidden',
-    },
-    barFill: {
-      height: '100%',
-      borderRadius: 4,
-      backgroundColor: '#3B82F6',
-    },
-    progressLabel: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      width: 100,
-      textAlign: 'right',
-      flexShrink: 0,
-    },
-    quickAddRow: {
-      flexDirection: 'row',
-      gap: Spacing.sm,
-      marginBottom: Spacing.sm,
-    },
-    quickAddBtn: {
-      flex: 1,
+    presetBtn: {
+      width: '100%',
       backgroundColor: colors.primaryLight,
       borderRadius: Radius.md,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
     },
-    quickAddText: {
+    presetBtnText: {
       ...Typography.small,
       color: colors.primary,
       fontWeight: '600',
+    },
+    editHint: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
+    presetEditInput: {
+      width: '100%',
+      backgroundColor: colors.background,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.sm,
+      ...Typography.small,
+      color: colors.text,
+      textAlign: 'center',
     },
     customRow: {
       flexDirection: 'row',
@@ -144,22 +139,39 @@ const makeStyles = (colors: typeof LightColors) =>
 
 interface Props {
   date: string;
+  expandKey?: number;
 }
 
-export default function WaterTracker({ date }: Props) {
+export default function WaterTracker({ date, expandKey }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { preferences, entries, waterLog, dispatch } = useApp();
 
   const [collapsed, setCollapsed] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
+  const [editingPreset, setEditingPreset] = useState<0 | 1 | 2 | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const editInputRef = useRef<TextInput>(null);
+
+  // Expand when expandKey changes (triggered from WaterBottleVisual tap)
+  useEffect(() => {
+    if (expandKey && expandKey > 0) setCollapsed(false);
+  }, [expandKey]);
 
   const isImperial = preferences.unit === 'lbs';
   const unit = isImperial ? 'oz' : 'mL';
-  const quickAmount = isImperial ? 8 : 250;
+
+  // Backward-compat: if no waterGoalMode set but override exists, default to manual
+  const waterGoalMode =
+    preferences.waterGoalMode ??
+    (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
+
+  // Presets
+  const defaultPresets = isImperial ? DEFAULT_PRESETS_OZ : DEFAULT_PRESETS_ML;
+  const presets: [number, number, number] = preferences.waterPresets ?? defaultPresets;
 
   // Get today's water entries
-  const dayWater = waterLog.find((d) => d.date === date);
+  const dayWater = waterLog?.find((d) => d.date === date);
   const entries_water = dayWater?.entries ?? [];
   const totalConsumed = entries_water.reduce((sum, e) => sum + e.amount, 0);
 
@@ -169,23 +181,25 @@ export default function WaterTracker({ date }: Props) {
   const latestWeight = sortedEntries[0];
 
   let waterGoal = 64; // fallback: 64 oz
-  if (profile && latestWeight) {
+  if (waterGoalMode === 'manual' && preferences.waterGoalOverride !== undefined) {
+    waterGoal = preferences.waterGoalOverride;
+  } else if (profile && latestWeight) {
     const resolvedAge = profile.dob ? ageFromDob(profile.dob) : (profile.age ?? null);
     if (resolvedAge !== null) {
-      waterGoal = calculateWaterGoal(latestWeight.weight, latestWeight.unit, profile.activityLevel);
+      waterGoal = calculateWaterGoal(
+        latestWeight.weight,
+        latestWeight.unit,
+        profile.activityLevel,
+        preferences.waterCreatineAdjustment,
+      );
     }
   }
-  if (preferences.waterGoalOverride !== undefined) {
-    waterGoal = preferences.waterGoalOverride;
-  }
 
-  const pct = waterGoal > 0 ? Math.min(totalConsumed / waterGoal, 1) * 100 : 0;
-
-  const handleQuickAdd = () => {
+  const handlePresetAdd = (amount: number) => {
     dispatch({
       type: 'ADD_WATER_ENTRY',
       date,
-      entry: { id: generateId(), amount: quickAmount },
+      entry: { id: generateId(), amount },
     });
   };
 
@@ -204,6 +218,25 @@ export default function WaterTracker({ date }: Props) {
     dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId });
   };
 
+  const startEditPreset = (idx: 0 | 1 | 2) => {
+    setEditValue(presets[idx].toString());
+    setEditingPreset(idx);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  };
+
+  const savePreset = (idx: 0 | 1 | 2) => {
+    const val = parseInt(editValue, 10);
+    const newPresets: [number, number, number] = [...presets] as [number, number, number];
+    if (!editValue.trim() || isNaN(val) || val <= 0) {
+      newPresets[idx] = defaultPresets[idx];
+    } else {
+      newPresets[idx] = val;
+    }
+    dispatch({ type: 'SET_WATER_PRESETS', presets: newPresets });
+    setEditingPreset(null);
+    setEditValue('');
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -219,28 +252,42 @@ export default function WaterTracker({ date }: Props) {
           />
           <Text style={styles.headerTitle}>Water</Text>
         </View>
-        <Text style={styles.summaryText}>
-          {Math.round(totalConsumed)} / {waterGoal} {unit}
-        </Text>
       </TouchableOpacity>
 
       {!collapsed && (
         <View style={styles.body}>
-          {/* Progress bar */}
-          <View style={styles.progressRow}>
-            <View style={styles.barContainer}>
-              <View style={[styles.barFill, { width: `${pct}%` }]} />
-            </View>
-            <Text style={styles.progressLabel} numberOfLines={1}>
-              {Math.round(totalConsumed)}{unit} / {waterGoal}{unit}
-            </Text>
-          </View>
-
-          {/* Quick add */}
-          <View style={styles.quickAddRow}>
-            <TouchableOpacity style={styles.quickAddBtn} onPress={handleQuickAdd} activeOpacity={0.8}>
-              <Text style={styles.quickAddText}>+{quickAmount} {unit}</Text>
-            </TouchableOpacity>
+          {/* 3 Preset buttons */}
+          <View style={styles.presetsRow}>
+            {([0, 1, 2] as const).map((idx) => (
+              <View key={idx} style={styles.presetWrapper}>
+                {editingPreset === idx ? (
+                  <TextInput
+                    ref={editingPreset === idx ? editInputRef : undefined}
+                    style={styles.presetEditInput}
+                    value={editValue}
+                    onChangeText={setEditValue}
+                    keyboardType="number-pad"
+                    returnKeyType="done"
+                    onSubmitEditing={() => savePreset(idx)}
+                    onBlur={() => savePreset(idx)}
+                    selectTextOnFocus
+                  />
+                ) : (
+                  <TouchableOpacity
+                    style={styles.presetBtn}
+                    onPress={() => handlePresetAdd(presets[idx])}
+                    onLongPress={() => startEditPreset(idx)}
+                    activeOpacity={0.8}
+                    delayLongPress={500}
+                  >
+                    <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
+                  </TouchableOpacity>
+                )}
+                {editingPreset !== idx && (
+                  <Text style={styles.editHint}>hold to edit</Text>
+                )}
+              </View>
+            ))}
           </View>
 
           {/* Custom amount */}
