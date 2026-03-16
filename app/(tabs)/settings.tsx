@@ -125,6 +125,11 @@ export default function SettingsScreen() {
     preferences.waterGoalOverride !== undefined ? preferences.waterGoalOverride.toString() : '',
   );
 
+  // Backward-compat: if no waterGoalMode but override exists, default to manual
+  const waterGoalMode =
+    preferences.waterGoalMode ??
+    (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
+
   // When deep-linked from Activity page, auto-expand Goals and scroll to it
   useEffect(() => {
     if (focusActivityMode) {
@@ -309,46 +314,90 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <Text style={styles.settingLabel}>Daily Water Goal</Text>
           <Text style={styles.settingDescription}>
-            Override the auto-calculated water goal (in {preferences.unit === 'lbs' ? 'oz' : 'mL'}).
-            Leave empty to use the calculated goal based on your profile.
+            Auto-calculates from your weight and activity level. Switch to Manual to set a custom goal.
           </Text>
-          <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-            <TextInput
-              style={[styles.toggleOption, {
-                flex: 1,
-                backgroundColor: colors.background,
-                borderRadius: Radius.sm,
-                paddingHorizontal: Spacing.md,
-                paddingVertical: Spacing.sm,
-                ...Typography.body,
-                color: colors.text,
-                borderWidth: 1,
-                borderColor: colors.border,
-              }]}
-              value={waterGoalInput}
-              onChangeText={setWaterGoalInput}
-              placeholder={`e.g. ${preferences.unit === 'lbs' ? '100' : '3000'}`}
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="number-pad"
-              returnKeyType="done"
-            />
-            <TouchableOpacity
-              style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }]}
-              onPress={() => {
-                const val = parseInt(waterGoalInput, 10);
-                if (waterGoalInput.trim() === '') {
-                  dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: undefined });
-                } else if (!isNaN(val) && val > 0) {
-                  dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: val });
-                } else {
-                  Alert.alert('Invalid', 'Please enter a positive number.');
-                }
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.toggleText, styles.toggleTextActive]}>Save</Text>
-            </TouchableOpacity>
+          {/* Auto / Manual toggle */}
+          <View style={styles.toggle}>
+            {(['auto', 'manual'] as const).map((mode) => (
+              <TouchableOpacity
+                key={mode}
+                style={[styles.toggleOption, waterGoalMode === mode && styles.toggleOptionActive]}
+                onPress={() => dispatch({ type: 'SET_WATER_GOAL_MODE', mode })}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.toggleText, waterGoalMode === mode && styles.toggleTextActive]}>
+                  {mode === 'auto' ? 'Auto' : 'Manual'}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
+
+          {/* Auto mode: show creatine toggle */}
+          {waterGoalMode === 'auto' && (
+            <View style={{ marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: Spacing.md }}>
+                <Text style={[styles.settingLabel, { marginBottom: 2 }]}>Creatine Adjustment</Text>
+                <Text style={[styles.settingDescription, { marginBottom: 0 }]}>
+                  Adds +{preferences.unit === 'lbs' ? '16 oz' : '500 mL'} to your daily goal.
+                </Text>
+              </View>
+              <View style={[styles.toggle, { width: 100 }]}>
+                {([false, true] as const).map((val) => (
+                  <TouchableOpacity
+                    key={String(val)}
+                    style={[styles.toggleOption, (preferences.waterCreatineAdjustment ?? false) === val && styles.toggleOptionActive]}
+                    onPress={() => dispatch({ type: 'SET_WATER_CREATINE', enabled: val })}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.toggleText, (preferences.waterCreatineAdjustment ?? false) === val && styles.toggleTextActive]}>
+                      {val ? 'On' : 'Off'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Manual mode: custom goal input */}
+          {waterGoalMode === 'manual' && (
+            <View style={{ marginTop: Spacing.md, flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
+              <TextInput
+                style={[styles.toggleOption, {
+                  flex: 1,
+                  backgroundColor: colors.background,
+                  borderRadius: Radius.sm,
+                  paddingHorizontal: Spacing.md,
+                  paddingVertical: Spacing.sm,
+                  ...Typography.body,
+                  color: colors.text,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }]}
+                value={waterGoalInput}
+                onChangeText={setWaterGoalInput}
+                placeholder={`e.g. ${preferences.unit === 'lbs' ? '100' : '3000'} ${preferences.unit === 'lbs' ? 'oz' : 'mL'}`}
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+                returnKeyType="done"
+              />
+              <TouchableOpacity
+                style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }]}
+                onPress={() => {
+                  const val = parseInt(waterGoalInput, 10);
+                  if (waterGoalInput.trim() === '') {
+                    dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: undefined });
+                  } else if (!isNaN(val) && val > 0) {
+                    dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: val });
+                  } else {
+                    Alert.alert('Invalid', 'Please enter a positive number.');
+                  }
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.toggleText, styles.toggleTextActive]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* 6. Units (was 5) */}

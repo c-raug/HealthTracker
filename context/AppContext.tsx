@@ -79,7 +79,10 @@ type Action =
   | { type: 'SET_DEFAULT_TAB'; tab: 'weight' | 'nutrition' | 'activity' }
   | { type: 'ADD_WATER_ENTRY'; date: string; entry: WaterEntry }
   | { type: 'DELETE_WATER_ENTRY'; date: string; entryId: string }
-  | { type: 'SET_WATER_GOAL_OVERRIDE'; amount: number | undefined };
+  | { type: 'SET_WATER_GOAL_OVERRIDE'; amount: number | undefined }
+  | { type: 'SET_WATER_GOAL_MODE'; mode: 'auto' | 'manual' }
+  | { type: 'SET_WATER_CREATINE'; enabled: boolean }
+  | { type: 'SET_WATER_PRESETS'; presets: [number, number, number] };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -135,7 +138,7 @@ function reducer(state: State, action: Action): State {
         customFoods: action.customFoods,
         savedMeals: action.savedMeals,
         activityLog: action.activityLog,
-        waterLog: action.waterLog,
+        waterLog: action.waterLog ?? [],
         isLoading: false,
       };
     }
@@ -309,6 +312,21 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, waterGoalOverride: action.amount },
+      };
+    case 'SET_WATER_GOAL_MODE':
+      return {
+        ...state,
+        preferences: { ...state.preferences, waterGoalMode: action.mode },
+      };
+    case 'SET_WATER_CREATINE':
+      return {
+        ...state,
+        preferences: { ...state.preferences, waterCreatineAdjustment: action.enabled },
+      };
+    case 'SET_WATER_PRESETS':
+      return {
+        ...state,
+        preferences: { ...state.preferences, waterPresets: action.presets },
       };
     default:
       return state;
