@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '../../context/AppContext';
@@ -9,6 +9,8 @@ import { ActivityMode } from '../../types';
 import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
+import ThemeColorPicker from '../../components/settings/ThemeColorPicker';
+import FeedbackSection from '../../components/settings/FeedbackSection';
 import { saveBackup } from '../../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
@@ -190,120 +192,135 @@ export default function SettingsScreen() {
   const activityAdjusted = avgActivityCalories > 0;
 
   return (
-    <ScrollView style={styles.container} ref={scrollRef}>
-      {/* 1. Profile — biometrics only */}
-      <View style={styles.collapsibleCard}>
-        <TouchableOpacity
-          style={styles.collapsibleHeader}
-          onPress={() => setProfileExpanded((v) => !v)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.collapsibleHeaderLeft}>
-            <Ionicons
-              name={profileExpanded ? 'chevron-down' : 'chevron-forward'}
-              size={16}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.sectionTitle}>Profile</Text>
-          </View>
-        </TouchableOpacity>
-        {profileExpanded && <ProfileSection />}
-      </View>
-
-      {/* 2. Goals & Calorie Target */}
-      <View style={styles.collapsibleCard} onLayout={(e) => setGoalsSectionY(e.nativeEvent.layout.y)}>
-        <TouchableOpacity
-          style={styles.collapsibleHeader}
-          onPress={() => setGoalsExpanded((v) => !v)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.collapsibleHeaderLeft}>
-            <Ionicons
-              name={goalsExpanded ? 'chevron-down' : 'chevron-forward'}
-              size={16}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.sectionTitle}>Goals &amp; Calorie Target</Text>
-          </View>
-        </TouchableOpacity>
-        {goalsExpanded && (
-          <GoalsSection activityMode={activityMode} onActivityModeChange={setActivityMode} />
-        )}
-      </View>
-
-      {/* 3. Units */}
-      <View style={styles.card}>
-        <Text style={styles.settingLabel}>Weight Unit</Text>
-        <Text style={styles.settingDescription}>
-          Applies to new entries and the history chart. Existing entries keep their original unit.
-        </Text>
-        <View style={styles.toggle}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView style={styles.container} ref={scrollRef} keyboardShouldPersistTaps="handled">
+        {/* 1. Profile — biometrics only */}
+        <View style={styles.collapsibleCard}>
           <TouchableOpacity
-            style={[styles.toggleOption, preferences.unit === 'lbs' && styles.toggleOptionActive]}
-            onPress={() => setUnit('lbs')}
-            activeOpacity={0.8}
+            style={styles.collapsibleHeader}
+            onPress={() => setProfileExpanded((v) => !v)}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.toggleText, preferences.unit === 'lbs' && styles.toggleTextActive]}>
-              lbs
-            </Text>
+            <View style={styles.collapsibleHeaderLeft}>
+              <Ionicons
+                name={profileExpanded ? 'chevron-down' : 'chevron-forward'}
+                size={16}
+                color={colors.textSecondary}
+              />
+              <Text style={styles.sectionTitle}>Profile</Text>
+            </View>
           </TouchableOpacity>
+          {profileExpanded && <ProfileSection />}
+        </View>
+
+        {/* 2. Goals & Calorie Target */}
+        <View style={styles.collapsibleCard} onLayout={(e) => setGoalsSectionY(e.nativeEvent.layout.y)}>
           <TouchableOpacity
-            style={[styles.toggleOption, preferences.unit === 'kg' && styles.toggleOptionActive]}
-            onPress={() => setUnit('kg')}
+            style={styles.collapsibleHeader}
+            onPress={() => setGoalsExpanded((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.collapsibleHeaderLeft}>
+              <Ionicons
+                name={goalsExpanded ? 'chevron-down' : 'chevron-forward'}
+                size={16}
+                color={colors.textSecondary}
+              />
+              <Text style={styles.sectionTitle}>Goals &amp; Calorie Target</Text>
+            </View>
+          </TouchableOpacity>
+          {goalsExpanded && (
+            <GoalsSection activityMode={activityMode} onActivityModeChange={setActivityMode} />
+          )}
+        </View>
+
+        {/* 3. Macros — collapsible */}
+        <View style={styles.collapsibleCard}>
+          <TouchableOpacity
+            style={styles.collapsibleHeader}
+            onPress={() => setMacroExpanded((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.collapsibleHeaderLeft}>
+              <Ionicons
+                name={macroExpanded ? 'chevron-down' : 'chevron-forward'}
+                size={16}
+                color={colors.textSecondary}
+              />
+              <Text style={styles.sectionTitle}>Macros</Text>
+            </View>
+          </TouchableOpacity>
+          {macroExpanded && (
+            <MacroSection goalCalories={adjustedGoalCalories} activityAdjusted={activityAdjusted} />
+          )}
+        </View>
+
+        {/* 4. Accent Color */}
+        <View style={styles.card}>
+          <ThemeColorPicker />
+        </View>
+
+        {/* 5. Units */}
+        <View style={styles.card}>
+          <Text style={styles.settingLabel}>Weight Unit</Text>
+          <Text style={styles.settingDescription}>
+            Applies to new entries and the history chart. Existing entries keep their original unit.
+          </Text>
+          <View style={styles.toggle}>
+            <TouchableOpacity
+              style={[styles.toggleOption, preferences.unit === 'lbs' && styles.toggleOptionActive]}
+              onPress={() => setUnit('lbs')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.toggleText, preferences.unit === 'lbs' && styles.toggleTextActive]}>
+                lbs
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleOption, preferences.unit === 'kg' && styles.toggleOptionActive]}
+              onPress={() => setUnit('kg')}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.toggleText, preferences.unit === 'kg' && styles.toggleTextActive]}>
+                kg
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 6. Data Backup */}
+        <View style={styles.card}>
+          <Text style={styles.settingLabel}>Data Backup</Text>
+          <Text style={styles.settingDescription}>
+            Save all app data to a file that persists across reinstalls.
+          </Text>
+          <TouchableOpacity
+            style={[styles.toggleOption, styles.toggleOptionActive, { paddingVertical: Spacing.sm }]}
+            onPress={async () => {
+              try {
+                await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
+                Alert.alert('Success', 'Data saved successfully.');
+              } catch {
+                Alert.alert('Error', 'Failed to save data.');
+              }
+            }}
             activeOpacity={0.8}
           >
-            <Text style={[styles.toggleText, preferences.unit === 'kg' && styles.toggleTextActive]}>
-              kg
-            </Text>
+            <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* 4. Macros — collapsible */}
-      <View style={styles.collapsibleCard}>
-        <TouchableOpacity
-          style={styles.collapsibleHeader}
-          onPress={() => setMacroExpanded((v) => !v)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.collapsibleHeaderLeft}>
-            <Ionicons
-              name={macroExpanded ? 'chevron-down' : 'chevron-forward'}
-              size={16}
-              color={colors.textSecondary}
-            />
-            <Text style={styles.sectionTitle}>Macros</Text>
-          </View>
-        </TouchableOpacity>
-        {macroExpanded && (
-          <MacroSection goalCalories={adjustedGoalCalories} activityAdjusted={activityAdjusted} />
-        )}
-      </View>
+        {/* 7. Send Feedback */}
+        <View style={styles.card}>
+          <FeedbackSection />
+        </View>
 
-      {/* 5. Data Backup */}
-      <View style={styles.card}>
-        <Text style={styles.settingLabel}>Data Backup</Text>
-        <Text style={styles.settingDescription}>
-          Save all app data to a file that persists across reinstalls.
-        </Text>
-        <TouchableOpacity
-          style={[styles.toggleOption, styles.toggleOptionActive, { paddingVertical: Spacing.sm }]}
-          onPress={async () => {
-            try {
-              await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
-              Alert.alert('Success', 'Data saved successfully.');
-            } catch {
-              Alert.alert('Error', 'Failed to save data.');
-            }
-          }}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Footer */}
-      <Text style={styles.footer}>HealthTracker v1.0.0</Text>
-    </ScrollView>
+        {/* Footer */}
+        <Text style={styles.footer}>HealthTracker v1.0.0</Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

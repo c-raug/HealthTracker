@@ -19,6 +19,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      initialRouteName="nutrition"
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,

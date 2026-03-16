@@ -69,7 +69,8 @@ type Action =
   | { type: 'DELETE_ACTIVITY'; date: string; activityId: string }
   | { type: 'DISMISS_ACTIVITY_WARNING'; date: string; activityId: string }
   | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode }
-  | { type: 'SET_ONBOARDING_COMPLETE' };
+  | { type: 'SET_ONBOARDING_COMPLETE' }
+  | { type: 'SET_THEME_COLOR'; color: string };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -267,6 +268,11 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, onboardingComplete: true },
+      };
+    case 'SET_THEME_COLOR':
+      return {
+        ...state,
+        preferences: { ...state.preferences, themeColor: action.color },
       };
     default:
       return state;

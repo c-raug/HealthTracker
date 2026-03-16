@@ -1,3 +1,4 @@
+import { createContext, useContext } from 'react';
 import { useColorScheme } from 'react-native';
 
 export const LightColors = {
@@ -26,9 +27,30 @@ export const DarkColors = {
   white: '#FFFFFF',
 };
 
+export const ACCENT_PRESETS = [
+  { id: 'green',  label: 'Green',  primary: '#4CAF50', primaryLight: '#E8F5E9', primaryLightDark: '#1A3D20' },
+  { id: 'blue',   label: 'Blue',   primary: '#2196F3', primaryLight: '#E3F2FD', primaryLightDark: '#1A2D4A' },
+  { id: 'orange', label: 'Orange', primary: '#FF9800', primaryLight: '#FFF3E0', primaryLightDark: '#3D2A10' },
+  { id: 'purple', label: 'Purple', primary: '#9C27B0', primaryLight: '#F3E5F5', primaryLightDark: '#2A1A3D' },
+  { id: 'red',    label: 'Red',    primary: '#F44336', primaryLight: '#FFEBEE', primaryLightDark: '#3D1919' },
+  { id: 'teal',   label: 'Teal',   primary: '#009688', primaryLight: '#E0F2F1', primaryLightDark: '#1A3333' },
+] as const;
+
+type AccentPresetId = typeof ACCENT_PRESETS[number]['id'];
+
+type ThemeContextValue = { accentColor: string | null };
+export const ThemeContext = createContext<ThemeContextValue>({ accentColor: null });
+
 export function useColors() {
   const scheme = useColorScheme();
-  return scheme === 'dark' ? DarkColors : LightColors;
+  const { accentColor } = useContext(ThemeContext);
+  const base = scheme === 'dark' ? DarkColors : LightColors;
+  if (!accentColor) return base;
+  const preset = ACCENT_PRESETS.find((p) => p.primary === accentColor);
+  const primaryLight = preset
+    ? (scheme === 'dark' ? preset.primaryLightDark : preset.primaryLight)
+    : base.primaryLight;
+  return { ...base, primary: accentColor, primaryLight };
 }
 
 // Fallback alias for any missed references
