@@ -61,7 +61,8 @@ No test runner or lint script exists in package.json.
 - **`/interview`** — Invoke automatically whenever the user mentions planning, update ideas, new features, or improvements to the app. Conducts a structured interview using `AskUserQuestion` and rewrites `prd.md` with a complete, phased implementation plan.
 - **`/push-changes`** — Invoke automatically after completing any code change (feature, fix, or refactor). Updates affected documentation, creates a new `claude/<description>-<id>` sub-branch off the current branch, commits all changes, and pushes to GitHub.
 - **`/dependency-check`** — For all version constraints, compatibility rules, and install commands.
-- **`/create-github-issues`** — Invoke automatically when user says "create github issues", "sync issues", "push to board", "sync roadmap", or "create project board". Reads `future_plans.md`, creates labelled GitHub issues for each idea not already tracked, and adds them to a "HealthTracker Roadmap" GitHub project (creating the project if it doesn't exist). Idempotent — safe to re-run.
+- **`/create-issues`** — Invoke automatically when user says "brainstorm", "idea dump", "create github issues", "sync issues", "push to board", or similar. Conducts a brainstorming interview, then creates labelled GitHub issues directly and adds them to the HealthTracker Project board in the Backlog column. No intermediate file — ideas go straight from conversation to GitHub.
+- **`/complete-prioritized`** — Invoke automatically when user says "work on prioritized", "complete the board", "do the prioritized tickets", or similar. Reads all issues in the "Prioritized" column of the project board, implements each one, then calls `/push-changes` to commit and push on a new branch.
 
 ## Dependency Management
 
