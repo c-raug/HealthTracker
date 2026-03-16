@@ -216,6 +216,7 @@ export default function FoodItem({ item, onDelete, drag, isActive, date, categor
                 baseFat={baseFat}
                 servingSize={item.servingSize ?? '1 serving'}
                 baseServings={1}
+                foodName={item.name}
               />
 
               <TouchableOpacity

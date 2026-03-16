@@ -94,6 +94,8 @@ export interface UserPreferences {
   activityMode?: ActivityMode;
   onboardingComplete?: boolean;
   themeColor?: string;
+  defaultTab?: 'weight' | 'nutrition' | 'activity';
+  waterGoalOverride?: number;
 }
 
 export type ExerciseType = 'weight_lifting';
@@ -112,4 +114,14 @@ export interface ActivityEntry {
 export interface DayActivity {
   date: string; // "YYYY-MM-DD"
   activities: ActivityEntry[];
+}
+
+export interface WaterEntry {
+  id: string;
+  amount: number; // oz (if unit=lbs) or mL (if unit=kg)
+}
+
+export interface DayWater {
+  date: string; // "YYYY-MM-DD"
+  entries: WaterEntry[];
 }

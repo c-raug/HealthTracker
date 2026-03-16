@@ -22,6 +22,7 @@ import ProfilePrompt from '../../components/nutrition/ProfilePrompt';
 import CalorieRing from '../../components/nutrition/CalorieRing';
 import MacroProgressBars from '../../components/nutrition/MacroProgressBars';
 import MealCategoryComponent from '../../components/nutrition/MealCategory';
+import WaterTracker from '../../components/nutrition/WaterTracker';
 
 const MEAL_CATEGORIES: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
@@ -297,6 +298,7 @@ export default function NutritionScreen() {
               goalCalories={calorieTarget}
               macroSplit={macroSplit}
             />
+            <WaterTracker date={selectedDate} />
             {MEAL_CATEGORIES.map((cat) => (
               <MealCategoryComponent
                 key={cat}

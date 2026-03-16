@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useApp } from '../../context/AppContext';
@@ -109,7 +109,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
 });
 
 export default function SettingsScreen() {
-  const { preferences, entries, nutritionLog, customFoods, savedMeals, activityLog, dispatch } = useApp();
+  const { preferences, entries, nutritionLog, customFoods, savedMeals, activityLog, waterLog, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
 
@@ -120,6 +120,10 @@ export default function SettingsScreen() {
   const [profileExpanded, setProfileExpanded] = useState(true);
   const [goalsExpanded, setGoalsExpanded] = useState(true);
   const [macroExpanded, setMacroExpanded] = useState(true);
+  const [appConfigExpanded, setAppConfigExpanded] = useState(true);
+  const [waterGoalInput, setWaterGoalInput] = useState(
+    preferences.waterGoalOverride !== undefined ? preferences.waterGoalOverride.toString() : '',
+  );
 
   // When deep-linked from Activity page, auto-expand Goals and scroll to it
   useEffect(() => {
@@ -258,12 +262,96 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        {/* 4. Accent Color */}
-        <View style={styles.card}>
-          <ThemeColorPicker />
+        {/* 4. App Configuration */}
+        <View style={styles.collapsibleCard}>
+          <TouchableOpacity
+            style={styles.collapsibleHeader}
+            onPress={() => setAppConfigExpanded((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.collapsibleHeaderLeft}>
+              <Ionicons
+                name={appConfigExpanded ? 'chevron-down' : 'chevron-forward'}
+                size={16}
+                color={colors.textSecondary}
+              />
+              <Text style={styles.sectionTitle}>App Configuration</Text>
+            </View>
+          </TouchableOpacity>
+          {appConfigExpanded && (
+            <View style={{ padding: Spacing.md, paddingTop: 0 }}>
+              <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Default Tab</Text>
+              <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
+                Choose which tab opens when you launch the app.
+              </Text>
+              <View style={styles.toggle}>
+                {(['weight', 'nutrition', 'activity'] as const).map((tab) => (
+                  <TouchableOpacity
+                    key={tab}
+                    style={[styles.toggleOption, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleOptionActive]}
+                    onPress={() => dispatch({ type: 'SET_DEFAULT_TAB', tab })}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.toggleText, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleTextActive]}>
+                      {tab === 'weight' ? 'Weight' : tab === 'nutrition' ? 'Nutrition' : 'Activity'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={{ marginTop: Spacing.md }}>
+                <ThemeColorPicker />
+              </View>
+            </View>
+          )}
         </View>
 
-        {/* 5. Units */}
+        {/* 5. Water Goal */}
+        <View style={styles.card}>
+          <Text style={styles.settingLabel}>Daily Water Goal</Text>
+          <Text style={styles.settingDescription}>
+            Override the auto-calculated water goal (in {preferences.unit === 'lbs' ? 'oz' : 'mL'}).
+            Leave empty to use the calculated goal based on your profile.
+          </Text>
+          <View style={{ flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
+            <TextInput
+              style={[styles.toggleOption, {
+                flex: 1,
+                backgroundColor: colors.background,
+                borderRadius: Radius.sm,
+                paddingHorizontal: Spacing.md,
+                paddingVertical: Spacing.sm,
+                ...Typography.body,
+                color: colors.text,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }]}
+              value={waterGoalInput}
+              onChangeText={setWaterGoalInput}
+              placeholder={`e.g. ${preferences.unit === 'lbs' ? '100' : '3000'}`}
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="number-pad"
+              returnKeyType="done"
+            />
+            <TouchableOpacity
+              style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }]}
+              onPress={() => {
+                const val = parseInt(waterGoalInput, 10);
+                if (waterGoalInput.trim() === '') {
+                  dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: undefined });
+                } else if (!isNaN(val) && val > 0) {
+                  dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: val });
+                } else {
+                  Alert.alert('Invalid', 'Please enter a positive number.');
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.toggleText, styles.toggleTextActive]}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 6. Units (was 5) */}
         <View style={styles.card}>
           <Text style={styles.settingLabel}>Weight Unit</Text>
           <Text style={styles.settingDescription}>
@@ -301,7 +389,7 @@ export default function SettingsScreen() {
             style={[styles.toggleOption, styles.toggleOptionActive, { paddingVertical: Spacing.sm }]}
             onPress={async () => {
               try {
-                await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
+                await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog, waterLog });
                 Alert.alert('Success', 'Data saved successfully.');
               } catch {
                 Alert.alert('Error', 'Failed to save data.');

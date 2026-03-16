@@ -19,6 +19,8 @@ import {
   ActivityEntry,
   DayActivity,
   ActivityMode,
+  WaterEntry,
+  DayWater,
 } from '../types';
 import {
   loadEntries,
@@ -33,6 +35,8 @@ import {
   saveSavedMeals,
   loadActivityLog,
   saveActivityLog,
+  loadWaterLog,
+  saveWaterLog,
 } from '../storage/storage';
 import { writeAutoBackup } from '../storage/backupStorage';
 
@@ -45,11 +49,12 @@ type State = {
   customFoods: CustomFood[];
   savedMeals: SavedMeal[];
   activityLog: DayActivity[];
+  waterLog: DayWater[];
   isLoading: boolean;
 };
 
 type Action =
-  | { type: 'LOAD_DATA'; entries: WeightEntry[]; preferences: UserPreferences; nutritionLog: DayNutrition[]; customFoods: CustomFood[]; savedMeals: SavedMeal[]; activityLog: DayActivity[] }
+  | { type: 'LOAD_DATA'; entries: WeightEntry[]; preferences: UserPreferences; nutritionLog: DayNutrition[]; customFoods: CustomFood[]; savedMeals: SavedMeal[]; activityLog: DayActivity[]; waterLog: DayWater[] }
   | { type: 'UPSERT_ENTRY'; entry: WeightEntry }
   | { type: 'DELETE_ENTRY'; id: string }
   | { type: 'SET_UNIT'; unit: 'lbs' | 'kg' }
@@ -70,7 +75,11 @@ type Action =
   | { type: 'DISMISS_ACTIVITY_WARNING'; date: string; activityId: string }
   | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode }
   | { type: 'SET_ONBOARDING_COMPLETE' }
-  | { type: 'SET_THEME_COLOR'; color: string };
+  | { type: 'SET_THEME_COLOR'; color: string }
+  | { type: 'SET_DEFAULT_TAB'; tab: 'weight' | 'nutrition' | 'activity' }
+  | { type: 'ADD_WATER_ENTRY'; date: string; entry: WaterEntry }
+  | { type: 'DELETE_WATER_ENTRY'; date: string; entryId: string }
+  | { type: 'SET_WATER_GOAL_OVERRIDE'; amount: number | undefined };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -104,6 +113,7 @@ const initialState: State = {
   customFoods: [],
   savedMeals: [],
   activityLog: [],
+  waterLog: [],
   isLoading: true,
 };
 
@@ -125,6 +135,7 @@ function reducer(state: State, action: Action): State {
         customFoods: action.customFoods,
         savedMeals: action.savedMeals,
         activityLog: action.activityLog,
+        waterLog: action.waterLog,
         isLoading: false,
       };
     }
@@ -274,6 +285,31 @@ function reducer(state: State, action: Action): State {
         ...state,
         preferences: { ...state.preferences, themeColor: action.color },
       };
+    case 'SET_DEFAULT_TAB':
+      return {
+        ...state,
+        preferences: { ...state.preferences, defaultTab: action.tab },
+      };
+    case 'ADD_WATER_ENTRY': {
+      const existing = state.waterLog.find((d) => d.date === action.date);
+      const day: DayWater = existing
+        ? { ...existing, entries: [...existing.entries, action.entry] }
+        : { date: action.date, entries: [action.entry] };
+      const filtered = state.waterLog.filter((d) => d.date !== action.date);
+      return { ...state, waterLog: [day, ...filtered] };
+    }
+    case 'DELETE_WATER_ENTRY': {
+      const existing = state.waterLog.find((d) => d.date === action.date);
+      if (!existing) return state;
+      const day: DayWater = { ...existing, entries: existing.entries.filter((e) => e.id !== action.entryId) };
+      const filtered = state.waterLog.filter((d) => d.date !== action.date);
+      return { ...state, waterLog: [day, ...filtered] };
+    }
+    case 'SET_WATER_GOAL_OVERRIDE':
+      return {
+        ...state,
+        preferences: { ...state.preferences, waterGoalOverride: action.amount },
+      };
     default:
       return state;
   }
@@ -291,15 +327,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Load persisted data on mount.
   useEffect(() => {
     (async () => {
-      const [entries, preferences, nutritionLog, customFoods, savedMeals, activityLog] = await Promise.all([
+      const [entries, preferences, nutritionLog, customFoods, savedMeals, activityLog, waterLog] = await Promise.all([
         loadEntries(),
         loadPreferences(),
         loadNutritionLog(),
         loadCustomFoods(),
         loadSavedMeals(),
         loadActivityLog(),
+        loadWaterLog(),
       ]);
-      dispatch({ type: 'LOAD_DATA', entries, preferences, nutritionLog, customFoods, savedMeals, activityLog });
+      dispatch({ type: 'LOAD_DATA', entries, preferences, nutritionLog, customFoods, savedMeals, activityLog, waterLog });
     })();
   }, []);
 
@@ -345,6 +382,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [state.activityLog, state.isLoading]);
 
+  // Persist water log whenever it changes.
+  useEffect(() => {
+    if (!state.isLoading) {
+      saveWaterLog(state.waterLog);
+    }
+  }, [state.waterLog, state.isLoading]);
+
   // Auto-backup: silently keep a local backup file in sync after every state
   // change (debounced). Used for same-session/same-Codespace quick recovery.
   // Errors are swallowed — auto-backup is best-effort and must never crash.
@@ -358,6 +402,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         customFoods: state.customFoods,
         savedMeals: state.savedMeals,
         activityLog: state.activityLog,
+        waterLog: state.waterLog,
       }).catch(() => {});
     }, 3000);
     return () => clearTimeout(timer);
@@ -369,6 +414,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     state.customFoods,
     state.savedMeals,
     state.activityLog,
+    state.waterLog,
   ]);
 
   return (

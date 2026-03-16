@@ -18,7 +18,12 @@ function RootNavigator() {
     const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal';
 
     if (onboardingComplete && !inApp) {
-      router.replace('/(tabs)/nutrition');
+      const tab = preferences.defaultTab ?? 'nutrition';
+      const route =
+        tab === 'weight' ? '/(tabs)/' :
+        tab === 'activity' ? '/(tabs)/activities' :
+        '/(tabs)/nutrition';
+      router.replace(route);
     } else if (!onboardingComplete && inApp) {
       router.replace('/welcome');
     }

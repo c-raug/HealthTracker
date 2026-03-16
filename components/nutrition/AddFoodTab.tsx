@@ -259,6 +259,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
             baseFat={selectedItem.fat ?? 0}
             servingSize={selectedItem.servingSize ?? '1 serving'}
             baseServings={1}
+            foodName={selectedItem.name}
           />
           <View style={styles.confirmRow}>
             <TouchableOpacity
