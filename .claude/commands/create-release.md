@@ -1,76 +1,90 @@
 # Create Release Skill
 
-Kicks off an EAS APK build for the HealthTracker app using the `preview` build profile, monitors its progress, and reports the download link when complete.
+Creates a versioned Git tag on `main` and pushes it to GitHub, which triggers the `release-android.yml` GitHub Actions pipeline. That pipeline builds an APK via EAS and attaches it to a GitHub Release automatically.
 
 ## When to invoke
 
 Only invoked explicitly via `/create-release`. Do NOT invoke this skill automatically.
 
-## Step 1 — Confirm with user
+## Step 1 — Get the version number
 
-Before starting the build, use `AskUserQuestion` to confirm:
+Use `AskUserQuestion` to ask the user what version to release:
 
-> "This will trigger an EAS cloud build and produce a downloadable APK (preview profile). Builds typically take 10–20 minutes. Proceed?"
+> "What version tag should this release use? (e.g. v1.0.1, v1.1.0, v2.0.0)"
 
-Options: **Yes, start the build** | **Cancel**
+Free-text input. Validate that the response matches the pattern `v<major>.<minor>.<patch>` — if not, ask again.
 
-If the user selects Cancel, stop and report that no build was started.
+## Step 2 — Check current branch and git state
 
-## Step 2 — Check EAS CLI
-
-Verify the EAS CLI is available:
+Check the current branch:
 ```
-npx eas --version
+git branch --show-current
 ```
 
-If this fails, tell the user to install it:
-```
-npm install -g eas-cli
-```
-Then stop — do not proceed until it's available.
+If not on `main`, warn the user:
+> "You are currently on `<branch>`, not `main`. Releases must be tagged on `main`. Switch to main first, or merge your branch before releasing."
 
-## Step 3 — Verify git state
+Use `AskUserQuestion`: **I'll switch to main first — cancel for now** | **I understand, proceed anyway (tag current branch)**
+
+If the user cancels, stop.
 
 Check for uncommitted changes:
 ```
 git status --short
 ```
 
-If there are uncommitted changes, warn the user:
-> "There are uncommitted changes in the working directory. The build will use the last committed state on the current branch. Consider committing your changes first with `/push-changes`."
+If there are uncommitted changes, warn:
+> "There are uncommitted changes. These will NOT be included in the release — the tag will point to the last commit. Commit and push first with `/push-changes` if you want them included."
 
-Use `AskUserQuestion`: **Continue anyway** | **Cancel and commit first**
+Use `AskUserQuestion`: **Proceed anyway** | **Cancel**
 
 If Cancel, stop.
 
-## Step 4 — Trigger the EAS build
+## Step 3 — Check the tag doesn't already exist
 
-Run the build using the `preview` profile (produces an APK for Android, internal distribution):
 ```
-npx eas build --platform android --profile preview --non-interactive
-```
-
-This command will print a build URL and a build ID. Capture both.
-
-If the command fails (e.g. not logged in), report the error to the user with the relevant EAS login command:
-```
-npx eas login
+git tag --list "<version>"
 ```
 
-## Step 5 — Report build kicked off
+If the tag already exists locally or remotely, tell the user and stop:
+> "Tag `<version>` already exists. Choose a different version number."
 
-Immediately after the build is submitted (do not wait for it to complete), tell the user:
+## Step 4 — Confirm before tagging
 
-> **Build started!**
+Use `AskUserQuestion` to confirm:
+
+> "Ready to create and push tag `<version>` to `main`. This will trigger the GitHub Actions pipeline which builds an APK via EAS and creates a GitHub Release. Proceed?"
+
+Options: **Yes, create the release** | **Cancel**
+
+If Cancel, stop.
+
+## Step 5 — Create and push the tag
+
+Create an annotated tag:
+```
+git tag -a <version> -m "Release <version>"
+```
+
+Push the tag to `main` on origin:
+```
+git push origin <version>
+```
+
+**Retry policy:** If push fails due to a network error, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s). Do NOT retry on 403 errors — report them to the user instead.
+
+## Step 6 — Report
+
+After a successful push, report:
+
+> **Release `<version>` kicked off!**
 >
-> - **Profile:** preview (APK, internal distribution)
-> - **Platform:** Android
-> - **Build URL:** {url from Step 4}
-> - **Project:** `com.healthtracker.app` (EAS project ID: `53a81a1a-0304-45db-82f5-a78d921278af`)
+> The tag has been pushed to GitHub. The `Android APK Release` workflow is now running and will:
+> 1. Build an APK via EAS (preview profile, ~10–20 min)
+> 2. Attach it to a new GitHub Release named **"HealthTracker `<version>`"**
 >
-> The build typically takes 10–20 minutes. Visit the build URL to monitor progress and download the APK when it's ready.
+> Monitor the build:
+> - **Actions:** `https://github.com/c-raug/HealthTracker/actions`
+> - **Releases:** `https://github.com/c-raug/HealthTracker/releases`
 >
-> You can also check status at any time with:
-> ```
-> npx eas build:list --platform android --limit 5
-> ```
+> Once complete, the APK will be downloadable directly from the Releases page.
