@@ -93,6 +93,7 @@ export interface UserPreferences {
   macroSplit?: MacroSplit;
   activityMode?: ActivityMode;
   onboardingComplete?: boolean;
+  themeColor?: string;
 }
 
 export type ExerciseType = 'weight_lifting';

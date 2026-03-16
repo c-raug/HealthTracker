@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AppProvider, useApp } from '../context/AppContext';
-import { Colors } from '../constants/theme';
+import { Colors, ThemeContext } from '../constants/theme';
 
 function RootNavigator() {
   const { isLoading, preferences } = useApp();
@@ -18,7 +18,7 @@ function RootNavigator() {
     const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal';
 
     if (onboardingComplete && !inApp) {
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/nutrition');
     } else if (!onboardingComplete && inApp) {
       router.replace('/welcome');
     }
@@ -54,12 +54,23 @@ function RootNavigator() {
   );
 }
 
+function ThemeColorSync({ children }: { children: React.ReactNode }) {
+  const { preferences } = useApp();
+  return (
+    <ThemeContext.Provider value={{ accentColor: preferences.themeColor ?? null }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppProvider>
-          <RootNavigator />
+          <ThemeColorSync>
+            <RootNavigator />
+          </ThemeColorSync>
         </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -9,6 +9,8 @@ import { ActivityMode } from '../../types';
 import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
+import ThemeColorPicker from '../../components/settings/ThemeColorPicker';
+import FeedbackSection from '../../components/settings/FeedbackSection';
 import { saveBackup } from '../../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
@@ -231,7 +233,12 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      {/* 3. Units */}
+      {/* 3. Accent Color */}
+      <View style={styles.card}>
+        <ThemeColorPicker />
+      </View>
+
+      {/* 4. Units */}
       <View style={styles.card}>
         <Text style={styles.settingLabel}>Weight Unit</Text>
         <Text style={styles.settingDescription}>
@@ -259,7 +266,7 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* 4. Macros — collapsible */}
+      {/* 5. Macros — collapsible */}
       <View style={styles.collapsibleCard}>
         <TouchableOpacity
           style={styles.collapsibleHeader}
@@ -280,7 +287,7 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      {/* 5. Data Backup */}
+      {/* 6. Data Backup */}
       <View style={styles.card}>
         <Text style={styles.settingLabel}>Data Backup</Text>
         <Text style={styles.settingDescription}>
@@ -300,6 +307,11 @@ export default function SettingsScreen() {
         >
           <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* 7. Send Feedback */}
+      <View style={styles.card}>
+        <FeedbackSection />
       </View>
 
       {/* Footer */}
