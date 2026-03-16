@@ -363,6 +363,7 @@ export default function EditMealFlow({ meal, onDone }: Props) {
             baseFat={selectedItem.fat ?? 0}
             servingSize={selectedItem.servingSize ?? '1 serving'}
             baseServings={selectedItem.servings ?? 1}
+            foodName={selectedItem.name}
           />
           <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
             <Text style={styles.confirmText}>Add to Meal</Text>
@@ -466,6 +467,7 @@ export default function EditMealFlow({ meal, onDone }: Props) {
                 baseFat={(editingFood.fat ?? 0) / (editingFood.servings ?? 1)}
                 servingSize={editingFood.servingSize ?? '1 serving'}
                 baseServings={1}
+                foodName={editingFood.name}
               />
             )}
           </View>

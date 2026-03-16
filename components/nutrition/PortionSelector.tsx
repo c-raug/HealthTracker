@@ -117,6 +117,14 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       marginBottom: Spacing.xs,
     },
+    foodNameText: {
+      ...Typography.body,
+      fontWeight: '600',
+      color: colors.text,
+      textAlign: 'center',
+      marginBottom: Spacing.sm,
+      paddingHorizontal: Spacing.sm,
+    },
   });
 
 export interface PortionSelectorProps {
@@ -128,6 +136,7 @@ export interface PortionSelectorProps {
   baseFat: number;
   servingSize: string;
   baseServings: number;
+  foodName?: string;
 }
 
 export default function PortionSelector({
@@ -139,6 +148,7 @@ export default function PortionSelector({
   baseFat,
   servingSize,
   baseServings,
+  foodName,
 }: PortionSelectorProps) {
   const colors = useColors();
   const styles = makeStyles(colors);
@@ -199,6 +209,9 @@ export default function PortionSelector({
 
   return (
     <View style={styles.container}>
+      {foodName && (
+        <Text style={styles.foodNameText} numberOfLines={1}>{foodName}</Text>
+      )}
       {/* Header row */}
       <View style={styles.headerRow}>
         <Text style={styles.servingLabel}>

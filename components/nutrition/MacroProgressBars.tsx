@@ -46,8 +46,9 @@ const makeStyles = (colors: typeof LightColors) =>
     values: {
       ...Typography.small,
       color: colors.textSecondary,
-      width: 70,
+      width: 90,
       textAlign: 'right',
+      flexShrink: 0,
     },
   });
 
@@ -85,7 +86,7 @@ export default function MacroProgressBars({ consumed, goalCalories, macroSplit }
             <View style={styles.barContainer}>
               <View style={[styles.barFill, { width: `${pct}%`, backgroundColor: color }]} />
             </View>
-            <Text style={styles.values}>
+            <Text style={styles.values} numberOfLines={1}>
               {current}g / {target}g
             </Text>
           </View>

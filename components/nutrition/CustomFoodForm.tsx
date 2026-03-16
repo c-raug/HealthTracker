@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  type TextInput as TextInputType,
 } from 'react-native';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
@@ -170,6 +171,10 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
   const parsedQty = initialFood ? (initialFood.servingSize.split(' ')[0] ?? '1') : '1';
   const parsedRawUnit = initialFood ? (initialFood.servingSize.split(' ')[1] ?? 'g') : 'g';
   const parsedUnit = (PORTION_UNITS as readonly string[]).includes(parsedRawUnit) ? parsedRawUnit : 'g';
+
+  const proteinRef = useRef<TextInputType>(null);
+  const carbsRef = useRef<TextInputType>(null);
+  const fatRef = useRef<TextInputType>(null);
 
   const [name, setName] = useState(initialFood?.name ?? initialName ?? '');
   const [calories, setCalories] = useState(initialFood ? initialFood.calories.toString() : '');
@@ -344,34 +349,44 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
         <View style={styles.halfInput}>
           <Text style={styles.label}>Protein (g)</Text>
           <TextInput
+            ref={proteinRef}
             style={styles.input}
             value={protein}
             onChangeText={setProtein}
             keyboardType="decimal-pad"
             placeholder="0"
             placeholderTextColor={colors.textSecondary}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => carbsRef.current?.focus()}
           />
         </View>
         <View style={styles.halfInput}>
           <Text style={styles.label}>Carbs (g)</Text>
           <TextInput
+            ref={carbsRef}
             style={styles.input}
             value={carbs}
             onChangeText={setCarbs}
             keyboardType="decimal-pad"
             placeholder="0"
             placeholderTextColor={colors.textSecondary}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => fatRef.current?.focus()}
           />
         </View>
         <View style={styles.halfInput}>
           <Text style={styles.label}>Fat (g)</Text>
           <TextInput
+            ref={fatRef}
             style={styles.input}
             value={fat}
             onChangeText={setFat}
             keyboardType="decimal-pad"
             placeholder="0"
             placeholderTextColor={colors.textSecondary}
+            returnKeyType="done"
           />
         </View>
       </View>

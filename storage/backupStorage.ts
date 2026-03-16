@@ -9,6 +9,7 @@ import {
   CustomFood,
   SavedMeal,
   DayActivity,
+  DayWater,
 } from '../types';
 
 const BACKUP_FILENAME = 'healthtracker-backup.json';
@@ -21,6 +22,7 @@ export interface BackupData {
   customFoods: CustomFood[];
   savedMeals: SavedMeal[];
   activityLog: DayActivity[];
+  waterLog: DayWater[];
   exportedAt: string;
 }
 

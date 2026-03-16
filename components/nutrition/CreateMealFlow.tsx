@@ -294,6 +294,7 @@ export default function CreateMealFlow({ onDone }: Props) {
             baseFat={selectedItem.fat ?? 0}
             servingSize={selectedItem.servingSize ?? '1 serving'}
             baseServings={selectedItem.servings ?? 1}
+            foodName={selectedItem.name}
           />
           <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmAdd}>
             <Text style={styles.confirmText}>Add to Meal</Text>
