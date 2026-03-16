@@ -75,6 +75,65 @@ These are lower-complexity improvements that would add meaningful value to daily
 
 ---
 
+### Default to Nutrition Tab on Launch
+
+**Goal:** After a user has completed profile setup, always open the app on the Nutrition tab instead of the Weight tab.
+
+**UX:**
+- First launch (no profile): user is walked through the profile creation wizard as today
+- Every subsequent launch: app lands directly on the Nutrition tab
+- No setting needed — this is the fixed post-onboarding default
+
+**Technical notes:**
+- Modified: `app/(tabs)/_layout.tsx` — set `initialRouteName` to `"nutrition"` or add a mount-time redirect using Expo Router's `<Redirect>` when a profile exists
+- Condition check: read profile from `AppContext` (or AsyncStorage before context loads) to distinguish first-run vs returning user
+- No new state or actions needed
+
+---
+
+### Theme Accent Color Picker in Settings
+
+**Goal:** Let users personalise the app by choosing from a small set of accent colors that apply to all interactive elements (buttons, progress rings, active tab icon, links).
+
+**UX:**
+- A "Accent Color" row appears in the Settings screen (logical place: near the top, alongside other appearance options)
+- Tapping it shows a horizontal row of color swatches (5–7 curated options, e.g. the current blue, green, orange, purple, red, teal)
+- The selected swatch gets a checkmark; the UI updates immediately on selection
+- Dark mode continues to work — only the accent hue changes, not background/surface colors
+
+**Technical notes:**
+- New state field: `themeColor: string` (hex or token key) added to app settings in `types/index.ts` and `context/AppContext.tsx`
+- New reducer action: `SET_THEME_COLOR`
+- Modified: `constants/theme.ts` — `Colors.primary` (and any other accent tokens) become dynamic, derived from the stored `themeColor`; `useColors()` hook reads from context so every component picks up changes automatically
+- New component (or inline section): `components/settings/ThemeColorPicker.tsx`
+- Modified: `app/(tabs)/settings.tsx` to render the picker row
+
+---
+
+### In-App Feedback Submission in Settings
+
+**Goal:** Give users a simple way to submit feedback from within the app; submissions should reach the developer (exact delivery mechanism TBD — candidates: Google Form WebView, webhook to Google Sheets, or mailto).
+
+**UX:**
+- A "Send Feedback" section appears at the bottom of the Settings screen
+- A multi-line text input (at least 5–6 visible lines) for the user to type their message
+- A "Submit" button below the input
+- On submit: show a brief success confirmation ("Thanks for your feedback!"), clear the input
+- On cancel / navigate away: optionally prompt to discard unsaved text
+
+**Delivery options (to decide at implementation time):**
+1. **Google Form (recommended for zero backend):** open a pre-built Google Form URL in `expo-web-browser` or as a prefilled WebView
+2. **Webhook:** POST JSON to a serverless function that appends a row to Google Sheets
+3. **mailto:** open device mail app pre-filled with the text
+
+**Technical notes:**
+- No new state needed — input is transient local component state
+- Modified: `app/(tabs)/settings.tsx` — add Feedback section at the bottom
+- Optionally new component: `components/settings/FeedbackSection.tsx`
+- Dependency check needed if using `expo-web-browser` or a fetch-based webhook
+
+---
+
 ## Medium-Term Ideas
 
 These require more design and development effort but are well-scoped and impactful.
