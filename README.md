@@ -16,6 +16,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 ### Nutrition Tab
 - **TDEE-based calorie target** using the Mifflin-St Jeor equation; exercise calories from the Activities tab are added when applicable
 - **Calorie ring** (SVG donut) — consumed vs target; shows "+N cal from exercise" when activity is logged
+- **Water bottle visual** — animated fill graphic beside the calorie ring; shows consumed/goal and fill percentage; turns green at 100%; tap to expand the Water tracker below
 - **Macro progress bars** for protein, carbs, and fat with configurable splits (Balanced, High Protein, Keto, or Custom)
 - **Four meal categories**: Breakfast, Lunch, Dinner, Snacks — each collapsible with calorie totals
 - **Custom food library** — create, edit, pin, and delete personal foods; calories auto-computed from macros; pinned foods surface first in search results
@@ -23,6 +24,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **Portion selector** — dual drum scroll wheels (whole 0–250 + fraction in ⅛ increments) with live calorie/macro preview; available when adding a food and when editing an already-logged item
 - **Drag-to-reorder** food items within meal categories
 - **Swipe-to-delete** food items
+- **Water tracker** (collapsible card) — three customisable quick-add preset buttons (long-press to edit; defaults 8 / 16 / 32 oz or 250 / 500 / 750 mL), custom amount input, and a per-entry delete list; auto-expands when the water bottle visual is tapped
 - **"Go to Today" pill** — same pattern as Weight tab
 - Date navigation matching the Weight screen pattern
 
@@ -38,9 +40,13 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Settings Tab
 - **Profile** (collapsible) — name, date of birth, sex, height
-- **Goals & Calorie Target** (collapsible) — weight goal drum wheel, activity level (auto mode only), activity tracking mode with info buttons, fitness goal; deep-linkable from Activities tab
-- **Units** — lbs / kg toggle
+- **Goals & Calorie Target** (collapsible) — weight goal drum wheel, activity level (auto mode only), activity tracking mode with info buttons; deep-linkable from Activities tab
 - **Macros** (collapsible) — preset buttons + custom % inputs; gram equivalents shown for each preset; ⓘ icon explains how grams factor in activity average
+- **Daily Water Goal** (collapsible) — Auto / Manual toggle; Auto mode calculates goal from body weight and activity level with an optional creatine adjustment (+16 oz / +500 mL); Manual mode lets you enter a fixed daily target
+- **App Configuration** (collapsible) — default tab picker, accent colour picker (6 presets)
+- **Units** — lbs / kg toggle
+- **Data Backup** — save / load via OS share sheet or file picker
+- **Send Feedback** — in-app feedback form
 
 ### Onboarding
 - **5-step wizard** on first launch: (1) unit + name, (2) DOB + sex + height, (3) activity level + weight goal, (4) macro preset (skippable), (5) starting weight
@@ -101,8 +107,11 @@ components/
 │   └── (activity-specific components)
 ├── settings/
 │   ├── ProfileSection.tsx   # Name, DOB picker, sex toggle, height input
-│   ├── GoalsSection.tsx     # Weight goal drum, activity level, tracking mode, fitness goal
-│   └── MacroSection.tsx     # Macro preset buttons + custom % + gram equivalents + ⓘ tooltip
+│   ├── GoalsSection.tsx     # Weight goal drum, activity level, tracking mode
+│   ├── MacroSection.tsx     # Macro preset buttons + custom % + gram equivalents + ⓘ tooltip
+│   ├── WaterGoalSection.tsx # Auto/Manual toggle + creatine flag + manual override input
+│   ├── ThemeColorPicker.tsx # 6-swatch accent colour picker
+│   └── FeedbackSection.tsx  # In-app feedback text input + submit
 └── nutrition/
     ├── CalorieRing.tsx      # SVG donut chart (consumed vs target)
     ├── MacroProgressBars.tsx # Protein/Carbs/Fat horizontal progress bars
@@ -114,6 +123,8 @@ components/
     ├── CustomFoodForm.tsx   # Create or edit a custom food (qty/unit picker + auto-calories)
     ├── CreateMealFlow.tsx   # Name meal + search/add custom foods (SectionList)
     ├── EditMealFlow.tsx     # Edit an existing saved meal template
+    ├── WaterTracker.tsx     # Collapsible water log card (presets, custom input, entry list)
+    ├── WaterBottleVisual.tsx # Animated bottle fill graphic (spring animation, green at 100%)
     └── ProfilePrompt.tsx    # CTA card when profile or weight entry is missing
 
 context/AppContext.tsx       # Global state (weight entries, nutrition log, activity log, custom foods, saved meals, preferences)
@@ -127,7 +138,8 @@ utils/
 ├── unitConversion.ts        # lbsToKg, kgToLbs, convertWeight, weightToKg
 ├── generateId.ts            # Shared UUID v4 generator
 ├── tdeeCalculation.ts       # Mifflin-St Jeor BMR/TDEE, goal calorie offset, ageFromDob
-└── activityCalculation.ts   # calculateExerciseCalories (MET-based), calculateStepCalories
+├── activityCalculation.ts   # calculateExerciseCalories (MET-based), calculateStepCalories
+└── waterCalculation.ts      # calculateWaterGoal (weight-based, ×1.2 active multiplier, creatine flag)
 ```
 
 ---
@@ -158,9 +170,13 @@ interface UserPreferences {
   unit: 'lbs' | 'kg';
   profile?: UserProfile;
   macroPreset?: MacroPreset;
-  macroSplit?: MacroSplit;       // { protein, carbs, fat } percentages
-  activityMode?: ActivityMode;  // 'auto' | 'manual' | 'smartwatch'
+  macroSplit?: MacroSplit;              // { protein, carbs, fat } percentages
+  activityMode?: ActivityMode;         // 'auto' | 'manual' | 'smartwatch'
   onboardingComplete?: boolean;
+  waterGoalMode?: 'auto' | 'manual';
+  waterGoalOverride?: number;          // manual daily target (oz or mL)
+  waterCreatineAdjustment?: boolean;   // adds +16 oz / +500 mL to auto goal
+  waterPresets?: [number, number, number]; // quick-add button values
 }
 
 type ActivityMode = 'auto' | 'manual' | 'smartwatch';
@@ -209,9 +225,19 @@ interface SavedMeal {
   pinnedCategories?: MealCategory[];
   createdAt: string;
 }
+
+interface WaterEntry {
+  id: string;
+  amount: number; // oz (unit=lbs) or mL (unit=kg)
+}
+
+interface DayWater {
+  date: string;  // "YYYY-MM-DD"
+  entries: WaterEntry[];
+}
 ```
 
-AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custom_foods`, `saved_meals`, `activity_log`
+AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custom_foods`, `saved_meals`, `activity_log`, `water_log`
 
 ---
 
