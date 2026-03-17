@@ -8,7 +8,7 @@ Invoke this skill automatically whenever the user:
 - Says "work on prioritized", "complete the board", "do the prioritized tickets", "ship the prioritized items", or similar
 - Asks Claude to start working through the backlog or project board
 
-Also invoked explicitly via `/complete-prioritized`.
+Also invoked explicitly via `/cp`.
 
 ## Step 1 — Fetch Prioritized issues
 

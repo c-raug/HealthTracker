@@ -4,7 +4,7 @@ Creates a versioned Git tag on `main`, pushes it to GitHub (triggers the `releas
 
 ## When to invoke
 
-Only invoked explicitly via `/create-release`. Do NOT invoke this skill automatically.
+Only invoked explicitly via `/cr`. Do NOT invoke this skill automatically.
 
 ## Step 1 — Determine new version
 

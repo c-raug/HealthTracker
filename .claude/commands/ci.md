@@ -11,7 +11,7 @@ Invoke this skill automatically whenever the user:
 - Says "create github issues", "sync issues", "push to board", "sync roadmap", or "create project board"
 - Asks to track future plans or backlog items on GitHub
 
-Also invoked explicitly via `/create-issues`.
+Also invoked explicitly via `/ci`.
 
 ## Step 1 — Orient
 
