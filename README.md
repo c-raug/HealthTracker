@@ -15,7 +15,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Nutrition Tab
 - **TDEE-based calorie target** using the Mifflin-St Jeor equation; exercise calories from the Activities tab are added when applicable
-- **Calorie ring** (SVG donut) — consumed vs target; always uses your chosen accent colour regardless of fill level; when over-goal a subtle looping opacity pulse plays; shows "+N cal from exercise" when activity is logged
+- **Calorie ring** (SVG donut) — consumed vs target; always uses your chosen accent colour regardless of fill level; shows "+N cal from exercise" when activity is logged
 - **Water bottle visual** — animated fill graphic beside the calorie ring; shows consumed/goal and fill percentage; turns green at 100%; tap to expand the Water tracker below
 - **Weekly intake graph** (swipe left on the ring/bottle area) — 7-day bar chart for calories and water; window ends on the currently selected date so browsing past dates shifts the chart accordingly; dashed goal lines reflect activity-adjusted TDEE (averaged over non-zero activity days in the window) and the full water goal including any creatine adjustment
 - **Macro progress bars** for protein, carbs, and fat with configurable splits (Balanced, High Protein, Keto, or Custom)
