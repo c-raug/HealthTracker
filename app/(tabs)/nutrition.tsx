@@ -146,14 +146,13 @@ const makeStyles = (colors: typeof LightColors) =>
   });
 
 export default function NutritionScreen() {
-  const { entries, preferences, nutritionLog, activityLog, waterLog, isLoading } = useApp();
+  const { entries, preferences, nutritionLog, activityLog, waterLog, isLoading, selectedDate, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
   const profile = preferences.profile;
   const { width: windowWidth } = useWindowDimensions();
   const pagerWidth = windowWidth - Spacing.md * 2;
 
-  const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
   const [sectionKey, setSectionKey] = useState(0);
@@ -170,10 +169,10 @@ export default function NutritionScreen() {
   const today = getToday();
   const isForwardDisabled = selectedDate >= today;
 
-  const goBack = () => setSelectedDate(addDays(selectedDate, -1));
+  const goBack = () => dispatch({ type: 'SET_SELECTED_DATE', date: addDays(selectedDate, -1) });
   const goForward = () => {
     const next = addDays(selectedDate, 1);
-    if (next <= today) setSelectedDate(next);
+    if (next <= today) dispatch({ type: 'SET_SELECTED_DATE', date: next });
   };
 
   const handleDatePickerChange = (
@@ -186,7 +185,7 @@ export default function NutritionScreen() {
       const m = String(date.getMonth() + 1).padStart(2, '0');
       const d = String(date.getDate()).padStart(2, '0');
       const newDate = `${y}-${m}-${d}`;
-      if (newDate <= today) setSelectedDate(newDate);
+      if (newDate <= today) dispatch({ type: 'SET_SELECTED_DATE', date: newDate });
     }
   };
 
@@ -361,7 +360,7 @@ export default function NutritionScreen() {
           </TouchableOpacity>
           {selectedDate !== today && (
             <TouchableOpacity
-              onPress={() => setSelectedDate(today)}
+              onPress={() => dispatch({ type: 'SET_SELECTED_DATE', date: today })}
               style={styles.arrowBtn}
             >
               <Ionicons name="play-skip-forward-outline" size={22} color={colors.primary} />
@@ -427,10 +426,17 @@ export default function NutritionScreen() {
               goalCalories={calorieTarget}
               macroSplit={macroSplit}
             />
-            <WaterTracker key={`water-${sectionKey}`} date={selectedDate} expandKey={waterExpandKey} />
+            <WaterTracker
+              key={`water-${sectionKey}`}
+              date={selectedDate}
+              expandKey={waterExpandKey}
+              onFocusInput={() => {
+                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
+              }}
+            />
             {MEAL_CATEGORIES.map((cat) => (
               <MealCategoryComponent
-                key={`${cat}-${sectionKey}`}
+                key={cat}
                 category={cat}
                 foods={meals[cat]}
                 date={selectedDate}
