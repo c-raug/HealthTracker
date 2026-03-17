@@ -29,6 +29,7 @@ type GroupedEntry = {
   count: number;
   ids: string[];
   latestLoggedAt?: string;
+  allLoggedAt: string[];
 };
 
 const makeStyles = (colors: typeof LightColors) =>
@@ -272,7 +273,7 @@ export default function WaterTracker({ date, expandKey }: Props) {
   const styles = makeStyles(colors);
   const { preferences, entries, waterLog, dispatch } = useApp();
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [customAmount, setCustomAmount] = useState('');
   const [editingPreset, setEditingPreset] = useState<0 | 1 | 2 | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -331,8 +332,17 @@ export default function WaterTracker({ date, expandKey }: Props) {
       if (entry.loggedAt && (!existing.latestLoggedAt || entry.loggedAt > existing.latestLoggedAt)) {
         existing.latestLoggedAt = entry.loggedAt;
       }
+      if (entry.loggedAt) {
+        existing.allLoggedAt.push(entry.loggedAt);
+      }
     } else {
-      groups.push({ amount: entry.amount, count: 1, ids: [entry.id], latestLoggedAt: entry.loggedAt });
+      groups.push({
+        amount: entry.amount,
+        count: 1,
+        ids: [entry.id],
+        latestLoggedAt: entry.loggedAt,
+        allLoggedAt: entry.loggedAt ? [entry.loggedAt] : [],
+      });
     }
     return groups;
   }, []);
@@ -420,12 +430,12 @@ export default function WaterTracker({ date, expandKey }: Props) {
   return (
     <>
       <View style={styles.container}>
-        <TouchableOpacity
-          style={styles.header}
-          onPress={() => setCollapsed((v) => !v)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.headerLeft}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.headerLeft}
+            onPress={() => setCollapsed((v) => !v)}
+            activeOpacity={0.7}
+          >
             <Ionicons
               name={collapsed ? 'chevron-forward' : 'chevron-down'}
               size={18}
@@ -437,13 +447,15 @@ export default function WaterTracker({ date, expandKey }: Props) {
                 {totalConsumed} / {waterGoal} {unit}
               </Text>
             )}
-          </View>
+          </TouchableOpacity>
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.quickAddBtn} onPress={handleQuickAdd}>
-              <Text style={styles.quickAddBtnText}>+{presets[1]} {unit}</Text>
-            </TouchableOpacity>
+            {collapsed && (
+              <TouchableOpacity style={styles.quickAddBtn} onPress={handleQuickAdd}>
+                <Text style={styles.quickAddBtnText}>+{presets[1]} {unit}</Text>
+              </TouchableOpacity>
+            )}
           </View>
-        </TouchableOpacity>
+        </View>
 
         {!collapsed && (
           <>
@@ -526,15 +538,16 @@ export default function WaterTracker({ date, expandKey }: Props) {
                     >
                       <View style={styles.entryInfo}>
                         <Text style={styles.entryAmount}>{group.amount} {unit}</Text>
-                        {group.latestLoggedAt ? (
-                          <Text style={styles.entryTime}>{formatTime(group.latestLoggedAt)}</Text>
-                        ) : null}
+                        {group.allLoggedAt.length > 0 && (
+                          <Text style={styles.entryTime}>
+                            {group.allLoggedAt
+                              .slice()
+                              .sort()
+                              .map((t) => formatTime(t))
+                              .join(' · ')}
+                          </Text>
+                        )}
                       </View>
-                      {group.count > 1 && (
-                        <View style={styles.entryBadge}>
-                          <Text style={styles.entryBadgeText}>×{group.count}</Text>
-                        </View>
-                      )}
                     </TouchableOpacity>
                   </Swipeable>
                 ))}

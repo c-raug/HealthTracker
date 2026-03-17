@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
@@ -117,13 +117,25 @@ export default function SettingsScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const [goalsSectionY, setGoalsSectionY] = useState(0);
 
-  const [profileExpanded, setProfileExpanded] = useState(true);
-  const [goalsExpanded, setGoalsExpanded] = useState(true);
-  const [macroExpanded, setMacroExpanded] = useState(true);
-  const [waterGoalExpanded, setWaterGoalExpanded] = useState(true);
-  const [appConfigExpanded, setAppConfigExpanded] = useState(true);
+  const [profileExpanded, setProfileExpanded] = useState(false);
+  const [goalsExpanded, setGoalsExpanded] = useState(false);
+  const [macroExpanded, setMacroExpanded] = useState(false);
+  const [waterGoalExpanded, setWaterGoalExpanded] = useState(false);
+  const [appConfigExpanded, setAppConfigExpanded] = useState(false);
   const [waterGoalInput, setWaterGoalInput] = useState(
     preferences.waterGoalOverride !== undefined ? preferences.waterGoalOverride.toString() : '',
+  );
+
+  // Reset all sections to collapsed and scroll to top when screen comes back into focus
+  useFocusEffect(
+    useCallback(() => {
+      setProfileExpanded(false);
+      setGoalsExpanded(false);
+      setMacroExpanded(false);
+      setWaterGoalExpanded(false);
+      setAppConfigExpanded(false);
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
   );
 
   // Backward-compat: if no waterGoalMode but override exists, default to manual
@@ -415,36 +427,34 @@ export default function SettingsScreen() {
               <View style={{ marginTop: Spacing.md }}>
                 <ThemeColorPicker />
               </View>
+              <View style={{ marginTop: Spacing.md }}>
+                <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Weight Unit</Text>
+                <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
+                  Applies to new entries and the history chart. Existing entries keep their original unit.
+                </Text>
+                <View style={styles.toggle}>
+                  <TouchableOpacity
+                    style={[styles.toggleOption, preferences.unit === 'lbs' && styles.toggleOptionActive]}
+                    onPress={() => setUnit('lbs')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.toggleText, preferences.unit === 'lbs' && styles.toggleTextActive]}>
+                      lbs
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.toggleOption, preferences.unit === 'kg' && styles.toggleOptionActive]}
+                    onPress={() => setUnit('kg')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.toggleText, preferences.unit === 'kg' && styles.toggleTextActive]}>
+                      kg
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
           )}
-        </View>
-
-        {/* 6. Units */}
-        <View style={styles.card}>
-          <Text style={styles.settingLabel}>Weight Unit</Text>
-          <Text style={styles.settingDescription}>
-            Applies to new entries and the history chart. Existing entries keep their original unit.
-          </Text>
-          <View style={styles.toggle}>
-            <TouchableOpacity
-              style={[styles.toggleOption, preferences.unit === 'lbs' && styles.toggleOptionActive]}
-              onPress={() => setUnit('lbs')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.toggleText, preferences.unit === 'lbs' && styles.toggleTextActive]}>
-                lbs
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleOption, preferences.unit === 'kg' && styles.toggleOptionActive]}
-              onPress={() => setUnit('kg')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.toggleText, preferences.unit === 'kg' && styles.toggleTextActive]}>
-                kg
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* 6. Data Backup */}

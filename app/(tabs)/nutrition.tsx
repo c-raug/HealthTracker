@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   Platform,
   Modal,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { NestableScrollContainer } from 'react-native-draggable-flatlist';
+import { useFocusEffect } from 'expo-router';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -130,6 +132,15 @@ export default function NutritionScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
+  const [sectionKey, setSectionKey] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      setSectionKey((k) => k + 1);
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
+  );
 
   const today = getToday();
   const isForwardDisabled = selectedDate >= today;
@@ -240,6 +251,7 @@ export default function NutritionScreen() {
   return (
     <View style={styles.flex}>
       <NestableScrollContainer
+        ref={scrollRef as any}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
@@ -309,10 +321,10 @@ export default function NutritionScreen() {
               goalCalories={calorieTarget}
               macroSplit={macroSplit}
             />
-            <WaterTracker date={selectedDate} expandKey={waterExpandKey} />
+            <WaterTracker key={`water-${sectionKey}`} date={selectedDate} expandKey={waterExpandKey} />
             {MEAL_CATEGORIES.map((cat) => (
               <MealCategoryComponent
-                key={cat}
+                key={`${cat}-${sectionKey}`}
                 category={cat}
                 foods={meals[cat]}
                 date={selectedDate}
