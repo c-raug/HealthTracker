@@ -183,8 +183,11 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
   const [fat, setFat] = useState(initialFood ? initialFood.fat.toString() : '');
   const [portionQty, setPortionQty] = useState(parsedQty);
   const [portionUnit, setPortionUnit] = useState<string>(parsedUnit);
-  // In edit mode start as manual so we don't clobber the stored calories
-  const [isCaloriesManual, setIsCaloriesManual] = useState(mode === 'edit');
+  // In edit mode, only start in manual if stored calories differ from what macros would compute
+  const initialIsManual = mode === 'edit' && initialFood
+    ? Math.round((initialFood.protein * 4) + (initialFood.carbs * 4) + (initialFood.fat * 9)) !== initialFood.calories
+    : false;
+  const [isCaloriesManual, setIsCaloriesManual] = useState(initialIsManual);
 
   // Auto-compute calories from macros when not in manual mode
   useEffect(() => {

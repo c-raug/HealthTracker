@@ -287,7 +287,6 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           onChangeText={setQuery}
           placeholder="Search foods..."
           placeholderTextColor={colors.textSecondary}
-          autoFocus
           returnKeyType="search"
         />
       </View>
