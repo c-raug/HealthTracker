@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard } from 'react-native';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 
@@ -66,9 +66,18 @@ interface Props {
   onFocusInput?: () => void;
 }
 
-export default function FeedbackSection({ onFocusInput }: Props) {
+export interface FeedbackSectionHandle {
+  focus: () => void;
+}
+
+const FeedbackSection = forwardRef<FeedbackSectionHandle, Props>(function FeedbackSection({ onFocusInput }, ref) {
   const colors = useColors();
   const styles = makeStyles(colors);
+  const inputRef = useRef<TextInput>(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+  }));
 
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -105,6 +114,7 @@ export default function FeedbackSection({ onFocusInput }: Props) {
         Have a suggestion or found a bug? We'd love to hear from you.
       </Text>
       <TextInput
+        ref={inputRef}
         style={styles.textInput}
         value={message}
         onChangeText={(val) => { setMessage(val); setSubmitted(false); }}
@@ -128,4 +138,6 @@ export default function FeedbackSection({ onFocusInput }: Props) {
       )}
     </View>
   );
-}
+});
+
+export default FeedbackSection;

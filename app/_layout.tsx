@@ -15,7 +15,7 @@ function RootNavigator() {
     if (isLoading) return;
 
     const onboardingComplete = preferences.onboardingComplete === true;
-    const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal';
+    const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal' || segments[0] === 'create-meal-modal';
 
     if (onboardingComplete && !inApp) {
       const tab = preferences.defaultTab ?? 'nutrition';
@@ -50,6 +50,13 @@ function RootNavigator() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="add-food-modal"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="create-meal-modal"
         options={{
           presentation: 'modal',
           headerShown: false,
