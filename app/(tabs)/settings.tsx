@@ -152,15 +152,20 @@ export default function SettingsScreen() {
         scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
       }, 150);
     }
-  }, [focusActivityMode, goalsSectionY]);
+  // goalsSectionY intentionally excluded: re-running on layout changes would
+  // re-expand Goals whenever a sibling section (e.g. Profile) changes height.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusActivityMode]);
 
   // When deep-linked with focusFeedback, scroll to feedback and focus input
   useEffect(() => {
     if (focusFeedback) {
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
-        feedbackRef.current?.focus();
       }, 150);
+      setTimeout(() => {
+        feedbackRef.current?.focus();
+      }, 350);
     }
   }, [focusFeedback]);
 
@@ -375,6 +380,7 @@ export default function SettingsScreen() {
                     placeholderTextColor={colors.textSecondary}
                     keyboardType="number-pad"
                     returnKeyType="done"
+                    onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
                   />
                   <TouchableOpacity
                     style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }]}

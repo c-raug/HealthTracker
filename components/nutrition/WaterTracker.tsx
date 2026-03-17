@@ -193,9 +193,10 @@ const makeStyles = (colors: typeof LightColors) =>
 interface Props {
   date: string;
   expandKey?: number;
+  onFocusInput?: () => void;
 }
 
-export default function WaterTracker({ date, expandKey }: Props) {
+export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { preferences, waterLog, dispatch } = useApp();
@@ -375,6 +376,7 @@ export default function WaterTracker({ date, expandKey }: Props) {
                   keyboardType="decimal-pad"
                   returnKeyType="done"
                   onSubmitEditing={handleCustomAdd}
+                  onFocus={onFocusInput}
                 />
                 <TouchableOpacity
                   style={styles.addBtn}

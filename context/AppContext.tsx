@@ -39,6 +39,7 @@ import {
   saveWaterLog,
 } from '../storage/storage';
 import { writeAutoBackup } from '../storage/backupStorage';
+import { getToday } from '../utils/dateUtils';
 
 // ─── State & Actions ─────────────────────────────────────────────────────────
 
@@ -50,12 +51,14 @@ type State = {
   savedMeals: SavedMeal[];
   activityLog: DayActivity[];
   waterLog: DayWater[];
+  selectedDate: string;
   isLoading: boolean;
 };
 
 type Action =
   | { type: 'LOAD_DATA'; entries: WeightEntry[]; preferences: UserPreferences; nutritionLog: DayNutrition[]; customFoods: CustomFood[]; savedMeals: SavedMeal[]; activityLog: DayActivity[]; waterLog: DayWater[] }
   | { type: 'UPSERT_ENTRY'; entry: WeightEntry }
+  | { type: 'SET_SELECTED_DATE'; date: string }
   | { type: 'DELETE_ENTRY'; id: string }
   | { type: 'SET_UNIT'; unit: 'lbs' | 'kg' }
   | { type: 'SET_PROFILE'; profile: UserProfile }
@@ -117,6 +120,7 @@ const initialState: State = {
   savedMeals: [],
   activityLog: [],
   waterLog: [],
+  selectedDate: getToday(),
   isLoading: true,
 };
 
@@ -328,6 +332,8 @@ function reducer(state: State, action: Action): State {
         ...state,
         preferences: { ...state.preferences, waterPresets: action.presets },
       };
+    case 'SET_SELECTED_DATE':
+      return { ...state, selectedDate: action.date };
     default:
       return state;
   }

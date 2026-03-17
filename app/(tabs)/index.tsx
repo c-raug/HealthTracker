@@ -169,11 +169,10 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
 });
 
 export default function WeightScreen() {
-  const { entries, preferences, dispatch, isLoading } = useApp();
+  const { entries, preferences, dispatch, isLoading, selectedDate } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
 
-  const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
@@ -196,10 +195,10 @@ export default function WeightScreen() {
     }
   }, [selectedDate, entries]);
 
-  const goBack = () => setSelectedDate(addDays(selectedDate, -1));
+  const goBack = () => dispatch({ type: 'SET_SELECTED_DATE', date: addDays(selectedDate, -1) });
   const goForward = () => {
     const next = addDays(selectedDate, 1);
-    if (next <= today) setSelectedDate(next);
+    if (next <= today) dispatch({ type: 'SET_SELECTED_DATE', date: next });
   };
 
   const handleDatePickerChange = (
@@ -212,7 +211,7 @@ export default function WeightScreen() {
       const m = String(date.getMonth() + 1).padStart(2, '0');
       const d = String(date.getDate()).padStart(2, '0');
       const newDate = `${y}-${m}-${d}`;
-      if (newDate <= today) setSelectedDate(newDate);
+      if (newDate <= today) dispatch({ type: 'SET_SELECTED_DATE', date: newDate });
     }
   };
 
@@ -314,7 +313,7 @@ export default function WeightScreen() {
           </TouchableOpacity>
           {selectedDate !== today && (
             <TouchableOpacity
-              onPress={() => setSelectedDate(today)}
+              onPress={() => dispatch({ type: 'SET_SELECTED_DATE', date: today })}
               style={styles.arrowBtn}
             >
               <Ionicons name="play-skip-forward-outline" size={22} color={colors.primary} />
