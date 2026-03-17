@@ -62,7 +62,11 @@ const makeStyles = (colors: typeof LightColors) =>
     },
   });
 
-export default function FeedbackSection() {
+interface Props {
+  onFocusInput?: () => void;
+}
+
+export default function FeedbackSection({ onFocusInput }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
 
@@ -108,6 +112,7 @@ export default function FeedbackSection() {
         multiline
         numberOfLines={5}
         returnKeyType="default"
+        onFocus={onFocusInput}
       />
       <TouchableOpacity
         style={[styles.submitButton, (!message.trim() || submitting) && styles.submitButtonDisabled]}

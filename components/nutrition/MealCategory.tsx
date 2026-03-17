@@ -4,15 +4,12 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Modal,
-  Platform,
   Alert,
 } from 'react-native';
 import {
   RenderItemParams,
   NestableDraggableFlatList,
 } from 'react-native-draggable-flatlist';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -76,42 +73,6 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       paddingVertical: Spacing.md,
     },
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.3)',
-    },
-    pickerSheet: {
-      backgroundColor: colors.card,
-      borderTopLeftRadius: Radius.lg,
-      borderTopRightRadius: Radius.lg,
-      paddingBottom: Spacing.xl,
-    },
-    pickerHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: Spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    pickerTitle: {
-      ...Typography.body,
-      color: colors.text,
-      fontWeight: '600',
-    },
-    pickerDone: {
-      ...Typography.body,
-      color: colors.primary,
-      fontWeight: '600',
-    },
-    pickerCancel: {
-      ...Typography.body,
-      color: colors.textSecondary,
-    },
-    iosPicker: {
-      height: 200,
-    },
   });
 
 interface Props {
@@ -126,13 +87,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   const { dispatch, nutritionLog } = useApp();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-  const [showCopyPicker, setShowCopyPicker] = useState(false);
-
-  // Parse today's date for max date in picker
-  const [todayYear, todayMonth, todayDay] = date.split('-').map(Number);
-  // Default copy picker to yesterday
-  const yesterday = new Date(todayYear, todayMonth - 1, todayDay - 1);
-  const [copyDate, setCopyDate] = useState<Date>(yesterday);
 
   const totalCal = foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 
@@ -151,46 +105,43 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
     });
   };
 
-  const handleCopyConfirm = (sourceDate: string) => {
-    const sourceDay = nutritionLog.find((d) => d.date === sourceDate);
+  const handleCopy = () => {
+    // Compute yesterday relative to the current date
+    const [y, mo, d] = date.split('-').map(Number);
+    const prev = new Date(y, mo - 1, d - 1);
+    const yesterdayStr = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${String(prev.getDate()).padStart(2, '0')}`;
+
+    const sourceDay = nutritionLog.find((day) => day.date === yesterdayStr);
     const sourceFoods: NutritionFoodItem[] = sourceDay?.meals[category] ?? [];
+
     if (sourceFoods.length === 0) {
       Alert.alert(
         'Nothing to Copy',
-        `No foods logged in ${CATEGORY_LABELS[category]} on that date.`,
+        `No foods logged in ${CATEGORY_LABELS[category]} yesterday.`,
       );
       return;
     }
-    sourceFoods.forEach((food) => {
-      dispatch({
-        type: 'ADD_FOOD_TO_MEAL',
-        date,
-        category,
-        food: { ...food, id: generateId() },
-      });
-    });
-  };
 
-  const handleCopyPickerChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowCopyPicker(false);
-      if (event.type === 'set' && selected) {
-        const y = selected.getFullYear();
-        const m = String(selected.getMonth() + 1).padStart(2, '0');
-        const d = String(selected.getDate()).padStart(2, '0');
-        handleCopyConfirm(`${y}-${m}-${d}`);
-      }
-    } else {
-      if (selected) setCopyDate(selected);
-    }
-  };
-
-  const confirmCopyiOS = () => {
-    setShowCopyPicker(false);
-    const y = copyDate.getFullYear();
-    const m = String(copyDate.getMonth() + 1).padStart(2, '0');
-    const d = String(copyDate.getDate()).padStart(2, '0');
-    handleCopyConfirm(`${y}-${m}-${d}`);
+    Alert.alert(
+      `Copy ${CATEGORY_LABELS[category]} from yesterday?`,
+      `This will add ${sourceFoods.length} food${sourceFoods.length === 1 ? '' : 's'} to your log.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Copy',
+          onPress: () => {
+            sourceFoods.forEach((food) => {
+              dispatch({
+                type: 'ADD_FOOD_TO_MEAL',
+                date,
+                category,
+                food: { ...food, id: generateId() },
+              });
+            });
+          },
+        },
+      ],
+    );
   };
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<NutritionFoodItem>) => (
@@ -203,9 +154,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
       category={category}
     />
   );
-
-  // Maximum date for picker is yesterday (can't copy from today)
-  const maxDate = new Date(todayYear, todayMonth - 1, todayDay - 1);
 
   return (
     <View style={styles.container}>
@@ -230,7 +178,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
         <View style={styles.headerActions}>
           <TouchableOpacity
             style={styles.actionBtn}
-            onPress={() => setShowCopyPicker(true)}
+            onPress={handleCopy}
           >
             <Ionicons name="copy-outline" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -262,48 +210,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
         </>
       )}
 
-      {/* Android: inline date picker */}
-      {Platform.OS === 'android' && showCopyPicker && (
-        <DateTimePicker
-          value={copyDate}
-          mode="date"
-          display="default"
-          maximumDate={maxDate}
-          onChange={handleCopyPickerChange}
-        />
-      )}
-
-      {/* iOS: bottom-sheet date picker */}
-      {Platform.OS === 'ios' && (
-        <Modal
-          visible={showCopyPicker}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowCopyPicker(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.pickerSheet}>
-              <View style={styles.pickerHeader}>
-                <TouchableOpacity onPress={() => setShowCopyPicker(false)}>
-                  <Text style={styles.pickerCancel}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={styles.pickerTitle}>Copy from…</Text>
-                <TouchableOpacity onPress={confirmCopyiOS}>
-                  <Text style={styles.pickerDone}>Copy</Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={copyDate}
-                mode="date"
-                display="spinner"
-                maximumDate={maxDate}
-                onChange={handleCopyPickerChange}
-                style={styles.iosPicker}
-              />
-            </View>
-          </View>
-        </Modal>
-      )}
     </View>
   );
 }

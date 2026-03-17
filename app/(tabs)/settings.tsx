@@ -470,7 +470,11 @@ export default function SettingsScreen() {
 
         {/* 7. Send Feedback */}
         <View style={styles.card}>
-          <FeedbackSection />
+          <FeedbackSection onFocusInput={() => {
+            setTimeout(() => {
+              scrollRef.current?.scrollToEnd({ animated: true });
+            }, 150);
+          }} />
         </View>
 
         {/* Footer */}
