@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Rect, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Rect, G, Text as SvgText, Line } from 'react-native-svg';
 import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
 
 const CHART_HEIGHT = 72;
@@ -42,15 +42,23 @@ interface BarChartProps {
   goalColor: string;
   dimColor: string;
   labelColor: string;
+  goalLineColor: string;
+  goalLabel: string;
+  /** When true, over-goal bars keep accent color instead of turning danger red */
+  keepAccentWhenOver?: boolean;
 }
 
-function BarChart({ data, width, barColor, goalColor, dimColor, labelColor }: BarChartProps) {
+function BarChart({ data, width, barColor, goalColor, dimColor, labelColor, goalLineColor, goalLabel, keepAccentWhenOver }: BarChartProps) {
   const usableWidth = width - SIDE_PAD * 2;
   const slotWidth = usableWidth / 7;
   const barWidth = slotWidth * 0.55;
   const svgHeight = CHART_HEIGHT + LABEL_HEIGHT;
 
   const maxValue = Math.max(...data.map((d) => Math.max(d.goal, d.consumed)), 1);
+
+  // Compute the shared goal value (first non-zero goal across days)
+  const sharedGoal = data.find((d) => d.goal > 0)?.goal ?? 0;
+  const goalLineY = sharedGoal > 0 ? CHART_HEIGHT - (sharedGoal / maxValue) * CHART_HEIGHT : null;
 
   return (
     <Svg width={width} height={svgHeight}>
@@ -65,6 +73,7 @@ function BarChart({ data, width, barColor, goalColor, dimColor, labelColor }: Ba
         const dayLabel = DAY_LABELS[d.getDay()];
 
         const isOver = day.consumed > day.goal && day.goal > 0;
+        const barFill = isOver && !keepAccentWhenOver ? goalColor : barColor;
 
         return (
           <G key={day.date}>
@@ -85,7 +94,7 @@ function BarChart({ data, width, barColor, goalColor, dimColor, labelColor }: Ba
                 width={barWidth}
                 height={consumedH}
                 rx={3}
-                fill={isOver ? goalColor : barColor}
+                fill={barFill}
               />
             )}
             {/* Day label */}
@@ -101,6 +110,29 @@ function BarChart({ data, width, barColor, goalColor, dimColor, labelColor }: Ba
           </G>
         );
       })}
+      {/* Dotted goal line overlay */}
+      {goalLineY !== null && (
+        <>
+          <Line
+            x1={SIDE_PAD}
+            y1={goalLineY}
+            x2={width - SIDE_PAD - 36}
+            y2={goalLineY}
+            stroke={goalLineColor}
+            strokeWidth={1}
+            strokeDasharray="3,3"
+          />
+          <SvgText
+            x={width - SIDE_PAD - 34}
+            y={goalLineY + 4}
+            fontSize={9}
+            fill={goalLineColor}
+            textAnchor="start"
+          >
+            {goalLabel}
+          </SvgText>
+        </>
+      )}
     </Svg>
   );
 }
@@ -129,6 +161,8 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData, water
           goalColor={colors.danger}
           dimColor={colors.border}
           labelColor={colors.textSecondary}
+          goalLineColor={colors.textSecondary}
+          goalLabel={calorieData.find((d) => d.goal > 0) ? `${Math.round(calorieData.find((d) => d.goal > 0)!.goal)} cal` : ''}
         />
       </View>
       <View style={styles.chartSection}>
@@ -140,6 +174,9 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData, water
           goalColor={colors.danger}
           dimColor={colors.border}
           labelColor={colors.textSecondary}
+          goalLineColor={colors.textSecondary}
+          goalLabel={waterData.find((d) => d.goal > 0) ? `${Math.round(waterData.find((d) => d.goal > 0)!.goal)} ${waterUnit}` : ''}
+          keepAccentWhenOver
         />
       </View>
     </View>

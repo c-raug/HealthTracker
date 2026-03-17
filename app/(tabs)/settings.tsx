@@ -506,7 +506,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* Footer */}
-        <Text style={styles.footer}>HealthTracker v1.0.0</Text>
+        <Text style={styles.footer}>HealthTracker v{(require('../../app.json') as { expo: { version: string } }).expo.version}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
