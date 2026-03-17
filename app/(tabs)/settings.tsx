@@ -372,36 +372,6 @@ export default function SettingsScreen() {
                 </View>
               )}
 
-              {/* Default quick-add amount */}
-              {(() => {
-                const isImperial = preferences.unit === 'lbs';
-                const defaultPresets = isImperial ? [8, 16, 32] : [250, 500, 750];
-                const waterPresets = preferences.waterPresets ?? (defaultPresets as [number, number, number]);
-                const unit = isImperial ? 'oz' : 'mL';
-                const currentDefault = preferences.waterDefaultAmount ?? waterPresets[1];
-                return (
-                  <View style={{ marginTop: Spacing.md }}>
-                    <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Default Quick-Add</Text>
-                    <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
-                      Amount logged when tapping + on the Water section header.
-                    </Text>
-                    <View style={styles.toggle}>
-                      {waterPresets.map((amount) => (
-                        <TouchableOpacity
-                          key={amount}
-                          style={[styles.toggleOption, currentDefault === amount && styles.toggleOptionActive]}
-                          onPress={() => dispatch({ type: 'SET_WATER_DEFAULT', amount })}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={[styles.toggleText, currentDefault === amount && styles.toggleTextActive]}>
-                            {amount} {unit}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                );
-              })()}
             </View>
           )}
         </View>

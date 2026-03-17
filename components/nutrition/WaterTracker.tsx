@@ -73,6 +73,17 @@ const makeStyles = (colors: typeof LightColors) =>
     actionBtn: {
       padding: Spacing.xs,
     },
+    quickAddBtn: {
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.md,
+      paddingVertical: 4,
+      paddingHorizontal: Spacing.sm,
+    },
+    quickAddBtnText: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '700',
+    },
     body: {
       paddingHorizontal: Spacing.md,
       paddingBottom: Spacing.md,
@@ -92,6 +103,10 @@ const makeStyles = (colors: typeof LightColors) =>
       borderRadius: Radius.md,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
+    },
+    presetBtnDefault: {
+      borderWidth: 2,
+      borderColor: colors.primary,
     },
     presetBtnText: {
       ...Typography.small,
@@ -331,11 +346,10 @@ export default function WaterTracker({ date, expandKey }: Props) {
   };
 
   const handleQuickAdd = () => {
-    const defaultAmount = preferences.waterDefaultAmount ?? presets[1];
     dispatch({
       type: 'ADD_WATER_ENTRY',
       date,
-      entry: { id: generateId(), amount: defaultAmount, loggedAt: new Date().toISOString() },
+      entry: { id: generateId(), amount: presets[1], loggedAt: new Date().toISOString() },
     });
   };
 
@@ -425,8 +439,8 @@ export default function WaterTracker({ date, expandKey }: Props) {
             )}
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.actionBtn} onPress={handleQuickAdd}>
-              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+            <TouchableOpacity style={styles.quickAddBtn} onPress={handleQuickAdd}>
+              <Text style={styles.quickAddBtnText}>+{presets[1]} {unit}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -452,7 +466,7 @@ export default function WaterTracker({ date, expandKey }: Props) {
                       />
                     ) : (
                       <TouchableOpacity
-                        style={styles.presetBtn}
+                        style={[styles.presetBtn, idx === 1 && styles.presetBtnDefault]}
                         onPress={() => handlePresetAdd(presets[idx])}
                         onLongPress={() => startEditPreset(idx)}
                         activeOpacity={0.8}
