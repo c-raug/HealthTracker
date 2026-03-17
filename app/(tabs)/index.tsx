@@ -279,13 +279,6 @@ export default function WeightScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Today pill */}
-        {selectedDate !== today && (
-          <TouchableOpacity style={styles.todayPill} onPress={() => setSelectedDate(today)} activeOpacity={0.7}>
-            <Text style={styles.todayPillText}>Today</Text>
-          </TouchableOpacity>
-        )}
-
         {/* Date navigation bar */}
         <View style={styles.dateNav}>
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
@@ -319,6 +312,14 @@ export default function WeightScreen() {
               color={isForwardDisabled ? colors.border : colors.primary}
             />
           </TouchableOpacity>
+          {selectedDate !== today && (
+            <TouchableOpacity
+              onPress={() => setSelectedDate(today)}
+              style={styles.arrowBtn}
+            >
+              <Ionicons name="play-skip-forward-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {existingEntry && (
