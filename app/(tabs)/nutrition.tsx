@@ -267,12 +267,8 @@ export default function NutritionScreen() {
 
   const calorieTarget = baseTdee + caloriesBurned;
 
-  // Compute 7-day weekly data for the graph (oldest → newest)
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  });
+  // Compute 7-day weekly data for the graph (oldest → newest), ending on selectedDate
+  const last7Days = Array.from({ length: 7 }, (_, i) => addDays(selectedDate, -(6 - i)));
 
   const weeklyCalorieData = last7Days.map((date) => {
     const dayNut = nutritionLog.find((d) => d.date === date);
@@ -291,6 +287,25 @@ export default function NutritionScreen() {
     }
     return { date, consumed, goal: baseTdee + dayBurned };
   });
+
+  // Activity-adjusted calorie goal for the graph dashed line:
+  // average caloriesBurned across days in the 7-day window that had activity (exclude zero-activity days)
+  const activityDaysInWindow = last7Days
+    .map((date) => {
+      const dayAct = activityLog.find((d) => d.date === date);
+      if (!dayAct) return 0;
+      if (activityMode === 'manual') {
+        return dayAct.activities.filter((a) => a.type !== 'smartwatch').reduce((s, a) => s + a.caloriesBurned, 0);
+      } else if (activityMode === 'smartwatch') {
+        return dayAct.activities.filter((a) => a.type === 'smartwatch').reduce((s, a) => s + a.caloriesBurned, 0);
+      }
+      return 0;
+    })
+    .filter((burned) => burned > 0);
+  const avgActivityCalories = activityDaysInWindow.length > 0
+    ? activityDaysInWindow.reduce((s, v) => s + v, 0) / activityDaysInWindow.length
+    : 0;
+  const adjustedCalorieGoal = baseTdee > 0 ? baseTdee + Math.round(avgActivityCalories) : null;
 
   const waterGoalValue = (() => {
     if (preferences.waterGoalMode === 'manual' || (!preferences.waterGoalMode && preferences.waterGoalOverride !== undefined)) {
@@ -415,6 +430,8 @@ export default function NutritionScreen() {
                     calorieData={weeklyCalorieData}
                     waterData={weeklyWaterData}
                     waterUnit={waterUnit}
+                    calorieGoal={adjustedCalorieGoal}
+                    waterGoal={waterGoalValue > 0 ? waterGoalValue : null}
                   />
                 </View>
               </ScrollView>

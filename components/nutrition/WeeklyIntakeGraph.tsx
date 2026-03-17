@@ -40,9 +40,11 @@ interface BarChartProps {
   width: number;
   /** When true, over-goal bars keep accent color instead of turning danger red */
   keepAccentWhenOver?: boolean;
+  /** Explicit goal value for the dashed goal line; falls back to first non-zero day goal */
+  goalLine?: number | null;
 }
 
-function BarChart({ data, width, keepAccentWhenOver }: BarChartProps) {
+function BarChart({ data, width, keepAccentWhenOver, goalLine }: BarChartProps) {
   const colors = useColors();
   const usableWidth = width - SIDE_PAD * 2;
   const slotWidth = usableWidth / 7;
@@ -51,9 +53,11 @@ function BarChart({ data, width, keepAccentWhenOver }: BarChartProps) {
 
   const maxValue = Math.max(...data.map((d) => Math.max(d.goal, d.consumed)), 1);
 
-  // Compute the shared goal value (first non-zero goal across days)
-  const sharedGoal = data.find((d) => d.goal > 0)?.goal ?? 0;
-  const goalLineY = sharedGoal > 0 ? CHART_HEIGHT - (sharedGoal / maxValue) * CHART_HEIGHT : null;
+  // Use explicit goalLine if provided, otherwise fall back to first non-zero day goal
+  const resolvedGoal = goalLine != null && goalLine > 0
+    ? goalLine
+    : (data.find((d) => d.goal > 0)?.goal ?? 0);
+  const goalLineY = resolvedGoal > 0 ? CHART_HEIGHT - (resolvedGoal / maxValue) * CHART_HEIGHT : null;
 
   return (
     <Svg width={width} height={svgHeight}>
@@ -117,9 +121,13 @@ interface Props {
   calorieData: DayEntry[];
   waterData: DayEntry[];
   waterUnit: string;
+  /** Activity-adjusted calorie goal for the dashed line */
+  calorieGoal?: number | null;
+  /** Water goal (with creatine if applicable) for the dashed line */
+  waterGoal?: number | null;
 }
 
-export default function WeeklyIntakeGraph({ width, calorieData, waterData }: Props) {
+export default function WeeklyIntakeGraph({ width, calorieData, waterData, calorieGoal, waterGoal }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
 
@@ -132,6 +140,7 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData }: Pro
         <BarChart
           data={calorieData}
           width={width}
+          goalLine={calorieGoal}
         />
       </View>
       <View style={styles.chartSection}>
@@ -140,6 +149,7 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData }: Pro
           data={waterData}
           width={width}
           keepAccentWhenOver
+          goalLine={waterGoal}
         />
       </View>
     </View>
