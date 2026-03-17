@@ -5,7 +5,9 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Modal,
 } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
@@ -15,6 +17,19 @@ import { ageFromDob } from '../../utils/tdeeCalculation';
 
 const DEFAULT_PRESETS_OZ: [number, number, number] = [8, 16, 32];
 const DEFAULT_PRESETS_ML: [number, number, number] = [250, 500, 750];
+
+function formatTime(isoString?: string): string {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+type GroupedEntry = {
+  amount: number;
+  count: number;
+  ids: string[];
+  latestLoggedAt?: string;
+};
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -32,21 +47,31 @@ const makeStyles = (colors: typeof LightColors) =>
     header: {
       flexDirection: 'row',
       alignItems: 'center',
+      justifyContent: 'space-between',
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
+      backgroundColor: colors.card,
     },
     headerLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.xs,
-      flex: 1,
     },
     headerTitle: {
+      ...Typography.h3,
+      color: colors.text,
+    },
+    headerInfo: {
       ...Typography.small,
       color: colors.textSecondary,
-      textTransform: 'uppercase',
-      letterSpacing: 0.8,
-      fontWeight: '600',
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    actionBtn: {
+      padding: Spacing.xs,
     },
     body: {
       paddingHorizontal: Spacing.md,
@@ -120,20 +145,105 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     entryList: {
       marginTop: Spacing.sm,
-      gap: Spacing.xs,
     },
     entryRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: Spacing.xs,
+      backgroundColor: colors.card,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
-    entryAmount: {
-      ...Typography.small,
-      color: colors.text,
+    entryInfo: {
       flex: 1,
     },
-    deleteBtn: {
-      padding: Spacing.xs,
+    entryAmount: {
+      ...Typography.body,
+      color: colors.text,
+    },
+    entryTime: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      marginTop: 1,
+    },
+    entryBadge: {
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.sm,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+      marginLeft: Spacing.sm,
+    },
+    entryBadgeText: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+    deleteAction: {
+      backgroundColor: colors.danger,
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: 80,
+    },
+    deleteActionText: {
+      ...Typography.body,
+      color: colors.white,
+      fontWeight: '600',
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0,0,0,0.35)',
+    },
+    editSheet: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: Radius.lg,
+      borderTopRightRadius: Radius.lg,
+      padding: Spacing.md,
+      paddingBottom: Spacing.xl,
+    },
+    editSheetTitle: {
+      ...Typography.h3,
+      color: colors.text,
+      marginBottom: Spacing.md,
+    },
+    editInputRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      alignItems: 'center',
+      marginBottom: Spacing.sm,
+    },
+    editInput: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      ...Typography.body,
+      color: colors.text,
+    },
+    editConfirmBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      alignItems: 'center',
+    },
+    editConfirmBtnText: {
+      ...Typography.body,
+      color: colors.white,
+      fontWeight: '600',
+    },
+    editCancelBtn: {
+      alignItems: 'center',
+      paddingVertical: Spacing.sm,
+      marginTop: Spacing.xs,
+    },
+    editCancelText: {
+      ...Typography.body,
+      color: colors.textSecondary,
     },
   });
 
@@ -152,6 +262,8 @@ export default function WaterTracker({ date, expandKey }: Props) {
   const [editingPreset, setEditingPreset] = useState<0 | 1 | 2 | null>(null);
   const [editValue, setEditValue] = useState('');
   const editInputRef = useRef<TextInput>(null);
+  const [editGroup, setEditGroup] = useState<GroupedEntry | null>(null);
+  const [editAmount, setEditAmount] = useState('');
 
   // Expand when expandKey changes (triggered from WaterBottleVisual tap)
   useEffect(() => {
@@ -172,8 +284,8 @@ export default function WaterTracker({ date, expandKey }: Props) {
 
   // Get today's water entries
   const dayWater = waterLog?.find((d) => d.date === date);
-  const entries_water = dayWater?.entries ?? [];
-  const totalConsumed = entries_water.reduce((sum, e) => sum + e.amount, 0);
+  const entriesWater = dayWater?.entries ?? [];
+  const totalConsumed = entriesWater.reduce((sum, e) => sum + e.amount, 0);
 
   // Calculate goal
   const profile = preferences.profile;
@@ -195,11 +307,35 @@ export default function WaterTracker({ date, expandKey }: Props) {
     }
   }
 
+  // Group entries by amount (display-only; underlying state stays individual)
+  const groupedEntries: GroupedEntry[] = entriesWater.reduce<GroupedEntry[]>((groups, entry) => {
+    const existing = groups.find((g) => g.amount === entry.amount);
+    if (existing) {
+      existing.ids.push(entry.id);
+      existing.count++;
+      if (entry.loggedAt && (!existing.latestLoggedAt || entry.loggedAt > existing.latestLoggedAt)) {
+        existing.latestLoggedAt = entry.loggedAt;
+      }
+    } else {
+      groups.push({ amount: entry.amount, count: 1, ids: [entry.id], latestLoggedAt: entry.loggedAt });
+    }
+    return groups;
+  }, []);
+
   const handlePresetAdd = (amount: number) => {
     dispatch({
       type: 'ADD_WATER_ENTRY',
       date,
-      entry: { id: generateId(), amount },
+      entry: { id: generateId(), amount, loggedAt: new Date().toISOString() },
+    });
+  };
+
+  const handleQuickAdd = () => {
+    const defaultAmount = preferences.waterDefaultAmount ?? presets[1];
+    dispatch({
+      type: 'ADD_WATER_ENTRY',
+      date,
+      entry: { id: generateId(), amount: defaultAmount, loggedAt: new Date().toISOString() },
     });
   };
 
@@ -209,13 +345,43 @@ export default function WaterTracker({ date, expandKey }: Props) {
     dispatch({
       type: 'ADD_WATER_ENTRY',
       date,
-      entry: { id: generateId(), amount: Math.round(amount) },
+      entry: { id: generateId(), amount: Math.round(amount), loggedAt: new Date().toISOString() },
     });
     setCustomAmount('');
   };
 
-  const handleDelete = (entryId: string) => {
-    dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId });
+  const handleDeleteGroup = (group: GroupedEntry) => {
+    // Delete the most recently logged entry in the group
+    const sortedIds = [...group.ids].sort((a, b) => {
+      const eA = entriesWater.find((e) => e.id === a);
+      const eB = entriesWater.find((e) => e.id === b);
+      return (eB?.loggedAt ?? '').localeCompare(eA?.loggedAt ?? '');
+    });
+    dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId: sortedIds[0] });
+  };
+
+  const handleOpenEdit = (group: GroupedEntry) => {
+    setEditAmount(group.amount.toString());
+    setEditGroup(group);
+  };
+
+  const handleEditConfirm = () => {
+    if (!editGroup) return;
+    const amount = parseInt(editAmount, 10);
+    if (isNaN(amount) || amount <= 0) return;
+    // Replace the most recent entry in the group with the new amount
+    const sortedIds = [...editGroup.ids].sort((a, b) => {
+      const eA = entriesWater.find((e) => e.id === a);
+      const eB = entriesWater.find((e) => e.id === b);
+      return (eB?.loggedAt ?? '').localeCompare(eA?.loggedAt ?? '');
+    });
+    dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId: sortedIds[0] });
+    dispatch({
+      type: 'ADD_WATER_ENTRY',
+      date,
+      entry: { id: generateId(), amount, loggedAt: new Date().toISOString() },
+    });
+    setEditGroup(null);
   };
 
   const startEditPreset = (idx: 0 | 1 | 2) => {
@@ -238,98 +404,172 @@ export default function WaterTracker({ date, expandKey }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => setCollapsed((v) => !v)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.headerLeft}>
-          <Ionicons
-            name={collapsed ? 'chevron-forward' : 'chevron-down'}
-            size={16}
-            color={colors.textSecondary}
-          />
-          <Text style={styles.headerTitle}>Water</Text>
-        </View>
-      </TouchableOpacity>
-
-      {!collapsed && (
-        <View style={styles.body}>
-          {/* 3 Preset buttons */}
-          <View style={styles.presetsRow}>
-            {([0, 1, 2] as const).map((idx) => (
-              <View key={idx} style={styles.presetWrapper}>
-                {editingPreset === idx ? (
-                  <TextInput
-                    ref={editingPreset === idx ? editInputRef : undefined}
-                    style={styles.presetEditInput}
-                    value={editValue}
-                    onChangeText={setEditValue}
-                    keyboardType="number-pad"
-                    returnKeyType="done"
-                    onSubmitEditing={() => savePreset(idx)}
-                    onBlur={() => savePreset(idx)}
-                    selectTextOnFocus
-                  />
-                ) : (
-                  <TouchableOpacity
-                    style={styles.presetBtn}
-                    onPress={() => handlePresetAdd(presets[idx])}
-                    onLongPress={() => startEditPreset(idx)}
-                    activeOpacity={0.8}
-                    delayLongPress={500}
-                  >
-                    <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
-                  </TouchableOpacity>
-                )}
-                {editingPreset !== idx && (
-                  <Text style={styles.editHint}>hold to edit</Text>
-                )}
-              </View>
-            ))}
-          </View>
-
-          {/* Custom amount */}
-          <View style={styles.customRow}>
-            <TextInput
-              style={styles.customInput}
-              value={customAmount}
-              onChangeText={setCustomAmount}
-              placeholder={`Custom amount (${unit})`}
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="decimal-pad"
-              returnKeyType="done"
-              onSubmitEditing={handleCustomAdd}
+    <>
+      <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => setCollapsed((v) => !v)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.headerLeft}>
+            <Ionicons
+              name={collapsed ? 'chevron-forward' : 'chevron-down'}
+              size={18}
+              color={colors.textSecondary}
             />
-            <TouchableOpacity
-              style={styles.addBtn}
-              onPress={handleCustomAdd}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.addBtnText}>Add</Text>
+            <Text style={styles.headerTitle}>Water</Text>
+            {entriesWater.length > 0 && (
+              <Text style={styles.headerInfo}>
+                {totalConsumed} / {waterGoal} {unit}
+              </Text>
+            )}
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.actionBtn} onPress={handleQuickAdd}>
+              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
             </TouchableOpacity>
           </View>
+        </TouchableOpacity>
 
-          {/* Entry list */}
-          {entries_water.length > 0 && (
-            <View style={styles.entryList}>
-              {entries_water.map((entry) => (
-                <View key={entry.id} style={styles.entryRow}>
-                  <Text style={styles.entryAmount}>{entry.amount} {unit}</Text>
-                  <TouchableOpacity
-                    style={styles.deleteBtn}
-                    onPress={() => handleDelete(entry.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="close-circle-outline" size={18} color={colors.danger} />
-                  </TouchableOpacity>
-                </View>
-              ))}
+        {!collapsed && (
+          <>
+            <View style={styles.body}>
+              {/* 3 Preset buttons */}
+              <View style={styles.presetsRow}>
+                {([0, 1, 2] as const).map((idx) => (
+                  <View key={idx} style={styles.presetWrapper}>
+                    {editingPreset === idx ? (
+                      <TextInput
+                        ref={editingPreset === idx ? editInputRef : undefined}
+                        style={styles.presetEditInput}
+                        value={editValue}
+                        onChangeText={setEditValue}
+                        keyboardType="number-pad"
+                        returnKeyType="done"
+                        onSubmitEditing={() => savePreset(idx)}
+                        onBlur={() => savePreset(idx)}
+                        selectTextOnFocus
+                      />
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.presetBtn}
+                        onPress={() => handlePresetAdd(presets[idx])}
+                        onLongPress={() => startEditPreset(idx)}
+                        activeOpacity={0.8}
+                        delayLongPress={500}
+                      >
+                        <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
+                      </TouchableOpacity>
+                    )}
+                    {editingPreset !== idx && (
+                      <Text style={styles.editHint}>hold to edit</Text>
+                    )}
+                  </View>
+                ))}
+              </View>
+
+              {/* Custom amount */}
+              <View style={styles.customRow}>
+                <TextInput
+                  style={styles.customInput}
+                  value={customAmount}
+                  onChangeText={setCustomAmount}
+                  placeholder={`Custom amount (${unit})`}
+                  placeholderTextColor={colors.textSecondary}
+                  keyboardType="decimal-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={handleCustomAdd}
+                />
+                <TouchableOpacity
+                  style={styles.addBtn}
+                  onPress={handleCustomAdd}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          )}
+
+            {/* Entry list — full-width rows with swipe-to-delete */}
+            {groupedEntries.length > 0 && (
+              <View style={styles.entryList}>
+                {groupedEntries.map((group) => (
+                  <Swipeable
+                    key={group.amount.toString()}
+                    renderRightActions={() => (
+                      <TouchableOpacity
+                        style={styles.deleteAction}
+                        onPress={() => handleDeleteGroup(group)}
+                      >
+                        <Text style={styles.deleteActionText}>Delete</Text>
+                      </TouchableOpacity>
+                    )}
+                  >
+                    <TouchableOpacity
+                      style={styles.entryRow}
+                      onPress={() => handleOpenEdit(group)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.entryInfo}>
+                        <Text style={styles.entryAmount}>{group.amount} {unit}</Text>
+                        {group.latestLoggedAt ? (
+                          <Text style={styles.entryTime}>{formatTime(group.latestLoggedAt)}</Text>
+                        ) : null}
+                      </View>
+                      {group.count > 1 && (
+                        <View style={styles.entryBadge}>
+                          <Text style={styles.entryBadgeText}>×{group.count}</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </Swipeable>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+      </View>
+
+      {/* Edit amount bottom sheet */}
+      <Modal
+        visible={editGroup !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditGroup(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.editSheet}>
+            <Text style={styles.editSheetTitle}>Edit Amount</Text>
+            <View style={styles.editInputRow}>
+              <TextInput
+                style={styles.editInput}
+                value={editAmount}
+                onChangeText={setEditAmount}
+                keyboardType="number-pad"
+                returnKeyType="done"
+                placeholder={`Amount in ${unit}`}
+                placeholderTextColor={colors.textSecondary}
+                autoFocus
+                onSubmitEditing={handleEditConfirm}
+              />
+              <TouchableOpacity
+                style={styles.editConfirmBtn}
+                onPress={handleEditConfirm}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.editConfirmBtnText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.editCancelBtn}
+              onPress={() => setEditGroup(null)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.editCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      )}
-    </View>
+      </Modal>
+    </>
   );
 }

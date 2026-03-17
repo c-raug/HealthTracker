@@ -99,6 +99,7 @@ export interface UserPreferences {
   waterGoalMode?: 'auto' | 'manual';
   waterCreatineAdjustment?: boolean;
   waterPresets?: [number, number, number];
+  waterDefaultAmount?: number;
 }
 
 export type ExerciseType = 'weight_lifting';
@@ -122,6 +123,7 @@ export interface DayActivity {
 export interface WaterEntry {
   id: string;
   amount: number; // oz (if unit=lbs) or mL (if unit=kg)
+  loggedAt?: string; // ISO timestamp
 }
 
 export interface DayWater {
