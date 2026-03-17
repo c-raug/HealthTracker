@@ -148,8 +148,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
 
   const renderSaveAsAction = () => (
     <TouchableOpacity style={styles.saveAsAction} onPress={handleSaveAsMeal}>
-      <Ionicons name="bookmark-outline" size={18} color={colors.white} />
-      <Text style={styles.saveAsActionText}>Save as{'\n'}Meal</Text>
+      <Ionicons name="bookmark-outline" size={22} color={colors.white} />
     </TouchableOpacity>
   );
 

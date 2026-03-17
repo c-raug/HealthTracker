@@ -5,24 +5,15 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Modal,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
-import { calculateWaterGoal } from '../../utils/waterCalculation';
-import { ageFromDob } from '../../utils/tdeeCalculation';
 
 const DEFAULT_PRESETS_OZ: [number, number, number] = [8, 16, 32];
 const DEFAULT_PRESETS_ML: [number, number, number] = [250, 500, 750];
-
-function formatTime(isoString?: string): string {
-  if (!isoString) return '';
-  const d = new Date(isoString);
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
 
 type GroupedEntry = {
   amount: number;
@@ -61,10 +52,6 @@ const makeStyles = (colors: typeof LightColors) =>
     headerTitle: {
       ...Typography.h3,
       color: colors.text,
-    },
-    headerInfo: {
-      ...Typography.small,
-      color: colors.textSecondary,
     },
     headerActions: {
       flexDirection: 'row',
@@ -178,11 +165,6 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.body,
       color: colors.text,
     },
-    entryTime: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      marginTop: 1,
-    },
     entryBadge: {
       backgroundColor: colors.primaryLight,
       borderRadius: Radius.sm,
@@ -206,61 +188,6 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.white,
       fontWeight: '600',
     },
-    modalOverlay: {
-      flex: 1,
-      justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.35)',
-    },
-    editSheet: {
-      backgroundColor: colors.card,
-      borderTopLeftRadius: Radius.lg,
-      borderTopRightRadius: Radius.lg,
-      padding: Spacing.md,
-      paddingBottom: Spacing.xl,
-    },
-    editSheetTitle: {
-      ...Typography.h3,
-      color: colors.text,
-      marginBottom: Spacing.md,
-    },
-    editInputRow: {
-      flexDirection: 'row',
-      gap: Spacing.sm,
-      alignItems: 'center',
-      marginBottom: Spacing.sm,
-    },
-    editInput: {
-      flex: 1,
-      backgroundColor: colors.background,
-      borderRadius: Radius.md,
-      borderWidth: 1,
-      borderColor: colors.primary,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      ...Typography.body,
-      color: colors.text,
-    },
-    editConfirmBtn: {
-      backgroundColor: colors.primary,
-      borderRadius: Radius.md,
-      paddingVertical: Spacing.sm,
-      paddingHorizontal: Spacing.md,
-      alignItems: 'center',
-    },
-    editConfirmBtnText: {
-      ...Typography.body,
-      color: colors.white,
-      fontWeight: '600',
-    },
-    editCancelBtn: {
-      alignItems: 'center',
-      paddingVertical: Spacing.sm,
-      marginTop: Spacing.xs,
-    },
-    editCancelText: {
-      ...Typography.body,
-      color: colors.textSecondary,
-    },
   });
 
 interface Props {
@@ -271,15 +198,13 @@ interface Props {
 export default function WaterTracker({ date, expandKey }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { preferences, entries, waterLog, dispatch } = useApp();
+  const { preferences, waterLog, dispatch } = useApp();
 
   const [collapsed, setCollapsed] = useState(true);
   const [customAmount, setCustomAmount] = useState('');
   const [editingPreset, setEditingPreset] = useState<0 | 1 | 2 | null>(null);
   const [editValue, setEditValue] = useState('');
   const editInputRef = useRef<TextInput>(null);
-  const [editGroup, setEditGroup] = useState<GroupedEntry | null>(null);
-  const [editAmount, setEditAmount] = useState('');
 
   // Expand when expandKey changes (triggered from WaterBottleVisual tap)
   useEffect(() => {
@@ -289,11 +214,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
   const isImperial = preferences.unit === 'lbs';
   const unit = isImperial ? 'oz' : 'mL';
 
-  // Backward-compat: if no waterGoalMode set but override exists, default to manual
-  const waterGoalMode =
-    preferences.waterGoalMode ??
-    (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
-
   // Presets
   const defaultPresets = isImperial ? DEFAULT_PRESETS_OZ : DEFAULT_PRESETS_ML;
   const presets: [number, number, number] = preferences.waterPresets ?? defaultPresets;
@@ -301,27 +221,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
   // Get today's water entries
   const dayWater = waterLog?.find((d) => d.date === date);
   const entriesWater = dayWater?.entries ?? [];
-  const totalConsumed = entriesWater.reduce((sum, e) => sum + e.amount, 0);
-
-  // Calculate goal
-  const profile = preferences.profile;
-  const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
-  const latestWeight = sortedEntries[0];
-
-  let waterGoal = 64; // fallback: 64 oz
-  if (waterGoalMode === 'manual' && preferences.waterGoalOverride !== undefined) {
-    waterGoal = preferences.waterGoalOverride;
-  } else if (profile && latestWeight) {
-    const resolvedAge = profile.dob ? ageFromDob(profile.dob) : (profile.age ?? null);
-    if (resolvedAge !== null) {
-      waterGoal = calculateWaterGoal(
-        latestWeight.weight,
-        latestWeight.unit,
-        profile.activityLevel,
-        preferences.waterCreatineAdjustment,
-      );
-    }
-  }
 
   // Group entries by amount (display-only; underlying state stays individual)
   const groupedEntries: GroupedEntry[] = entriesWater.reduce<GroupedEntry[]>((groups, entry) => {
@@ -384,30 +283,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
     dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId: sortedIds[0] });
   };
 
-  const handleOpenEdit = (group: GroupedEntry) => {
-    setEditAmount(group.amount.toString());
-    setEditGroup(group);
-  };
-
-  const handleEditConfirm = () => {
-    if (!editGroup) return;
-    const amount = parseInt(editAmount, 10);
-    if (isNaN(amount) || amount <= 0) return;
-    // Replace the most recent entry in the group with the new amount
-    const sortedIds = [...editGroup.ids].sort((a, b) => {
-      const eA = entriesWater.find((e) => e.id === a);
-      const eB = entriesWater.find((e) => e.id === b);
-      return (eB?.loggedAt ?? '').localeCompare(eA?.loggedAt ?? '');
-    });
-    dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId: sortedIds[0] });
-    dispatch({
-      type: 'ADD_WATER_ENTRY',
-      date,
-      entry: { id: generateId(), amount, loggedAt: new Date().toISOString() },
-    });
-    setEditGroup(null);
-  };
-
   const startEditPreset = (idx: 0 | 1 | 2) => {
     setEditValue(presets[idx].toString());
     setEditingPreset(idx);
@@ -442,11 +317,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
               color={colors.textSecondary}
             />
             <Text style={styles.headerTitle}>Water</Text>
-            {entriesWater.length > 0 && (
-              <Text style={styles.headerInfo}>
-                {totalConsumed} / {waterGoal} {unit}
-              </Text>
-            )}
           </TouchableOpacity>
           <View style={styles.headerActions}>
             {collapsed && (
@@ -531,24 +401,16 @@ export default function WaterTracker({ date, expandKey }: Props) {
                       </TouchableOpacity>
                     )}
                   >
-                    <TouchableOpacity
-                      style={styles.entryRow}
-                      onPress={() => handleOpenEdit(group)}
-                      activeOpacity={0.7}
-                    >
+                    <View style={styles.entryRow}>
                       <View style={styles.entryInfo}>
                         <Text style={styles.entryAmount}>{group.amount} {unit}</Text>
-                        {group.allLoggedAt.length > 0 && (
-                          <Text style={styles.entryTime}>
-                            {group.allLoggedAt
-                              .slice()
-                              .sort()
-                              .map((t) => formatTime(t))
-                              .join(' · ')}
-                          </Text>
-                        )}
                       </View>
-                    </TouchableOpacity>
+                      {group.count > 1 && (
+                        <View style={styles.entryBadge}>
+                          <Text style={styles.entryBadgeText}>{group.count}x</Text>
+                        </View>
+                      )}
+                    </View>
                   </Swipeable>
                 ))}
               </View>
@@ -557,46 +419,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
         )}
       </View>
 
-      {/* Edit amount bottom sheet */}
-      <Modal
-        visible={editGroup !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditGroup(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.editSheet}>
-            <Text style={styles.editSheetTitle}>Edit Amount</Text>
-            <View style={styles.editInputRow}>
-              <TextInput
-                style={styles.editInput}
-                value={editAmount}
-                onChangeText={setEditAmount}
-                keyboardType="number-pad"
-                returnKeyType="done"
-                placeholder={`Amount in ${unit}`}
-                placeholderTextColor={colors.textSecondary}
-                autoFocus
-                onSubmitEditing={handleEditConfirm}
-              />
-              <TouchableOpacity
-                style={styles.editConfirmBtn}
-                onPress={handleEditConfirm}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.editConfirmBtnText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity
-              style={styles.editCancelBtn}
-              onPress={() => setEditGroup(null)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editCancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </>
   );
 }

@@ -109,9 +109,10 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
     }
   }
 
-  const pct = waterGoal > 0 ? Math.min(totalConsumed / waterGoal, 1) : 0;
+  const rawPct = waterGoal > 0 ? totalConsumed / waterGoal : 0;
+  const pct = Math.min(rawPct, 1);
   const fillHeight = Math.round(pct * BOTTLE_BODY_HEIGHT);
-  const pctDisplay = Math.round(pct * 100);
+  const pctDisplay = Math.round(rawPct * 100);
 
   // Animate fill height
   const fillAnim = useRef(new Animated.Value(0)).current;
