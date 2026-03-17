@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
+import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
 
 const SIZE = 160;
 const STROKE_WIDTH = 14;
@@ -55,13 +55,6 @@ export default function CalorieRing({ consumed, target }: Props) {
   const strokeDashoffset = CIRCUMFERENCE * (1 - Math.min(ratio, 1));
   const remaining = target - consumed;
 
-  let progressColor = colors.primary;
-  if (ratio >= 1) {
-    progressColor = colors.danger;
-  } else if (ratio >= 0.8) {
-    progressColor = '#F59E0B'; // warning yellow
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.svgContainer}>
@@ -80,7 +73,7 @@ export default function CalorieRing({ consumed, target }: Props) {
             cx={SIZE / 2}
             cy={SIZE / 2}
             r={RADIUS}
-            stroke={progressColor}
+            stroke={colors.primary}
             strokeWidth={STROKE_WIDTH}
             fill="none"
             strokeDasharray={CIRCUMFERENCE}
