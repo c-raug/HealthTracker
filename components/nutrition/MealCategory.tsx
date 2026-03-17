@@ -86,7 +86,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   const styles = makeStyles(colors);
   const { dispatch, nutritionLog } = useApp();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const totalCal = foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard } from 'react-native';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 
 const GOOGLE_FORM_ID = '1FAIpQLSd9Ul_u4gcdkK5UI68Kak-3nO7DS8xIrFsIzFmszSvYlfljgw';
@@ -94,6 +94,7 @@ export default function FeedbackSection({ onFocusInput }: Props) {
       Alert.alert('Error', 'Could not send feedback. Please try again later.');
     } finally {
       setSubmitting(false);
+      Keyboard.dismiss();
     }
   };
 
