@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
 import { formatShortDate, getToday } from '../utils/dateUtils';
@@ -51,25 +52,19 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  rangeSelector: {
+  rangeDropdown: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
-  },
-  rangeBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    backgroundColor: colors.primaryLight,
     borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
   },
-  rangeBtnActive: {
-    backgroundColor: colors.primary,
-  },
-  rangeBtnText: {
+  rangeDropdownText: {
     ...Typography.small,
-    color: colors.textSecondary,
+    color: colors.primary,
     fontWeight: '600',
-  },
-  rangeBtnTextActive: {
-    color: colors.white,
   },
   chart: {
     borderRadius: Radius.md,
@@ -117,6 +112,21 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     lineHeight: 22,
   },
 });
+
+function showRangePicker(current: TimeRange, onSelect: (r: TimeRange) => void) {
+  Alert.alert(
+    'Select Range',
+    undefined,
+    [
+      ...TIME_RANGE_OPTIONS.map((r) => ({
+        text: r === current ? `${r} ✓` : r,
+        onPress: () => onSelect(r),
+      })),
+      { text: 'Cancel', style: 'cancel' as const },
+    ],
+    { cancelable: true },
+  );
+}
 
 export default function WeightChart() {
   const { entries, preferences } = useApp();
@@ -203,20 +213,14 @@ export default function WeightChart() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Weight Trend ({preferences.unit})</Text>
-        <View style={styles.rangeSelector}>
-          {TIME_RANGE_OPTIONS.map((range) => (
-            <TouchableOpacity
-              key={range}
-              style={[styles.rangeBtn, selectedRange === range && styles.rangeBtnActive]}
-              onPress={() => setSelectedRange(range)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.rangeBtnText, selectedRange === range && styles.rangeBtnTextActive]}>
-                {range}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <TouchableOpacity
+          style={styles.rangeDropdown}
+          onPress={() => showRangePicker(selectedRange, setSelectedRange)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.rangeDropdownText}>{selectedRange}</Text>
+          <Ionicons name="chevron-down" size={12} color={colors.primary} />
+        </TouchableOpacity>
       </View>
       <LineChart
         data={chartData}

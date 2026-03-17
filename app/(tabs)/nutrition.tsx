@@ -158,11 +158,14 @@ export default function NutritionScreen() {
   const [sectionKey, setSectionKey] = useState(0);
   const [activePagerPage, setActivePagerPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  const pagerScrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
     useCallback(() => {
       setSectionKey((k) => k + 1);
       scrollRef.current?.scrollTo({ y: 0, animated: false });
+      pagerScrollRef.current?.scrollTo({ x: 0, animated: false });
+      setActivePagerPage(0);
     }, []),
   );
 
@@ -382,6 +385,7 @@ export default function NutritionScreen() {
             {/* Swipeable pager: Page 1 = ring+bottle, Page 2 = weekly graph */}
             <View style={styles.pagerContainer}>
               <ScrollView
+                ref={pagerScrollRef}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}

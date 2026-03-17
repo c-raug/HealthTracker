@@ -38,17 +38,12 @@ interface DayEntry {
 interface BarChartProps {
   data: DayEntry[];
   width: number;
-  barColor: string;
-  goalColor: string;
-  dimColor: string;
-  labelColor: string;
-  goalLineColor: string;
-  goalLabel: string;
   /** When true, over-goal bars keep accent color instead of turning danger red */
   keepAccentWhenOver?: boolean;
 }
 
-function BarChart({ data, width, barColor, goalColor, dimColor, labelColor, goalLineColor, goalLabel, keepAccentWhenOver }: BarChartProps) {
+function BarChart({ data, width, keepAccentWhenOver }: BarChartProps) {
+  const colors = useColors();
   const usableWidth = width - SIDE_PAD * 2;
   const slotWidth = usableWidth / 7;
   const barWidth = slotWidth * 0.55;
@@ -64,7 +59,6 @@ function BarChart({ data, width, barColor, goalColor, dimColor, labelColor, goal
     <Svg width={width} height={svgHeight}>
       {data.map((day, i) => {
         const x = SIDE_PAD + slotWidth * i + (slotWidth - barWidth) / 2;
-        const goalH = Math.max((day.goal / maxValue) * CHART_HEIGHT, 2);
         const consumedH = Math.min((day.consumed / maxValue) * CHART_HEIGHT, CHART_HEIGHT);
 
         // Parse date safely (avoid timezone issues)
@@ -73,19 +67,10 @@ function BarChart({ data, width, barColor, goalColor, dimColor, labelColor, goal
         const dayLabel = DAY_LABELS[d.getDay()];
 
         const isOver = day.consumed > day.goal && day.goal > 0;
-        const barFill = isOver && !keepAccentWhenOver ? goalColor : barColor;
+        const barFill = isOver && !keepAccentWhenOver ? colors.danger : colors.primary;
 
         return (
           <G key={day.date}>
-            {/* Goal background bar */}
-            <Rect
-              x={x}
-              y={CHART_HEIGHT - goalH}
-              width={barWidth}
-              height={goalH}
-              rx={3}
-              fill={dimColor}
-            />
             {/* Consumed bar */}
             {day.consumed > 0 && (
               <Rect
@@ -103,7 +88,7 @@ function BarChart({ data, width, barColor, goalColor, dimColor, labelColor, goal
               y={svgHeight - 2}
               textAnchor="middle"
               fontSize={10}
-              fill={labelColor}
+              fill={colors.textSecondary}
             >
               {dayLabel}
             </SvgText>
@@ -112,26 +97,16 @@ function BarChart({ data, width, barColor, goalColor, dimColor, labelColor, goal
       })}
       {/* Dotted goal line overlay */}
       {goalLineY !== null && (
-        <>
-          <Line
-            x1={SIDE_PAD}
-            y1={goalLineY}
-            x2={width - SIDE_PAD - 36}
-            y2={goalLineY}
-            stroke={goalLineColor}
-            strokeWidth={1}
-            strokeDasharray="3,3"
-          />
-          <SvgText
-            x={width - SIDE_PAD - 34}
-            y={goalLineY + 4}
-            fontSize={9}
-            fill={goalLineColor}
-            textAnchor="start"
-          >
-            {goalLabel}
-          </SvgText>
-        </>
+        <Line
+          x1={SIDE_PAD}
+          y1={goalLineY}
+          x2={width - SIDE_PAD}
+          y2={goalLineY}
+          stroke={colors.textSecondary}
+          strokeWidth={1.5}
+          strokeDasharray="4,3"
+          strokeOpacity={0.7}
+        />
       )}
     </Svg>
   );
@@ -144,7 +119,7 @@ interface Props {
   waterUnit: string;
 }
 
-export default function WeeklyIntakeGraph({ width, calorieData, waterData, waterUnit }: Props) {
+export default function WeeklyIntakeGraph({ width, calorieData, waterData }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
 
@@ -153,29 +128,17 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData, water
   return (
     <View style={styles.container}>
       <View style={styles.chartSection}>
-        <Text style={styles.chartTitle}>Calories — 7 days</Text>
+        <Text style={styles.chartTitle}>Calories — 7 Days</Text>
         <BarChart
           data={calorieData}
           width={width}
-          barColor={colors.primary}
-          goalColor={colors.danger}
-          dimColor={colors.border}
-          labelColor={colors.textSecondary}
-          goalLineColor={colors.textSecondary}
-          goalLabel={calorieData.find((d) => d.goal > 0) ? `${Math.round(calorieData.find((d) => d.goal > 0)!.goal)} cal` : ''}
         />
       </View>
       <View style={styles.chartSection}>
-        <Text style={styles.chartTitle}>Water · {waterUnit} — 7 days</Text>
+        <Text style={styles.chartTitle}>Water — 7 Days</Text>
         <BarChart
           data={waterData}
           width={width}
-          barColor={colors.primary}
-          goalColor={colors.danger}
-          dimColor={colors.border}
-          labelColor={colors.textSecondary}
-          goalLineColor={colors.textSecondary}
-          goalLabel={waterData.find((d) => d.goal > 0) ? `${Math.round(waterData.find((d) => d.goal > 0)!.goal)} ${waterUnit}` : ''}
           keepAccentWhenOver
         />
       </View>

@@ -306,27 +306,27 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
   return (
     <>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerLeft}
-            onPress={() => setCollapsed((v) => !v)}
-            activeOpacity={0.7}
-          >
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => setCollapsed((v) => !v)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.headerLeft}>
             <Ionicons
               name={collapsed ? 'chevron-forward' : 'chevron-down'}
               size={18}
               color={colors.textSecondary}
             />
             <Text style={styles.headerTitle}>Water</Text>
-          </TouchableOpacity>
+          </View>
           <View style={styles.headerActions}>
             {collapsed && (
-              <TouchableOpacity style={styles.quickAddBtn} onPress={handleQuickAdd}>
+              <TouchableOpacity style={styles.quickAddBtn} onPress={handleQuickAdd} activeOpacity={0.8}>
                 <Text style={styles.quickAddBtnText}>+{presets[1]} {unit}</Text>
               </TouchableOpacity>
             )}
           </View>
-        </View>
+        </TouchableOpacity>
 
         {!collapsed && (
           <>
