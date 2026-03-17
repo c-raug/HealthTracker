@@ -122,6 +122,7 @@ export interface DayActivity {
 export interface WaterEntry {
   id: string;
   amount: number; // oz (if unit=lbs) or mL (if unit=kg)
+  loggedAt?: string; // ISO timestamp
 }
 
 export interface DayWater {

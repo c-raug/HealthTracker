@@ -371,6 +371,7 @@ export default function SettingsScreen() {
                   </TouchableOpacity>
                 </View>
               )}
+
             </View>
           )}
         </View>
