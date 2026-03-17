@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
@@ -124,6 +124,18 @@ export default function SettingsScreen() {
   const [appConfigExpanded, setAppConfigExpanded] = useState(false);
   const [waterGoalInput, setWaterGoalInput] = useState(
     preferences.waterGoalOverride !== undefined ? preferences.waterGoalOverride.toString() : '',
+  );
+
+  // Reset all sections to collapsed and scroll to top when screen comes back into focus
+  useFocusEffect(
+    useCallback(() => {
+      setProfileExpanded(false);
+      setGoalsExpanded(false);
+      setMacroExpanded(false);
+      setWaterGoalExpanded(false);
+      setAppConfigExpanded(false);
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
   );
 
   // Backward-compat: if no waterGoalMode but override exists, default to manual
