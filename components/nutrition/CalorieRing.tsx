@@ -55,11 +55,11 @@ export default function CalorieRing({ consumed, target }: Props) {
   const strokeDashoffset = CIRCUMFERENCE * (1 - Math.min(ratio, 1));
   const remaining = target - consumed;
 
-  let progressColor = colors.primary; // green
+  let progressColor = colors.primary;
   if (ratio >= 1) {
-    progressColor = '#EF4444'; // red - over
+    progressColor = colors.danger;
   } else if (ratio >= 0.8) {
-    progressColor = '#F59E0B'; // yellow - close
+    progressColor = '#F59E0B'; // warning yellow
   }
 
   return (

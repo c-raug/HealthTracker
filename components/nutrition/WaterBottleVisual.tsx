@@ -125,8 +125,7 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
     }).start();
   }, [fillHeight]);
 
-  // Fill color: blue normally, green at 100%
-  const fillColor = pct >= 1 ? '#22C55E' : colors.primary;
+  const fillColor = colors.primary;
 
   return (
     <TouchableOpacity style={styles.wrapper} onPress={onPress} activeOpacity={0.8}>
