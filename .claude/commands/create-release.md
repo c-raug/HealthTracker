@@ -49,39 +49,78 @@ git tag --list "<version>"
 If the tag already exists locally or remotely, tell the user and stop:
 > "Tag `<version>` already exists. Choose a different version number."
 
-## Step 4 — Confirm before tagging
+## Step 4 — Compile release notes
+
+Invoke `/release-notes` to fetch all Done items from the project board and compile them into formatted markdown release notes. This runs silently — do not show intermediate output from the release-notes skill.
+
+Once the notes are compiled, display them to the user:
+
+> **Here are the release notes compiled from your Done column:**
+>
+> ```
+> <compiled notes>
+> ```
+
+Use `AskUserQuestion` with options: **Use these notes** | **Edit before continuing** | **Skip (use generic message)**
+
+- If **Edit before continuing**: ask the user to provide their edited notes as free-text input, then use that text as the release notes.
+- If **Skip**: set release notes to `"Release <version>"`.
+
+Store the final release notes string for use in Step 6.
+
+## Step 5 — Confirm before tagging
 
 Use `AskUserQuestion` to confirm:
 
-> "Ready to create and push tag `<version>` to `main`. This will trigger the GitHub Actions pipeline which builds an APK via EAS and creates a GitHub Release. Proceed?"
+> "Ready to create and push tag `<version>` to `main`. This will:
+> - Create an annotated git tag
+> - Push the tag to GitHub (triggers the APK build pipeline)
+> - Create a GitHub Release with the compiled release notes
+>
+> Proceed?"
 
 Options: **Yes, create the release** | **Cancel**
 
 If Cancel, stop.
 
-## Step 5 — Create and push the tag
+## Step 6 — Create tag, push, and create GitHub Release
 
 Create an annotated tag:
 ```
 git tag -a <version> -m "Release <version>"
 ```
 
-Push the tag to `main` on origin:
+Push the tag to origin:
 ```
 git push origin <version>
 ```
 
-**Retry policy:** If push fails due to a network error, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s). Do NOT retry on 403 errors — report them to the user instead.
+**Retry policy for push:** If push fails due to a network error, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s). Do NOT retry on 403 errors — report them to the user instead.
 
-## Step 6 — Report
+After a successful tag push, create the GitHub Release with the compiled notes:
+```
+gh release create <version> \
+  --title "HealthTracker <version>" \
+  --notes "<release-notes-string>" \
+  --verify-tag
+```
 
-After a successful push, report:
+**If the release already exists** (gh exits with an error containing "already exists"), update the notes instead:
+```
+gh release edit <version> --notes "<release-notes-string>"
+```
+
+**Retry policy for gh release create/edit:** Retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s) on network errors only.
+
+## Step 7 — Report
+
+After a successful push and release creation, report:
 
 > **Release `<version>` kicked off!**
 >
 > The tag has been pushed to GitHub. The `Android APK Release` workflow is now running and will:
 > 1. Build an APK via EAS (preview profile, ~10–20 min)
-> 2. Attach it to a new GitHub Release named **"HealthTracker `<version>`"**
+> 2. Attach it to the GitHub Release named **"HealthTracker `<version>`"** (already created with your release notes)
 >
 > Monitor the build:
 > - **Actions:** `https://github.com/c-raug/HealthTracker/actions`
