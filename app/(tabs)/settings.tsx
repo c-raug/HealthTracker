@@ -10,7 +10,7 @@ import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
 import ThemeColorPicker from '../../components/settings/ThemeColorPicker';
-import FeedbackSection from '../../components/settings/FeedbackSection';
+import FeedbackSection, { FeedbackSectionHandle } from '../../components/settings/FeedbackSection';
 import { saveBackup } from '../../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
@@ -113,8 +113,9 @@ export default function SettingsScreen() {
   const colors = useColors();
   const styles = makeStyles(colors);
 
-  const { focusActivityMode } = useLocalSearchParams<{ focusActivityMode?: string }>();
+  const { focusActivityMode, focusFeedback } = useLocalSearchParams<{ focusActivityMode?: string; focusFeedback?: string }>();
   const scrollRef = useRef<ScrollView>(null);
+  const feedbackRef = useRef<FeedbackSectionHandle>(null);
   const [goalsSectionY, setGoalsSectionY] = useState(0);
 
   const [profileExpanded, setProfileExpanded] = useState(false);
@@ -152,6 +153,16 @@ export default function SettingsScreen() {
       }, 150);
     }
   }, [focusActivityMode, goalsSectionY]);
+
+  // When deep-linked with focusFeedback, scroll to feedback and focus input
+  useEffect(() => {
+    if (focusFeedback) {
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+        feedbackRef.current?.focus();
+      }, 150);
+    }
+  }, [focusFeedback]);
 
   const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
 
@@ -481,7 +492,7 @@ export default function SettingsScreen() {
 
         {/* 7. Send Feedback */}
         <View style={styles.card}>
-          <FeedbackSection onFocusInput={() => {
+          <FeedbackSection ref={feedbackRef} onFocusInput={() => {
             setTimeout(() => {
               scrollRef.current?.scrollToEnd({ animated: true });
             }, 150);

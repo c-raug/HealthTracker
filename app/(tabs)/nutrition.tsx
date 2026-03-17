@@ -8,6 +8,7 @@ import {
   Modal,
   ActivityIndicator,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { NestableScrollContainer } from 'react-native-draggable-flatlist';
 import { useFocusEffect } from 'expo-router';
@@ -19,6 +20,7 @@ import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
+import { calculateWaterGoal } from '../../utils/waterCalculation';
 import { MealCategory, MacroSplit } from '../../types';
 import ProfilePrompt from '../../components/nutrition/ProfilePrompt';
 import CalorieRing from '../../components/nutrition/CalorieRing';
@@ -26,6 +28,7 @@ import MacroProgressBars from '../../components/nutrition/MacroProgressBars';
 import MealCategoryComponent from '../../components/nutrition/MealCategory';
 import WaterTracker from '../../components/nutrition/WaterTracker';
 import WaterBottleVisual from '../../components/nutrition/WaterBottleVisual';
+import WeeklyIntakeGraph from '../../components/nutrition/WeeklyIntakeGraph';
 
 const MEAL_CATEGORIES: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
@@ -95,6 +98,25 @@ const makeStyles = (colors: typeof LightColors) =>
       marginTop: -Spacing.sm,
       marginBottom: Spacing.md,
     },
+    pagerContainer: {
+      overflow: 'hidden',
+    },
+    pageDots: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: Spacing.xs,
+      marginBottom: Spacing.sm,
+    },
+    dot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.border,
+    },
+    dotActive: {
+      backgroundColor: colors.primary,
+    },
     modalOverlay: {
       flex: 1,
       justifyContent: 'flex-end',
@@ -124,15 +146,18 @@ const makeStyles = (colors: typeof LightColors) =>
   });
 
 export default function NutritionScreen() {
-  const { entries, preferences, nutritionLog, activityLog, isLoading } = useApp();
+  const { entries, preferences, nutritionLog, activityLog, waterLog, isLoading } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
   const profile = preferences.profile;
+  const { width: windowWidth } = useWindowDimensions();
+  const pagerWidth = windowWidth - Spacing.md * 2;
 
   const [selectedDate, setSelectedDate] = useState<string>(getToday());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
   const [sectionKey, setSectionKey] = useState(0);
+  const [activePagerPage, setActivePagerPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
@@ -240,6 +265,54 @@ export default function NutritionScreen() {
 
   const calorieTarget = baseTdee + caloriesBurned;
 
+  // Compute 7-day weekly data for the graph (oldest → newest)
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
+
+  const weeklyCalorieData = last7Days.map((date) => {
+    const dayNut = nutritionLog.find((d) => d.date === date);
+    const consumed = dayNut
+      ? MEAL_CATEGORIES.reduce(
+          (sum, cat) => sum + (dayNut.meals[cat]?.reduce((s, f) => s + (f.calories ?? 0), 0) ?? 0),
+          0,
+        )
+      : 0;
+    const dayAct = activityLog.find((d) => d.date === date);
+    let dayBurned = 0;
+    if (activityMode === 'manual') {
+      dayBurned = dayAct?.activities.filter((a) => a.type !== 'smartwatch').reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+    } else if (activityMode === 'smartwatch') {
+      dayBurned = dayAct?.activities.filter((a) => a.type === 'smartwatch').reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+    }
+    return { date, consumed, goal: baseTdee + dayBurned };
+  });
+
+  const waterGoalValue = (() => {
+    if (preferences.waterGoalMode === 'manual' || (!preferences.waterGoalMode && preferences.waterGoalOverride !== undefined)) {
+      return preferences.waterGoalOverride ?? 0;
+    }
+    if (latestWeight && profile) {
+      return calculateWaterGoal(
+        latestWeight.weight,
+        latestWeight.unit,
+        profile.activityLevel,
+        preferences.waterCreatineAdjustment,
+      );
+    }
+    return 0;
+  })();
+
+  const weeklyWaterData = last7Days.map((date) => {
+    const dayWater = waterLog.find((d) => d.date === date);
+    const consumed = dayWater ? dayWater.entries.reduce((s, e) => s + e.amount, 0) : 0;
+    return { date, consumed, goal: waterGoalValue };
+  });
+
+  const waterUnit = preferences.unit === 'lbs' ? 'oz' : 'mL';
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -307,15 +380,48 @@ export default function NutritionScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.ringRow}>
-              <CalorieRing consumed={consumed} target={calorieTarget} />
-              <WaterBottleVisual date={selectedDate} onPress={() => setWaterExpandKey((k) => k + 1)} />
+            {/* Swipeable pager: Page 1 = ring+bottle, Page 2 = weekly graph */}
+            <View style={styles.pagerContainer}>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                scrollEventThrottle={32}
+                onMomentumScrollEnd={(e) => {
+                  const page = Math.round(e.nativeEvent.contentOffset.x / pagerWidth);
+                  setActivePagerPage(page);
+                }}
+              >
+                {/* Page 1: Calorie ring + water bottle */}
+                <View style={{ width: pagerWidth }}>
+                  <View style={styles.ringRow}>
+                    <CalorieRing consumed={consumed} target={calorieTarget} />
+                    <WaterBottleVisual date={selectedDate} onPress={() => setWaterExpandKey((k) => k + 1)} />
+                  </View>
+                  {caloriesBurned > 0 && (
+                    <Text style={styles.exerciseBurnedLabel}>
+                      +{caloriesBurned} cal from {activityMode === 'smartwatch' ? 'smart watch' : 'exercise'}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Page 2: Weekly intake graph */}
+                <View style={{ width: pagerWidth }}>
+                  <WeeklyIntakeGraph
+                    width={pagerWidth}
+                    calorieData={weeklyCalorieData}
+                    waterData={weeklyWaterData}
+                    waterUnit={waterUnit}
+                  />
+                </View>
+              </ScrollView>
+
+              {/* Page dot indicators */}
+              <View style={styles.pageDots}>
+                <View style={[styles.dot, activePagerPage === 0 && styles.dotActive]} />
+                <View style={[styles.dot, activePagerPage === 1 && styles.dotActive]} />
+              </View>
             </View>
-            {caloriesBurned > 0 && (
-              <Text style={styles.exerciseBurnedLabel}>
-                +{caloriesBurned} cal from {activityMode === 'smartwatch' ? 'smart watch' : 'exercise'}
-              </Text>
-            )}
             <MacroProgressBars
               consumed={consumedMacros}
               goalCalories={calorieTarget}

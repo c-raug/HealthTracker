@@ -156,6 +156,8 @@ const makeStyles = (colors: typeof LightColors) =>
 
 interface Props {
   onDone: () => void;
+  initialFoods?: NutritionFoodItem[];
+  initialName?: string;
 }
 
 // Discriminated union so SectionList can render both meal foods and custom foods
@@ -163,13 +165,13 @@ type SectionItem =
   | { kind: 'meal'; food: NutritionFoodItem }
   | { kind: 'custom'; food: CustomFood };
 
-export default function CreateMealFlow({ onDone }: Props) {
+export default function CreateMealFlow({ onDone, initialFoods, initialName }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { customFoods, dispatch } = useApp();
 
-  const [mealName, setMealName] = useState('');
-  const [foods, setFoods] = useState<NutritionFoodItem[]>([]);
+  const [mealName, setMealName] = useState(initialName ?? '');
+  const [foods, setFoods] = useState<NutritionFoodItem[]>(initialFoods ?? []);
   const [query, setQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);

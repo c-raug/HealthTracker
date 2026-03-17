@@ -1,4 +1,5 @@
-import { Tabs } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../../constants/theme';
 
@@ -12,6 +13,20 @@ function TabIcon({
   color: string;
 }) {
   return <Ionicons name={name} size={24} color={color} />;
+}
+
+function FeedbackHeaderButton() {
+  const router = useRouter();
+  const colors = useColors();
+  return (
+    <TouchableOpacity
+      onPress={() => router.push({ pathname: '/(tabs)/settings', params: { focusFeedback: '1' } })}
+      style={{ marginRight: 8, padding: 4 }}
+      activeOpacity={0.7}
+    >
+      <Ionicons name="chatbubble-outline" size={22} color={colors.text} />
+    </TouchableOpacity>
+  );
 }
 
 export default function TabLayout() {
@@ -30,6 +45,7 @@ export default function TabLayout() {
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
         headerShadowVisible: false,
+        headerRight: () => <FeedbackHeaderButton />,
       }}
     >
       <Tabs.Screen
@@ -63,6 +79,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
+          headerRight: () => null,
           tabBarIcon: ({ color }) => (
             <TabIcon name="settings-outline" color={color} />
           ),

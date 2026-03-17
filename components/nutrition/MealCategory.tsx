@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   RenderItemParams,
   NestableDraggableFlatList,
 } from 'react-native-draggable-flatlist';
+import { Swipeable } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -67,6 +68,19 @@ const makeStyles = (colors: typeof LightColors) =>
     actionBtn: {
       padding: Spacing.xs,
     },
+    saveAsAction: {
+      backgroundColor: colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+      borderTopRightRadius: Radius.lg,
+      borderBottomRightRadius: Radius.lg,
+    },
+    saveAsActionText: {
+      ...Typography.small,
+      color: colors.white,
+      fontWeight: '600',
+    },
     emptyText: {
       ...Typography.small,
       color: colors.textSecondary,
@@ -87,6 +101,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   const { dispatch, nutritionLog } = useApp();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(true);
+  const swipeableRef = useRef<Swipeable>(null);
 
   const totalCal = foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 
@@ -104,6 +119,39 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
       params: { date, category },
     });
   };
+
+  const handleSaveAsMeal = () => {
+    swipeableRef.current?.close();
+    if (foods.length === 0) return;
+
+    Alert.alert(
+      `Save ${CATEGORY_LABELS[category]} as a Custom Meal?`,
+      'You can review and edit the foods before saving.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Save',
+          onPress: () => {
+            const freshFoods = foods.map((f) => ({ ...f, id: generateId() }));
+            router.push({
+              pathname: '/create-meal-modal',
+              params: {
+                initialFoodsJson: JSON.stringify(freshFoods),
+                initialMealName: CATEGORY_LABELS[category],
+              },
+            });
+          },
+        },
+      ],
+    );
+  };
+
+  const renderSaveAsAction = () => (
+    <TouchableOpacity style={styles.saveAsAction} onPress={handleSaveAsMeal}>
+      <Ionicons name="bookmark-outline" size={18} color={colors.white} />
+      <Text style={styles.saveAsActionText}>Save as{'\n'}Meal</Text>
+    </TouchableOpacity>
+  );
 
   const handleCopy = () => {
     // Compute yesterday relative to the current date
@@ -157,39 +205,45 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => setCollapsed(!collapsed)}
-        activeOpacity={0.7}
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={renderSaveAsAction}
+        overshootRight={false}
       >
-        <View style={styles.headerLeft}>
-          <Ionicons
-            name={collapsed ? 'chevron-forward' : 'chevron-down'}
-            size={18}
-            color={colors.textSecondary}
-          />
-          <Text style={styles.headerTitle}>{CATEGORY_LABELS[category]}</Text>
-          {foods.length > 0 && (
-            <Text style={styles.headerInfo}>
-              ({foods.length}) · {totalCal} cal
-            </Text>
-          )}
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={handleCopy}
-          >
-            <Ionicons name="copy-outline" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={handleAdd}
-          >
-            <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.header}
+          onPress={() => setCollapsed(!collapsed)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.headerLeft}>
+            <Ionicons
+              name={collapsed ? 'chevron-forward' : 'chevron-down'}
+              size={18}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.headerTitle}>{CATEGORY_LABELS[category]}</Text>
+            {foods.length > 0 && (
+              <Text style={styles.headerInfo}>
+                ({foods.length}) · {totalCal} cal
+              </Text>
+            )}
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={handleCopy}
+            >
+              <Ionicons name="copy-outline" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={handleAdd}
+            >
+              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Swipeable>
 
       {!collapsed && (
         <>
