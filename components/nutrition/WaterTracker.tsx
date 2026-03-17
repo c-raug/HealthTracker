@@ -11,8 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
-import { calculateWaterGoal } from '../../utils/waterCalculation';
-import { ageFromDob } from '../../utils/tdeeCalculation';
 
 const DEFAULT_PRESETS_OZ: [number, number, number] = [8, 16, 32];
 const DEFAULT_PRESETS_ML: [number, number, number] = [250, 500, 750];
@@ -54,10 +52,6 @@ const makeStyles = (colors: typeof LightColors) =>
     headerTitle: {
       ...Typography.h3,
       color: colors.text,
-    },
-    headerInfo: {
-      ...Typography.small,
-      color: colors.textSecondary,
     },
     headerActions: {
       flexDirection: 'row',
@@ -171,6 +165,18 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.body,
       color: colors.text,
     },
+    entryBadge: {
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.sm,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+      marginLeft: Spacing.sm,
+    },
+    entryBadgeText: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '600',
+    },
     deleteAction: {
       backgroundColor: colors.danger,
       justifyContent: 'center',
@@ -192,7 +198,7 @@ interface Props {
 export default function WaterTracker({ date, expandKey }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { preferences, entries, waterLog, dispatch } = useApp();
+  const { preferences, waterLog, dispatch } = useApp();
 
   const [collapsed, setCollapsed] = useState(true);
   const [customAmount, setCustomAmount] = useState('');
@@ -208,11 +214,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
   const isImperial = preferences.unit === 'lbs';
   const unit = isImperial ? 'oz' : 'mL';
 
-  // Backward-compat: if no waterGoalMode set but override exists, default to manual
-  const waterGoalMode =
-    preferences.waterGoalMode ??
-    (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
-
   // Presets
   const defaultPresets = isImperial ? DEFAULT_PRESETS_OZ : DEFAULT_PRESETS_ML;
   const presets: [number, number, number] = preferences.waterPresets ?? defaultPresets;
@@ -220,28 +221,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
   // Get today's water entries
   const dayWater = waterLog?.find((d) => d.date === date);
   const entriesWater = dayWater?.entries ?? [];
-  const totalConsumed = entriesWater.reduce((sum, e) => sum + e.amount, 0);
-
-  // Calculate goal
-  const profile = preferences.profile;
-  const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
-  const latestWeight = sortedEntries[0];
-
-  // waterGoal is null when it cannot be computed (missing profile/weight/age in auto mode)
-  let waterGoal: number | null = null;
-  if (waterGoalMode === 'manual' && preferences.waterGoalOverride !== undefined) {
-    waterGoal = preferences.waterGoalOverride;
-  } else if (profile && latestWeight) {
-    const resolvedAge = profile.dob ? ageFromDob(profile.dob) : (profile.age ?? null);
-    if (resolvedAge !== null) {
-      waterGoal = calculateWaterGoal(
-        latestWeight.weight,
-        latestWeight.unit,
-        profile.activityLevel,
-        preferences.waterCreatineAdjustment,
-      );
-    }
-  }
 
   // Group entries by amount (display-only; underlying state stays individual)
   const groupedEntries: GroupedEntry[] = entriesWater.reduce<GroupedEntry[]>((groups, entry) => {
@@ -338,11 +317,6 @@ export default function WaterTracker({ date, expandKey }: Props) {
               color={colors.textSecondary}
             />
             <Text style={styles.headerTitle}>Water</Text>
-            {entriesWater.length > 0 && (
-              <Text style={styles.headerInfo}>
-                {totalConsumed}{waterGoal !== null ? ` / ${waterGoal}` : ''} {unit}
-              </Text>
-            )}
           </TouchableOpacity>
           <View style={styles.headerActions}>
             {collapsed && (
@@ -429,10 +403,13 @@ export default function WaterTracker({ date, expandKey }: Props) {
                   >
                     <View style={styles.entryRow}>
                       <View style={styles.entryInfo}>
-                        <Text style={styles.entryAmount}>
-                          {group.amount} {unit}{group.count > 1 ? ` (${group.count}x)` : ''}
-                        </Text>
+                        <Text style={styles.entryAmount}>{group.amount} {unit}</Text>
                       </View>
+                      {group.count > 1 && (
+                        <View style={styles.entryBadge}>
+                          <Text style={styles.entryBadgeText}>{group.count}x</Text>
+                        </View>
+                      )}
                     </View>
                   </Swipeable>
                 ))}
