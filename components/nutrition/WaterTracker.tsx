@@ -65,14 +65,14 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.xs,
     },
     quickAddBtn: {
-      backgroundColor: WATER_BLUE_LIGHT,
+      backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
       paddingVertical: 4,
       paddingHorizontal: Spacing.sm,
     },
     quickAddBtnText: {
       ...Typography.small,
-      color: WATER_BLUE,
+      color: colors.white,
       fontWeight: '700',
     },
     body: {
@@ -90,18 +90,18 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     presetBtn: {
       width: '100%',
-      backgroundColor: WATER_BLUE_LIGHT,
+      backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
     },
     presetBtnDefault: {
       borderWidth: 2,
-      borderColor: WATER_BLUE,
+      borderColor: '#1565C0',
     },
     presetBtnText: {
       ...Typography.small,
-      color: WATER_BLUE,
+      color: colors.white,
       fontWeight: '600',
     },
     editHint: {
@@ -188,30 +188,10 @@ const makeStyles = (colors: typeof LightColors) =>
       gap: Spacing.xs,
     },
     removeOneBtn: {
-      backgroundColor: colors.background,
-      borderRadius: Radius.sm,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingVertical: 4,
-      paddingHorizontal: Spacing.sm,
-    },
-    removeOneBtnText: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      fontWeight: '600',
+      padding: Spacing.xs,
     },
     clearAllBtn: {
-      backgroundColor: colors.background,
-      borderRadius: Radius.sm,
-      borderWidth: 1,
-      borderColor: colors.danger,
-      paddingVertical: 4,
-      paddingHorizontal: Spacing.sm,
-    },
-    clearAllBtnText: {
-      ...Typography.small,
-      color: colors.danger,
-      fontWeight: '600',
+      padding: Spacing.xs,
     },
   });
 
@@ -451,14 +431,14 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
                         onPress={() => handleRemoveOne(group)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.removeOneBtnText}>−1</Text>
+                        <Ionicons name="trash-outline" size={16} color={colors.danger} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.clearAllBtn}
                         onPress={() => handleClearAll(group)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.clearAllBtnText}>Clear</Text>
+                        <Ionicons name="trash-outline" size={22} color={colors.danger} />
                       </TouchableOpacity>
                     </View>
                   </View>

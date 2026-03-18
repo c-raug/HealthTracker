@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect, useRouter } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
@@ -114,6 +114,7 @@ export default function SettingsScreen() {
   const styles = makeStyles(colors);
 
   const { focusActivityMode, focusFeedback } = useLocalSearchParams<{ focusActivityMode?: string; focusFeedback?: string }>();
+  const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const feedbackRef = useRef<FeedbackSectionHandle>(null);
   const [goalsSectionY, setGoalsSectionY] = useState(0);
@@ -129,18 +130,22 @@ export default function SettingsScreen() {
 
   // Reset all sections to collapsed and scroll to top when screen comes back into focus.
   // When focusActivityMode is present, expand Goals & Calorie Target and scroll to it instead.
+  // After handling focusActivityMode, clear the param so repeated tab switches don't re-expand.
   useFocusEffect(
     useCallback(() => {
       setProfileExpanded(false);
-      setGoalsExpanded(!!focusActivityMode);
       setMacroExpanded(false);
       setWaterGoalExpanded(false);
       setAppConfigExpanded(false);
       if (focusActivityMode) {
+        setGoalsExpanded(true);
         setTimeout(() => {
           scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
         }, 150);
+        // Clear the param so subsequent tab-switches don't re-expand Goals
+        router.setParams({ focusActivityMode: undefined });
       } else {
+        setGoalsExpanded(false);
         scrollRef.current?.scrollTo({ y: 0, animated: false });
       }
     // goalsSectionY intentionally excluded: re-running on layout changes would

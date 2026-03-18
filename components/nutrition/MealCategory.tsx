@@ -89,6 +89,37 @@ const makeStyles = (colors: typeof LightColors) =>
       textAlign: 'center',
       paddingVertical: Spacing.md,
     },
+    groupHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: colors.background,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    groupHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      flex: 1,
+    },
+    groupName: {
+      ...Typography.body,
+      color: colors.text,
+      fontWeight: '600',
+    },
+    groupInfo: {
+      ...Typography.small,
+      color: colors.textSecondary,
+    },
+    removeMealAction: {
+      backgroundColor: colors.danger,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.md,
+    },
   });
 
 interface Props {
@@ -97,13 +128,33 @@ interface Props {
   date: string;
 }
 
+type MealGroup = {
+  mealGroupId: string;
+  mealGroupName: string;
+  foods: NutritionFoodItem[];
+};
+
 export default function MealCategoryComponent({ category, foods, date }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { dispatch, nutritionLog } = useApp();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(true);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const swipeableRef = useRef<Swipeable>(null);
+  const groupSwipeableRefs = useRef<Record<string, Swipeable | null>>({});
+
+  // Split foods into ungrouped and grouped
+  const ungroupedFoods = foods.filter((f) => !f.mealGroupId);
+  const mealGroupsMap = new Map<string, MealGroup>();
+  foods.filter((f) => f.mealGroupId).forEach((f) => {
+    const gid = f.mealGroupId!;
+    if (!mealGroupsMap.has(gid)) {
+      mealGroupsMap.set(gid, { mealGroupId: gid, mealGroupName: f.mealGroupName ?? 'Saved Meal', foods: [] });
+    }
+    mealGroupsMap.get(gid)!.foods.push(f);
+  });
+  const mealGroups = [...mealGroupsMap.values()];
 
   const totalCal = foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 
@@ -193,6 +244,26 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
     );
   };
 
+  const handleRemoveGroup = (group: MealGroup) => {
+    groupSwipeableRefs.current[group.mealGroupId]?.close();
+    Alert.alert(
+      `Remove ${group.mealGroupName}?`,
+      `Remove all ${group.foods.length} food${group.foods.length === 1 ? '' : 's'} from this meal group?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            group.foods.forEach((food) => {
+              dispatch({ type: 'DELETE_FOOD_FROM_MEAL', date, category, foodId: food.id });
+            });
+          },
+        },
+      ],
+    );
+  };
+
   const renderItem = ({ item, drag, isActive }: RenderItemParams<NutritionFoodItem>) => (
     <FoodItem
       item={item}
@@ -252,16 +323,69 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
             <Text style={styles.emptyText}>No foods logged</Text>
           )}
 
-          {foods.length > 0 && (
+          {/* Ungrouped foods */}
+          {ungroupedFoods.length > 0 && (
             <View>
               <NestableDraggableFlatList
-                data={foods}
+                data={ungroupedFoods}
                 keyExtractor={(item) => item.id}
                 renderItem={renderItem}
-                onDragEnd={({ data }) => handleReorder(data)}
+                onDragEnd={({ data }) => handleReorder([...data, ...foods.filter((f) => f.mealGroupId)])}
               />
             </View>
           )}
+
+          {/* Grouped meal sections */}
+          {mealGroups.map((group) => {
+            const isGroupCollapsed = collapsedGroups[group.mealGroupId] ?? true;
+            const groupCal = group.foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
+            return (
+              <View key={group.mealGroupId}>
+                <Swipeable
+                  ref={(ref) => { groupSwipeableRefs.current[group.mealGroupId] = ref; }}
+                  renderRightActions={() => (
+                    <TouchableOpacity
+                      style={styles.removeMealAction}
+                      onPress={() => handleRemoveGroup(group)}
+                    >
+                      <Ionicons name="trash-outline" size={20} color={colors.white} />
+                    </TouchableOpacity>
+                  )}
+                  overshootRight={false}
+                >
+                  <TouchableOpacity
+                    style={styles.groupHeader}
+                    onPress={() =>
+                      setCollapsedGroups((prev) => ({
+                        ...prev,
+                        [group.mealGroupId]: !prev[group.mealGroupId],
+                      }))
+                    }
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.groupHeaderLeft}>
+                      <Ionicons
+                        name={isGroupCollapsed ? 'chevron-forward' : 'chevron-down'}
+                        size={16}
+                        color={colors.textSecondary}
+                      />
+                      <Text style={styles.groupName} numberOfLines={1}>{group.mealGroupName}</Text>
+                      <Text style={styles.groupInfo}>· {groupCal} cal</Text>
+                    </View>
+                  </TouchableOpacity>
+                </Swipeable>
+                {!isGroupCollapsed && group.foods.map((food) => (
+                  <FoodItem
+                    key={food.id}
+                    item={food}
+                    onDelete={() => handleDelete(food.id)}
+                    date={date}
+                    category={category}
+                  />
+                ))}
+              </View>
+            );
+          })}
         </>
       )}
 
