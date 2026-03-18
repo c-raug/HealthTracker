@@ -49,6 +49,8 @@ export interface NutritionFoodItem {
   fat?: number;
   servingSize?: string;
   servings?: number;
+  mealGroupId?: string;
+  mealGroupName?: string;
 }
 
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snacks';

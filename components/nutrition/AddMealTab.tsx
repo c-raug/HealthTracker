@@ -164,10 +164,13 @@ export default function AddMealTab({ date, category, onDone }: Props) {
     const meal = savedMeals.find((m) => m.id === mealId);
     if (!meal) return;
 
+    const groupId = generateId();
     meal.foods.forEach((food) => {
       const newFood: NutritionFoodItem = {
         ...food,
         id: generateId(),
+        mealGroupId: groupId,
+        mealGroupName: meal.name,
       };
       dispatch({ type: 'ADD_FOOD_TO_MEAL', date, category, food: newFood });
     });

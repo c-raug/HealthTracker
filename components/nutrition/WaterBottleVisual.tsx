@@ -13,6 +13,8 @@ const CAP_WIDTH = 28;
 const CAP_HEIGHT = 12;
 const NECK_HEIGHT = 6;
 
+const GLOW_BLUE = '#64B5F6';
+
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
     wrapper: {
@@ -133,7 +135,17 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
     <TouchableOpacity style={styles.wrapper} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.cap} />
       <View style={styles.neck} />
-      <View style={styles.bottleBody}>
+      <View style={[
+        styles.bottleBody,
+        rawPct >= 1 && {
+          shadowColor: GLOW_BLUE,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.85,
+          shadowRadius: 10,
+          elevation: 10,
+          borderColor: GLOW_BLUE,
+        },
+      ]}>
         <Animated.View
           style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
         />
