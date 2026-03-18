@@ -1,3 +1,8 @@
+---
+name: ci
+description: Create Issues Skill. Invoke automatically when the user says "brainstorm", "idea dump", "create github issues", "sync issues", "push to board", or wants to explore ideas and track them on the GitHub project board.
+---
+
 # Create Issues Skill
 
 Brainstorm new ideas with the user, then push them directly to GitHub as labelled issues in the Backlog column of the HealthTracker Project board. No intermediate file — ideas go straight from conversation to GitHub.

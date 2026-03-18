@@ -1,3 +1,8 @@
+---
+name: dependency-check
+description: Dependency Check for HealthTracker. Reference before installing any package, modifying package.json, or troubleshooting Metro/npm errors. Contains all version constraints and correct install commands.
+---
+
 # Dependency Check — HealthTracker
 
 Reference this skill before installing any package, modifying `package.json`, or
