@@ -1,10 +1,15 @@
+---
+name: release-notes
+description: Release Notes Skill. Invoked automatically by /cr to compile release notes from Done items on the project board. Also usable standalone via /release-notes to preview upcoming release notes.
+---
+
 # Release Notes Skill
 
 Fetches all issues in the "Done" column of the HealthTracker Project board, deduplicates conflicting changes, and compiles formatted markdown release notes.
 
 ## When to invoke
 
-- Invoked automatically by `/create-release` (Step 4) to generate release body text.
+- Invoked automatically by `/cr` (Step 5) to generate release body text.
 - Can also be invoked explicitly via `/release-notes` to preview what the next release notes would look like.
 
 ## Step 1 — Fetch Done items from project board
@@ -101,6 +106,6 @@ Guidelines for each bullet:
 
 ## Step 6 — Output
 
-When invoked standalone (not from `/create-release`), display the compiled notes to the user as a formatted preview and stop.
+When invoked standalone (not from `/cr`), display the compiled notes to the user as a formatted preview and stop.
 
-When invoked from `/create-release`, return the compiled notes string for use in the next steps of that skill.
+When invoked from `/cr`, return the compiled notes string for use in the next steps of that skill.

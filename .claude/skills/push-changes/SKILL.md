@@ -1,3 +1,8 @@
+---
+name: push-changes
+description: Push Changes Skill. Invoke automatically after completing any feature implementation, bug fix, refactor, or code improvement — updates docs, creates a sub-branch, commits, and pushes to GitHub.
+---
+
 # Push Changes Skill
 
 After completing any code change, this skill updates documentation, creates a new sub-branch off the current branch, commits all changes, and pushes to GitHub.
@@ -22,7 +27,7 @@ Review what was changed and update docs as needed. Do **not** update files that 
   - A new utility or helper was added
   - An existing component's props, behavior, or usage changed significantly
 
-- **`.claude/commands/*.md`** (skill files): Update any skill whose instructions reference changed behavior (e.g., if dependency-check constraints changed).
+- **`.claude/skills/*/SKILL.md`** (skill files): Update any skill whose instructions reference changed behavior (e.g., if dependency-check constraints changed).
 
 - **`README.md`**: Update only if it exists and public-facing behavior or setup instructions changed.
 

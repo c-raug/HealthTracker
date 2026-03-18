@@ -1,3 +1,9 @@
+---
+name: cr
+description: Create Release Skill. Creates a versioned Git tag, triggers the APK build pipeline, creates a GitHub Release, and archives Done items. Only invoked explicitly — never invoke automatically.
+disable-model-invocation: true
+---
+
 # Create Release Skill
 
 Creates a versioned Git tag on `main`, pushes it to GitHub (triggers the `release-android.yml` APK build pipeline), creates a GitHub Release with compiled release notes, and archives all Done items on the project board.

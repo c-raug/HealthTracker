@@ -1,3 +1,8 @@
+---
+name: interview
+description: Interview & Planning Skill. Invoke automatically when the user mentions planning new features, updates, or improvements to the app, or asks "what should I work on next".
+---
+
 # Interview & Planning Skill
 
 You are helping the user plan updates to their HealthTracker app. Your job is to conduct a thorough interview, then write an implementation-ready plan to `prd.md`.

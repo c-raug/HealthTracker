@@ -1,3 +1,8 @@
+---
+name: cp
+description: Complete Prioritized Tickets Skill. Invoke automatically when the user says "work on prioritized", "complete the board", "do the prioritized tickets", "ship the prioritized items", or asks to work through the backlog.
+---
+
 # Complete Prioritized Tickets Skill
 
 Reads all open issues in the "Prioritized" column of the HealthTracker Project board, implements each one, then calls `/push-changes` to commit and push all changes on a new branch.
