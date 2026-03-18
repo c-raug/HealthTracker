@@ -127,16 +127,26 @@ export default function SettingsScreen() {
     preferences.waterGoalOverride !== undefined ? preferences.waterGoalOverride.toString() : '',
   );
 
-  // Reset all sections to collapsed and scroll to top when screen comes back into focus
+  // Reset all sections to collapsed and scroll to top when screen comes back into focus.
+  // When focusActivityMode is present, expand Goals & Calorie Target and scroll to it instead.
   useFocusEffect(
     useCallback(() => {
       setProfileExpanded(false);
-      setGoalsExpanded(false);
+      setGoalsExpanded(!!focusActivityMode);
       setMacroExpanded(false);
       setWaterGoalExpanded(false);
       setAppConfigExpanded(false);
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, []),
+      if (focusActivityMode) {
+        setTimeout(() => {
+          scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
+        }, 150);
+      } else {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+      }
+    // goalsSectionY intentionally excluded: re-running on layout changes would
+    // re-expand Goals whenever a sibling section (e.g. Profile) changes height.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [focusActivityMode]),
   );
 
   // Backward-compat: if no waterGoalMode but override exists, default to manual
@@ -144,20 +154,7 @@ export default function SettingsScreen() {
     preferences.waterGoalMode ??
     (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
 
-  // When deep-linked from Activity page, auto-expand Goals and scroll to it
-  useEffect(() => {
-    if (focusActivityMode) {
-      setGoalsExpanded(true);
-      setTimeout(() => {
-        scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
-      }, 150);
-    }
-  // goalsSectionY intentionally excluded: re-running on layout changes would
-  // re-expand Goals whenever a sibling section (e.g. Profile) changes height.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusActivityMode]);
-
-  // When deep-linked with focusFeedback, scroll to feedback and focus input
+  // When deep-linked with focusFeedback, scroll to end and focus the feedback input
   useEffect(() => {
     if (focusFeedback) {
       setTimeout(() => {

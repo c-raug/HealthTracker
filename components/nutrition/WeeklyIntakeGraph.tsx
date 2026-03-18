@@ -1,6 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Rect, G, Text as SvgText, Line } from 'react-native-svg';
 import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
+import { ringColorForProximity } from '../../utils/calorieColor';
+
+const WATER_BLUE = '#2196F3';
 
 const CHART_HEIGHT = 72;
 const LABEL_HEIGHT = 16;
@@ -40,11 +43,15 @@ interface BarChartProps {
   width: number;
   /** When true, over-goal bars keep accent color instead of turning danger red */
   keepAccentWhenOver?: boolean;
+  /** When true, each bar color is computed from proximity to the day's goal */
+  useProximityColors?: boolean;
+  /** When provided, all bars use this fixed color */
+  fixedBarColor?: string;
   /** Explicit goal value for the dashed goal line; falls back to first non-zero day goal */
   goalLine?: number | null;
 }
 
-function BarChart({ data, width, keepAccentWhenOver, goalLine }: BarChartProps) {
+function BarChart({ data, width, keepAccentWhenOver, useProximityColors, fixedBarColor, goalLine }: BarChartProps) {
   const colors = useColors();
   const usableWidth = width - SIDE_PAD * 2;
   const slotWidth = usableWidth / 7;
@@ -70,8 +77,15 @@ function BarChart({ data, width, keepAccentWhenOver, goalLine }: BarChartProps) 
         const d = new Date(parts[0], parts[1] - 1, parts[2]);
         const dayLabel = DAY_LABELS[d.getDay()];
 
-        const isOver = day.consumed > day.goal && day.goal > 0;
-        const barFill = isOver && !keepAccentWhenOver ? colors.danger : colors.primary;
+        let barFill: string;
+        if (fixedBarColor) {
+          barFill = fixedBarColor;
+        } else if (useProximityColors) {
+          barFill = ringColorForProximity(day.consumed, day.goal, colors.primary);
+        } else {
+          const isOver = day.consumed > day.goal && day.goal > 0;
+          barFill = isOver && !keepAccentWhenOver ? colors.danger : colors.primary;
+        }
 
         return (
           <G key={day.date}>
@@ -140,6 +154,7 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData, calor
         <BarChart
           data={calorieData}
           width={width}
+          useProximityColors
           goalLine={calorieGoal}
         />
       </View>
@@ -148,7 +163,7 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData, calor
         <BarChart
           data={waterData}
           width={width}
-          keepAccentWhenOver
+          fixedBarColor={WATER_BLUE}
           goalLine={waterGoal}
         />
       </View>

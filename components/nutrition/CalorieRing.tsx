@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
+import { ringColorForProximity } from '../../utils/calorieColor';
 
 const SIZE = 160;
 const STROKE_WIDTH = 14;
@@ -73,7 +74,7 @@ export default function CalorieRing({ consumed, target }: Props) {
             cx={SIZE / 2}
             cy={SIZE / 2}
             r={RADIUS}
-            stroke={colors.primary}
+            stroke={ringColorForProximity(consumed, target, colors.primary)}
             strokeWidth={STROKE_WIDTH}
             fill="none"
             strokeDasharray={CIRCUMFERENCE}

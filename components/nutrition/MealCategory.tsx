@@ -19,6 +19,8 @@ import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import FoodItem from './FoodItem';
 
+const SAVE_AS_MEAL_BLUE = '#2196F3';
+
 const CATEGORY_LABELS: Record<MealCategoryType, string> = {
   breakfast: 'Breakfast',
   lunch: 'Lunch',
@@ -69,7 +71,7 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.xs,
     },
     saveAsAction: {
-      backgroundColor: colors.primary,
+      backgroundColor: SAVE_AS_MEAL_BLUE,
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: Spacing.md,
