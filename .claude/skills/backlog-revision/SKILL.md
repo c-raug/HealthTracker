@@ -5,7 +5,7 @@ description: Backlog Revision Skill. Invoke automatically when the user says "re
 
 # Backlog Revision Skill
 
-Fetches all issues from the Backlog column of the HealthTracker Project board, lets the user pick one, shows a rundown, then iteratively refines the body in plain English until the user is happy — then saves it back to GitHub.
+Fetches all issues from the Backlog column of the HealthTracker Project board, lets the user pick one, shows a rundown, then iteratively refines the body in plain English until the user is happy — then saves it back to GitHub. After saving, asks if the user wants to edit another issue and loops if so.
 
 ## When to invoke
 
@@ -14,7 +14,7 @@ Invoke this skill automatically whenever the user:
 - Wants to refine, rewrite, or improve the description of a Backlog issue
 - Asks to "tighten up" or "rework" an issue on the board
 
-Also invoked explicitly via `/backlog-revision`.
+Also invoked explicitly via `/edit-issue`.
 
 ## Step 1 — Fetch Backlog issues
 
@@ -130,11 +130,19 @@ gh issue edit <number> \
 
 Use a heredoc or properly escaped string to preserve newlines and formatting.
 
-## Step 6 — Confirm to user
+## Step 6 — Confirm and offer to loop
 
 After the edit succeeds, report back:
 
 > **Saved!** Issue #<number> — "<title>" has been updated on GitHub.
 > <url>
 
-If the `gh issue edit` command fails, show the error and ask the user how they'd like to proceed.
+Then immediately ask using `AskUserQuestion`:
+
+> "Would you like to edit another Backlog issue?"
+
+Options:
+- **Yes, pick another** — loop back to Step 1 (re-fetch the Backlog issues so the list is fresh)
+- **No, I'm done** — thank the user and stop
+
+If the `gh issue edit` command fails, show the error and ask the user how they'd like to proceed — do not proceed to the loop question until the save is confirmed.
