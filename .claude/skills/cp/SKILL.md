@@ -22,7 +22,7 @@ Use the GitHub GraphQL API to get all items with Status = "Prioritized" from the
 ```
 gh api graphql -f query='
 {
-  node(id: "PVT_kwHODcEpUs4BRrsp") {
+  node(id: "'"$GH_PROJECT_BOARD_ID"'") {
     ... on ProjectV2 {
       items(first: 50) {
         nodes {

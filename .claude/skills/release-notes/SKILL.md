@@ -19,7 +19,7 @@ Run the following GitHub GraphQL query:
 ```
 gh api graphql -f query='
 {
-  node(id: "PVT_kwHODcEpUs4BRrsp") {
+  node(id: "'"$GH_PROJECT_BOARD_ID"'") {
     ... on ProjectV2 {
       items(first: 100) {
         nodes {
