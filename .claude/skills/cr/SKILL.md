@@ -164,7 +164,7 @@ Fetch all project items with Status = "Done", capturing the ProjectV2Item `id` f
 ```
 gh api graphql -f query='
 {
-  node(id: "PVT_kwHODcEpUs4BRrsp") {
+  node(id: "'"$GH_PROJECT_BOARD_ID"'") {
     ... on ProjectV2 {
       items(first: 100) {
         nodes {
@@ -195,7 +195,7 @@ For each item, run the archive mutation:
 gh api graphql -f query='
 mutation {
   archiveProjectV2Item(input: {
-    projectId: "PVT_kwHODcEpUs4BRrsp"
+    projectId: "'"$GH_PROJECT_BOARD_ID"'"
     itemId: "<item-id>"
   }) {
     item { id }
@@ -215,9 +215,9 @@ After all steps complete, report:
 > 1. Build an APK via EAS (preview profile, ~10–20 min)
 > 2. Attach it to the GitHub Release **"HealthTracker `<tag>`"** (already created with your release notes)
 >
-> Monitor the build:
-> - **Actions:** `https://github.com/c-raug/HealthTracker/actions`
-> - **Releases:** `https://github.com/c-raug/HealthTracker/releases`
+> Monitor the build (substitute actual repo owner/name from `GH_REPO`):
+> - **Actions:** `https://github.com/{owner}/{repo}/actions`
+> - **Releases:** `https://github.com/{owner}/{repo}/releases`
 >
 > **Archived `<N>` Done items from the project board:**
 > - [list each archived item as `#<number> <title>`]

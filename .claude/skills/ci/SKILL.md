@@ -24,7 +24,8 @@ Before asking anything, read both of these silently:
 - `CLAUDE.md` — understand the current app architecture, components, and patterns
 - Fetch existing open GitHub issues to know what's already tracked (for duplicate detection and informed suggestions):
   ```
-  gh issue list --repo c-raug/HealthTracker --state open --limit 100 --json title,number
+  GH_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+  gh issue list --repo "$GH_REPO" --state open --limit 100 --json title,number
   ```
 
 Use this context to ask informed follow-up questions and to avoid proposing ideas that are already issues.
@@ -85,15 +86,15 @@ Options: **Yes, I'm done — create the issues** | **Keep going**
 
 Check existing labels:
 ```
-gh label list --repo c-raug/HealthTracker --limit 100
+gh label list --repo "$GH_REPO" --limit 100
 ```
 
 For each missing label, create it:
 ```
-gh label create "short-term" --repo c-raug/HealthTracker --color "0E8A16" --description "Lower-complexity improvements that add meaningful daily-use value"
-gh label create "medium-term" --repo c-raug/HealthTracker --color "0075CA" --description "New components or state changes — moderate design and dev effort"
-gh label create "long-term" --repo c-raug/HealthTracker --color "D93F0B" --description "Large infrastructure, external APIs, or major new flows"
-gh label create "enhancement" --repo c-raug/HealthTracker --color "A2EEEF" --description "New feature or request"
+gh label create "short-term" --repo "$GH_REPO" --color "0E8A16" --description "Lower-complexity improvements that add meaningful daily-use value"
+gh label create "medium-term" --repo "$GH_REPO" --color "0075CA" --description "New components or state changes — moderate design and dev effort"
+gh label create "long-term" --repo "$GH_REPO" --color "D93F0B" --description "Large infrastructure, external APIs, or major new flows"
+gh label create "enhancement" --repo "$GH_REPO" --color "A2EEEF" --description "New feature or request"
 ```
 
 Only run `gh label create` for labels not already present.
@@ -125,7 +126,7 @@ _Tier: {short-term | medium-term | long-term}_
 Create the issue:
 ```
 gh issue create \
-  --repo c-raug/HealthTracker \
+  --repo "$GH_REPO" \
   --title "{Idea Title}" \
   --body "{body constructed above}" \
   --label "enhancement" \
@@ -138,31 +139,27 @@ Capture the URL returned by each `gh issue create` call. Record skipped duplicat
 
 For each newly created issue URL, add it to the HealthTracker Project using the GraphQL API:
 ```
-gh api graphql -f query='mutation {
-  addProjectV2ItemById(input: {projectId: "PVT_kwHODcEpUs4BRrsp", contentId: "{node_id}"}) {
+NODE_ID=$(gh api repos/$GH_REPO/issues/{number} --jq .node_id)
+ITEM_ID=$(gh api graphql -f query='mutation {
+  addProjectV2ItemById(input: {projectId: "'"$GH_PROJECT_BOARD_ID"'", contentId: "'"$NODE_ID"'"}) {
     item { id }
   }
-}'
-```
-
-Get the issue node_id via:
-```
-gh api repos/c-raug/HealthTracker/issues/{number} --jq .node_id
+}' --jq .data.addProjectV2ItemById.item.id)
 ```
 
 Use the returned item ID to set the Status to **Backlog**:
 ```
 gh api graphql -f query='mutation {
   updateProjectV2ItemFieldValue(input: {
-    projectId: "PVT_kwHODcEpUs4BRrsp",
-    itemId: "{item-id}",
-    fieldId: "PVTSSF_lAHODcEpUs4BRrspzg_cIC4",
-    value: { singleSelectOptionId: "f75ad846" }
+    projectId: "'"$GH_PROJECT_BOARD_ID"'",
+    itemId: "'"$ITEM_ID"'",
+    fieldId: "'"$GH_PROJECT_FIELD_ID"'",
+    value: { singleSelectOptionId: "'"$GH_PROJECT_BACKLOG_OPTION_ID"'" }
   }) { projectV2Item { id } }
 }'
 ```
 
-(These IDs are stable for the HealthTracker Project board.)
+(Read `GH_PROJECT_BOARD_ID`, `GH_PROJECT_FIELD_ID`, and `GH_PROJECT_BACKLOG_OPTION_ID` from environment variables.)
 
 ## Step 8 — Report to user
 
@@ -170,18 +167,16 @@ After all issues are processed, report a clear summary:
 
 - **Created** — count + list of titles with their GitHub URLs and assigned tier
 - **Skipped as duplicates** — count + list of titles
-- **Project board** — https://github.com/users/c-raug/projects/3
+- **Project board** — link from `gh project list --owner @me` or from GitHub
 
 Example format:
 
 > **Issues Created**
 >
 > **Created (3):**
-> - Dark Mode Toggle [short-term] — https://github.com/c-raug/HealthTracker/issues/47
-> - Body Measurements Tracker [medium-term] — https://github.com/c-raug/HealthTracker/issues/48
-> - Apple Health Sync [long-term] — https://github.com/c-raug/HealthTracker/issues/49
+> - Dark Mode Toggle [short-term] — https://github.com/{owner}/{repo}/issues/47
+> - Body Measurements Tracker [medium-term] — https://github.com/{owner}/{repo}/issues/48
+> - Apple Health Sync [long-term] — https://github.com/{owner}/{repo}/issues/49
 >
 > **Skipped as duplicates (1):**
 > - Water Tracking
->
-> **Project board:** https://github.com/users/c-raug/projects/3
