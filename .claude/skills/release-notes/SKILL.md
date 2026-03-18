@@ -61,17 +61,29 @@ And return the string: `"No tracked changes for this release."`
 
 Sort all Done items by `closedAt` timestamp, newest first. Items with a null `closedAt` go to the end.
 
-## Step 3 — Deduplicate conflicting items
+## Step 3 — Group and deduplicate related items
 
-Working through the sorted list (newest first), identify groups of issues that appear to address the same feature or component. Signs of conflict/overlap:
+Working through the sorted list (newest first), identify groups of issues that relate to the same feature or change. Use a two-phase process:
 
-- Very similar titles (e.g. "Add water tracker" and "Update water tracker" or "Fix water tracker bug")
-- Same component name mentioned in both titles (e.g. both mention "WaterTracker", "CalorieRing", "Settings", etc.)
-- One issue's title or body explicitly says it supersedes or replaces another
+### Phase A — Group related issues
 
-For each such group, **keep only the most recently closed issue** (already first due to sort order). Discard the older duplicates silently — do not list them.
+Group issues together when **any** of the following signals are present:
 
-Issues with clearly distinct subjects are always kept regardless of any surface-level similarity.
+1. **Title/component match**: very similar titles, or both titles mention the same named component (e.g. `WaterTracker`, `CalorieRing`, `Settings`, `WeeklyIntakeGraph`, `PortionSelector`, etc.)
+
+2. **Body text similarity**: the issue bodies describe the same user-facing outcome. Flag as related if ≥2 of the following overlap between two issues: same noun subject (the thing being changed), same verb action (what is happening to it), same UI element or screen affected.
+
+3. **Sequential iteration**: one issue clearly iterates on or rewrites what another introduced. Look for iteration signals in the title or body: words like "redesign", "rework", "v2", "improve", "update", "overhaul", "refactor", "replace", or "redo" applied to the same subject as an earlier issue. Also flag if issue B's body explicitly references a feature that issue A introduced (e.g. "the water tracker added in #42" or "builds on the step counter").
+
+Issues with clearly distinct subjects are never grouped, even if they share a common word like "Settings" used in a different context.
+
+### Phase B — Collapse each group into one bullet
+
+For each group of ≥2 related issues:
+- **Keep only the most recently closed issue** as the canonical entry — its title and framing represent the current state of the feature, since it may have overwritten or superseded what came before.
+- **Discard all older issues in the group silently** — do not list them anywhere in the output.
+
+For singleton issues (not grouped with anything), keep as-is.
 
 ## Step 4 — Categorise items
 
