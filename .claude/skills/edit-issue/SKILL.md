@@ -1,9 +1,9 @@
 ---
-name: backlog-revision
-description: Backlog Revision Skill. Invoke automatically when the user says "revise a ticket", "edit a backlog issue", "update a backlog item", or wants to refine an issue in the Backlog column of the project board.
+name: edit-issue
+description: Edit Issue Skill. Invoke automatically when the user says "revise a ticket", "edit a backlog issue", "update a backlog item", or wants to refine an issue in the Backlog column of the project board.
 ---
 
-# Backlog Revision Skill
+# Edit Issue Skill
 
 Fetches all issues from the Backlog column of the HealthTracker Project board, lets the user pick one, shows a rundown, then iteratively refines the body in plain English until the user is happy — then saves it back to GitHub. After saving, asks if the user wants to edit another issue and loops if so.
 
