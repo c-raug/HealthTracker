@@ -5,6 +5,8 @@ import { useApp } from '../../context/AppContext';
 import { calculateWaterGoal } from '../../utils/waterCalculation';
 import { ageFromDob } from '../../utils/tdeeCalculation';
 
+const WATER_BLUE = '#2196F3';
+
 const BOTTLE_WIDTH = 52;
 const BOTTLE_BODY_HEIGHT = 90;
 const CAP_WIDTH = 28;
@@ -125,7 +127,7 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
     }).start();
   }, [fillHeight]);
 
-  const fillColor = colors.primary;
+  const fillColor = WATER_BLUE;
 
   return (
     <TouchableOpacity style={styles.wrapper} onPress={onPress} activeOpacity={0.8}>

@@ -5,8 +5,8 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Alert,
 } from 'react-native';
-import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
@@ -14,6 +14,9 @@ import { generateId } from '../../utils/generateId';
 
 const DEFAULT_PRESETS_OZ: [number, number, number] = [8, 16, 32];
 const DEFAULT_PRESETS_ML: [number, number, number] = [250, 500, 750];
+
+const WATER_BLUE = '#2196F3';
+const WATER_BLUE_LIGHT = '#E3F2FD';
 
 type GroupedEntry = {
   amount: number;
@@ -62,14 +65,14 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.xs,
     },
     quickAddBtn: {
-      backgroundColor: colors.primaryLight,
+      backgroundColor: WATER_BLUE_LIGHT,
       borderRadius: Radius.md,
       paddingVertical: 4,
       paddingHorizontal: Spacing.sm,
     },
     quickAddBtnText: {
       ...Typography.small,
-      color: colors.primary,
+      color: WATER_BLUE,
       fontWeight: '700',
     },
     body: {
@@ -87,18 +90,18 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     presetBtn: {
       width: '100%',
-      backgroundColor: colors.primaryLight,
+      backgroundColor: WATER_BLUE_LIGHT,
       borderRadius: Radius.md,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
     },
     presetBtnDefault: {
       borderWidth: 2,
-      borderColor: colors.primary,
+      borderColor: WATER_BLUE,
     },
     presetBtnText: {
       ...Typography.small,
-      color: colors.primary,
+      color: WATER_BLUE,
       fontWeight: '600',
     },
     editHint: {
@@ -111,7 +114,7 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.background,
       borderRadius: Radius.md,
       borderWidth: 1,
-      borderColor: colors.primary,
+      borderColor: WATER_BLUE,
       paddingHorizontal: Spacing.sm,
       paddingVertical: Spacing.sm,
       ...Typography.small,
@@ -135,7 +138,7 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.text,
     },
     addBtn: {
-      backgroundColor: colors.primary,
+      backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
@@ -160,13 +163,15 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     entryInfo: {
       flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
     },
     entryAmount: {
       ...Typography.body,
       color: colors.text,
     },
     entryBadge: {
-      backgroundColor: colors.primaryLight,
+      backgroundColor: WATER_BLUE_LIGHT,
       borderRadius: Radius.sm,
       paddingHorizontal: Spacing.xs,
       paddingVertical: 2,
@@ -174,18 +179,38 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     entryBadgeText: {
       ...Typography.small,
-      color: colors.primary,
+      color: WATER_BLUE,
       fontWeight: '600',
     },
-    deleteAction: {
-      backgroundColor: colors.danger,
-      justifyContent: 'center',
+    entryActions: {
+      flexDirection: 'row',
       alignItems: 'center',
-      width: 80,
+      gap: Spacing.xs,
     },
-    deleteActionText: {
-      ...Typography.body,
-      color: colors.white,
+    removeOneBtn: {
+      backgroundColor: colors.background,
+      borderRadius: Radius.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 4,
+      paddingHorizontal: Spacing.sm,
+    },
+    removeOneBtnText: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    clearAllBtn: {
+      backgroundColor: colors.background,
+      borderRadius: Radius.sm,
+      borderWidth: 1,
+      borderColor: colors.danger,
+      paddingVertical: 4,
+      paddingHorizontal: Spacing.sm,
+    },
+    clearAllBtnText: {
+      ...Typography.small,
+      color: colors.danger,
       fontWeight: '600',
     },
   });
@@ -274,7 +299,7 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
     setCustomAmount('');
   };
 
-  const handleDeleteGroup = (group: GroupedEntry) => {
+  const handleRemoveOne = (group: GroupedEntry) => {
     // Delete the most recently logged entry in the group
     const sortedIds = [...group.ids].sort((a, b) => {
       const eA = entriesWater.find((e) => e.id === a);
@@ -282,6 +307,25 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
       return (eB?.loggedAt ?? '').localeCompare(eA?.loggedAt ?? '');
     });
     dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId: sortedIds[0] });
+  };
+
+  const handleClearAll = (group: GroupedEntry) => {
+    Alert.alert(
+      'Remove all entries?',
+      `Remove all ${group.count} entr${group.count === 1 ? 'y' : 'ies'} of ${group.amount} ${unit}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          style: 'destructive',
+          onPress: () => {
+            group.ids.forEach((id) => {
+              dispatch({ type: 'DELETE_WATER_ENTRY', date, entryId: id });
+            });
+          },
+        },
+      ],
+    );
   };
 
   const startEditPreset = (idx: 0 | 1 | 2) => {
@@ -388,32 +432,36 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
               </View>
             </View>
 
-            {/* Entry list — full-width rows with swipe-to-delete */}
+            {/* Entry list */}
             {groupedEntries.length > 0 && (
               <View style={styles.entryList}>
                 {groupedEntries.map((group) => (
-                  <Swipeable
-                    key={group.amount.toString()}
-                    renderRightActions={() => (
-                      <TouchableOpacity
-                        style={styles.deleteAction}
-                        onPress={() => handleDeleteGroup(group)}
-                      >
-                        <Text style={styles.deleteActionText}>Delete</Text>
-                      </TouchableOpacity>
-                    )}
-                  >
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryInfo}>
-                        <Text style={styles.entryAmount}>{group.amount} {unit}</Text>
-                      </View>
+                  <View key={group.amount.toString()} style={styles.entryRow}>
+                    <View style={styles.entryInfo}>
+                      <Text style={styles.entryAmount}>{group.amount} {unit}</Text>
                       {group.count > 1 && (
                         <View style={styles.entryBadge}>
                           <Text style={styles.entryBadgeText}>{group.count}x</Text>
                         </View>
                       )}
                     </View>
-                  </Swipeable>
+                    <View style={styles.entryActions}>
+                      <TouchableOpacity
+                        style={styles.removeOneBtn}
+                        onPress={() => handleRemoveOne(group)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.removeOneBtnText}>−1</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.clearAllBtn}
+                        onPress={() => handleClearAll(group)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.clearAllBtnText}>Clear</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 ))}
               </View>
             )}
