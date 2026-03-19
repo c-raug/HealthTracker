@@ -34,16 +34,12 @@ const makeStyles = (colors: typeof LightColors) =>
       marginBottom: Spacing.sm,
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
+      overflow: 'hidden',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.06,
       shadowRadius: 4,
       elevation: 2,
-    },
-    contentArea: {
-      overflow: 'hidden',
-      borderBottomLeftRadius: Radius.lg,
-      borderBottomRightRadius: Radius.lg,
     },
     header: {
       flexDirection: 'row',
@@ -322,7 +318,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
       </Swipeable>
 
       {!collapsed && (
-        <View style={styles.contentArea}>
+        <>
           {foods.length === 0 && (
             <Text style={styles.emptyText}>No foods logged</Text>
           )}
@@ -390,7 +386,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
               </View>
             );
           })}
-        </View>
+        </>
       )}
 
     </View>

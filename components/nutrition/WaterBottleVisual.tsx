@@ -23,16 +23,6 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingHorizontal: Spacing.sm,
       marginBottom: Spacing.md,
     },
-    bottleShapeWrapper: {
-      alignItems: 'center',
-    },
-    bottleGlow: {
-      shadowColor: GLOW_BLUE,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.85,
-      shadowRadius: 12,
-      elevation: 10,
-    },
     cap: {
       width: CAP_WIDTH,
       height: CAP_HEIGHT,
@@ -40,16 +30,10 @@ const makeStyles = (colors: typeof LightColors) =>
       borderTopLeftRadius: 4,
       borderTopRightRadius: 4,
     },
-    capGlow: {
-      backgroundColor: GLOW_BLUE,
-    },
     neck: {
       width: CAP_WIDTH + 8,
       height: NECK_HEIGHT,
       backgroundColor: colors.border,
-    },
-    neckGlow: {
-      backgroundColor: GLOW_BLUE,
     },
     bottleBody: {
       width: BOTTLE_WIDTH,
@@ -149,19 +133,24 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
 
   return (
     <TouchableOpacity style={styles.wrapper} onPress={onPress} activeOpacity={0.8}>
-      <View style={[styles.bottleShapeWrapper, rawPct >= 1 && styles.bottleGlow]}>
-        <View style={[styles.cap, rawPct >= 1 && styles.capGlow]} />
-        <View style={[styles.neck, rawPct >= 1 && styles.neckGlow]} />
-        <View style={[
-          styles.bottleBody,
-          rawPct >= 1 && { borderColor: GLOW_BLUE },
-        ]}>
-          <Animated.View
-            style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
-          />
-          <View style={styles.pctLabel}>
-            <Text style={styles.pctText}>{pctDisplay}%</Text>
-          </View>
+      <View style={styles.cap} />
+      <View style={styles.neck} />
+      <View style={[
+        styles.bottleBody,
+        rawPct >= 1 && {
+          shadowColor: GLOW_BLUE,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.85,
+          shadowRadius: 10,
+          elevation: 10,
+          borderColor: GLOW_BLUE,
+        },
+      ]}>
+        <Animated.View
+          style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
+        />
+        <View style={styles.pctLabel}>
+          <Text style={styles.pctText}>{pctDisplay}%</Text>
         </View>
       </View>
       <Text style={styles.label} numberOfLines={1}>
