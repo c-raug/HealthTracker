@@ -119,6 +119,11 @@ export default function SettingsScreen() {
   const feedbackRef = useRef<FeedbackSectionHandle>(null);
   const [goalsSectionY, setGoalsSectionY] = useState(0);
 
+  // Keep a ref in sync so useFocusEffect (with [] deps) can read the latest value
+  // without re-running when router.setParams clears the param mid-effect.
+  const focusActivityModeRef = useRef(focusActivityMode);
+  focusActivityModeRef.current = focusActivityMode;
+
   const [profileExpanded, setProfileExpanded] = useState(false);
   const [goalsExpanded, setGoalsExpanded] = useState(false);
   const [macroExpanded, setMacroExpanded] = useState(false);
@@ -131,13 +136,17 @@ export default function SettingsScreen() {
   // Reset all sections to collapsed and scroll to top when screen comes back into focus.
   // When focusActivityMode is present, expand Goals & Calorie Target and scroll to it instead.
   // After handling focusActivityMode, clear the param so repeated tab switches don't re-expand.
+  //
+  // Uses [] deps + a ref to avoid a re-run loop: calling router.setParams inside the effect
+  // would change focusActivityMode, which would re-create the useCallback and re-trigger
+  // useFocusEffect, collapsing Goals before the scroll completes.
   useFocusEffect(
     useCallback(() => {
       setProfileExpanded(false);
       setMacroExpanded(false);
       setWaterGoalExpanded(false);
       setAppConfigExpanded(false);
-      if (focusActivityMode) {
+      if (focusActivityModeRef.current === '1') {
         setGoalsExpanded(true);
         setTimeout(() => {
           scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
@@ -148,10 +157,10 @@ export default function SettingsScreen() {
         setGoalsExpanded(false);
         scrollRef.current?.scrollTo({ y: 0, animated: false });
       }
-    // goalsSectionY intentionally excluded: re-running on layout changes would
-    // re-expand Goals whenever a sibling section (e.g. Profile) changes height.
+    // goalsSectionY and focusActivityModeRef intentionally excluded: stable refs/values
+    // that should not trigger re-runs. See comment above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [focusActivityMode]),
+    }, []),
   );
 
   // Backward-compat: if no waterGoalMode but override exists, default to manual

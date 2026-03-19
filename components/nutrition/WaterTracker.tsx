@@ -192,6 +192,12 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     clearAllBtn: {
       padding: Spacing.xs,
+      paddingHorizontal: Spacing.sm,
+    },
+    clearAllText: {
+      ...Typography.small,
+      color: colors.danger,
+      fontWeight: '600',
     },
   });
 
@@ -431,14 +437,14 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
                         onPress={() => handleRemoveOne(group)}
                         activeOpacity={0.7}
                       >
-                        <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                        <Ionicons name="trash-outline" size={20} color={colors.danger} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.clearAllBtn}
                         onPress={() => handleClearAll(group)}
                         activeOpacity={0.7}
                       >
-                        <Ionicons name="trash-outline" size={22} color={colors.danger} />
+                        <Text style={styles.clearAllText}>Clear</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
