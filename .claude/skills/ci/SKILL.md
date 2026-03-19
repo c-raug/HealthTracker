@@ -1,154 +1,178 @@
 ---
 name: ci
-description: Create Issues Skill. Invoke automatically when the user says "brainstorm", "idea dump", "create github issues", "sync issues", "push to board", or wants to explore ideas and track them on the GitHub project board.
+description: Create Issues Skill. Invoke automatically when the user says "brainstorm", "idea dump", "create github issues", "sync issues", "push to board", or wants to track ideas on the GitHub project board.
 ---
 
 # Create Issues Skill
 
-Brainstorm new ideas with the user, then push them directly to GitHub as labelled issues in the Backlog column of the HealthTracker Project board. No intermediate file — ideas go straight from conversation to GitHub.
+Structure user ideas into well-defined GitHub issues with labels, technical context, and acceptance criteria. Each issue is reviewed and approved before creation. All created issues land in the Backlog column of the HealthTracker Project board.
 
 ## When to invoke
 
 Invoke this skill automatically whenever the user:
-- Says "brainstorm", "idea dump", "what could I add", or similar
-- Asks for suggestions on what to improve or build next
-- Wants to explore possibilities without committing to implementation
-- Says "create github issues", "sync issues", "push to board", "sync roadmap", or "create project board"
-- Asks to track future plans or backlog items on GitHub
+- Says "brainstorm", "idea dump", "create github issues", "sync issues", "push to board"
+- Wants to create or track issues on GitHub
+- Asks to explore ideas and turn them into tickets
 
 Also invoked explicitly via `/ci`.
 
+## Label System — 3 Categories
+
+Every issue gets exactly **3 labels**, one from each category:
+
+### Category 1 — Type
+| Label | Color | Description |
+|-------|-------|-------------|
+| `bug` | `#D73A4A` | Something isn't working correctly |
+| `improvement` | `#A2EEEF` | Enhancement to an existing feature |
+| `feature` | `#0E8A16` | Entirely new functionality |
+
+### Category 2 — Page
+| Label | Color | Description |
+|-------|-------|-------------|
+| `weight` | `#C5DEF5` | Weight tab or weight-related components |
+| `nutrition` | `#C5DEF5` | Nutrition tab, meals, foods, water, macros |
+| `activity` | `#C5DEF5` | Activity tab, exercise, steps |
+| `settings` | `#C5DEF5` | Settings tab, preferences, profile, configuration |
+| `global` | `#C5DEF5` | Cross-cutting: navigation, theme, backup, layout |
+
+### Category 3 — Timeline
+| Label | Color | Description |
+|-------|-------|-------------|
+| `short-term` | `#0E8A16` | A few file changes, low risk, immediate value |
+| `medium-term` | `#0075CA` | New component or state changes, moderate effort |
+| `long-term` | `#D93F0B` | Major new flow, external APIs, or large infrastructure |
+
 ## Step 1 — Orient
 
-Before asking anything, read both of these silently:
-- `CLAUDE.md` — understand the current app architecture, components, and patterns
-- Fetch existing open GitHub issues to know what's already tracked (for duplicate detection and informed suggestions):
-  ```
-  GH_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
-  gh issue list --repo "$GH_REPO" --state open --limit 100 --json title,number
-  ```
+Before doing anything, silently:
+1. Read `CLAUDE.md` to understand the current app architecture, components, and patterns.
+2. Fetch existing open issues for duplicate detection:
+   ```
+   GH_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+   gh issue list --repo "$GH_REPO" --state open --limit 100 --json title,number,labels
+   ```
 
-Use this context to ask informed follow-up questions and to avoid proposing ideas that are already issues.
+## Step 2 — Collect ideas
 
-## Step 2 — Opening question
+If the user has already provided a list of ideas in their message, skip to Step 3.
 
-If the user has NOT already supplied a list of ideas, ask what areas they want to brainstorm. Use `AskUserQuestion` with multi-select options covering:
+Otherwise, ask what they want to create issues for using `AskUserQuestion`:
 
-> "What areas of the app do you want to brainstorm ideas for?"
+> "What issues or ideas do you want to create? List them all — we'll structure each one."
 
-Options: Weight tracking, Nutrition & meals, Activity logging, Settings & goals, UI/UX & animations, Data & backup, Something else
+## Step 3 — Structure each issue one at a time
 
-**If the user already provided a list of ideas in their message, skip this step and go directly to Step 3 for each of those ideas.**
+For each idea, Claude structures it into the full issue format below. Claude uses its knowledge of the codebase (from CLAUDE.md and file reads as needed) to fill in the technical implementation section and suggest appropriate labels.
 
-## Step 3 — Flesh out each idea interactively
+### Issue Format
 
-**This step is mandatory for every idea — whether the user supplied ideas upfront or they emerged during brainstorming. Never skip it.**
+```markdown
+## Title
+{Clear, descriptive title — action-oriented, e.g. "Add weekly weight trend summary to Weight tab"}
 
-For each idea, use `AskUserQuestion` to ask up to 3 targeted follow-up questions before moving on. You may batch multiple questions about the same idea in a single `AskUserQuestion` call (up to 4 questions per call). Choose the most relevant from:
+## Labels
+- **Type:** {bug | improvement | feature}
+- **Page:** {weight | nutrition | activity | settings | global}
+- **Timeline:** {short-term | medium-term | long-term}
 
-- **UX flow**: "Walk me through the interaction — what does the user tap, and what do they see?"
-- **Problem being solved**: "What's the specific pain point this addresses?"
-- **Scope / edge cases**: "What should happen in empty, cancel, or error states?"
-- **Technical angle**: "Are there constraints I should know about — existing components to reuse, state changes needed, etc.?"
+## Description
+{2-4 sentences describing the problem, motivation, or what this adds. Explain WHY this matters to the user.}
 
-After gathering answers, summarize the fleshed-out idea internally before moving on to the next one.
+## Technical Implementation
+{What needs to change in the codebase. Reference specific files, components, reducer actions, state fields, and patterns from CLAUDE.md where relevant. Keep it focused — enough for an AI or developer to implement without guessing, but not overkill.}
 
-Suggest related ideas proactively when relevant, using your knowledge of the app from Step 1. Accumulate all ideas internally — do NOT write to any file.
+- `path/to/file.tsx` — what changes here
+- `path/to/other.tsx` — what changes here
+- New state/actions needed (if any)
+- Patterns to follow (reference CLAUDE.md patterns)
 
-## Step 3b — Confirm tier per item
+## Acceptance Criteria
+{Bulleted checklist of what "done" looks like. Each item should be independently verifiable.}
 
-After all ideas are fleshed out, ask the user to assign a priority tier for each one. Use a single `AskUserQuestion` call with one question per idea (batch up to 4 questions per call; use multiple calls if there are more than 4 ideas):
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
+```
+
+### Label Assignment Rules
+
+- **Type** and **Page**: Claude assigns based on the idea's nature and affected area.
+- **Timeline**: Claude suggests based on scope/complexity. The user can override during approval.
+
+### Presenting for Approval
+
+After structuring an issue, present the full formatted issue to the user using `AskUserQuestion`:
+
+> Show the complete issue (title, labels, description, technical implementation, acceptance criteria) as context, then ask:
 
 ```
-Question: "What tier should '[Idea Title]' be?"
+"Does this issue look good?"
 Options:
-  - Short-term — a few file changes, low risk, adds immediate daily value
-  - Medium-term — new component or state changes, moderate effort
-  - Long-term — major new flow, external APIs, or large infrastructure
+  - "Approve — create this issue"
+  - "Revise — I have changes"
 ```
 
-**Claude must NOT pre-select or suggest a tier.** Present all three options neutrally and record the user's choice for each idea.
+- If **Approve**: proceed to create the issue (Step 5), then move to the next idea.
+- If **Revise**: ask the user what to change, revise the issue accordingly, and present it again for approval. Repeat until approved.
 
-## Step 4 — Ask if done brainstorming
+## Step 4 — Ensure labels exist
 
-**This step MUST happen before any issue creation (Steps 5–8).** Even if the user said "create issues" in their original message, this gate must still be asked.
+Before creating any issues, check and create missing labels:
 
-Use `AskUserQuestion`:
-
-> "Are you done brainstorming, or would you like to explore more areas?"
-
-Options: **Yes, I'm done — create the issues** | **Keep going**
-
-- If **Keep going** → return to Step 2.
-- If **Yes, I'm done** → proceed to Step 5.
-
-## Step 5 — Ensure labels exist
-
-Check existing labels:
-```
-gh label list --repo "$GH_REPO" --limit 100
+```bash
+gh label list --repo "$GH_REPO" --limit 100 --json name
 ```
 
-For each missing label, create it:
-```
-gh label create "short-term" --repo "$GH_REPO" --color "0E8A16" --description "Lower-complexity improvements that add meaningful daily-use value"
-gh label create "medium-term" --repo "$GH_REPO" --color "0075CA" --description "New components or state changes — moderate design and dev effort"
-gh label create "long-term" --repo "$GH_REPO" --color "D93F0B" --description "Large infrastructure, external APIs, or major new flows"
-gh label create "enhancement" --repo "$GH_REPO" --color "A2EEEF" --description "New feature or request"
+For each label from the 3-category system that doesn't exist, create it:
+
+```bash
+gh label create "{name}" --repo "$GH_REPO" --color "{color}" --description "{description}"
 ```
 
-Only run `gh label create` for labels not already present.
+Use the colors and descriptions from the Label System tables above. Only create labels that are actually needed for the current batch of issues.
 
-## Step 6 — Create GitHub issues directly
+## Step 5 — Create GitHub issue
 
-For each accumulated idea that is NOT already an open issue (case-insensitive title match against the list fetched in Step 1):
+For each approved issue, construct the body using the structured format and create it:
 
-Use the tier the user assigned in Step 3b. Construct the issue body using the details gathered in Step 3:
-
-```
-## Goal
-
-{One sentence describing what this adds or fixes.}
-
-## Details
-
-{UX behavior bullets — what the user sees/taps/experiences, edge cases, empty states}
-
-## Technical Notes
-
-{Affected files or new components, new state fields or reducer actions if known}
-
----
-
-_Tier: {short-term | medium-term | long-term}_
-```
-
-Create the issue:
-```
+```bash
 gh issue create \
   --repo "$GH_REPO" \
-  --title "{Idea Title}" \
-  --body "{body constructed above}" \
-  --label "enhancement" \
-  --label "{short-term | medium-term | long-term}"
+  --title "{title}" \
+  --body "$(cat <<'EOF'
+## Description
+
+{description}
+
+## Technical Implementation
+
+{technical implementation details}
+
+## Acceptance Criteria
+
+{acceptance criteria checklist}
+EOF
+)" \
+  --label "{type-label}" \
+  --label "{page-label}" \
+  --label "{timeline-label}"
 ```
 
-Capture the URL returned by each `gh issue create` call. Record skipped duplicates separately.
+Capture the URL and issue number returned.
 
-## Step 7 — Add to project board and set Backlog status
+## Step 6 — Add to project board (Backlog)
 
-For each newly created issue URL, add it to the HealthTracker Project using the GraphQL API:
-```
+For each newly created issue, add it to the HealthTracker Project board in the **Backlog** column:
+
+```bash
 NODE_ID=$(gh api repos/$GH_REPO/issues/{number} --jq .node_id)
 ITEM_ID=$(gh api graphql -f query='mutation {
   addProjectV2ItemById(input: {projectId: "'"$GH_PROJECT_BOARD_ID"'", contentId: "'"$NODE_ID"'"}) {
     item { id }
   }
 }' --jq .data.addProjectV2ItemById.item.id)
-```
 
-Use the returned item ID to set the Status to **Backlog**:
-```
 gh api graphql -f query='mutation {
   updateProjectV2ItemFieldValue(input: {
     projectId: "'"$GH_PROJECT_BOARD_ID"'",
@@ -161,22 +185,15 @@ gh api graphql -f query='mutation {
 
 (Read `GH_PROJECT_BOARD_ID`, `GH_PROJECT_FIELD_ID`, and `GH_PROJECT_BACKLOG_OPTION_ID` from environment variables.)
 
-## Step 8 — Report to user
+## Step 7 — Report summary
 
-After all issues are processed, report a clear summary:
+After all issues are processed, report:
 
-- **Created** — count + list of titles with their GitHub URLs and assigned tier
-- **Skipped as duplicates** — count + list of titles
-- **Project board** — link from `gh project list --owner @me` or from GitHub
-
-Example format:
-
-> **Issues Created**
+> **Issues Created ({count}):**
+> - {Title} [`{type}`] [`{page}`] [`{timeline}`] — {URL}
+> - ...
 >
-> **Created (3):**
-> - Dark Mode Toggle [short-term] — https://github.com/{owner}/{repo}/issues/47
-> - Body Measurements Tracker [medium-term] — https://github.com/{owner}/{repo}/issues/48
-> - Apple Health Sync [long-term] — https://github.com/{owner}/{repo}/issues/49
+> **Skipped as duplicates ({count}):**
+> - {Title} (matches #{existing_number})
 >
-> **Skipped as duplicates (1):**
-> - Water Tracking
+> All issues added to **Backlog** on the project board.
