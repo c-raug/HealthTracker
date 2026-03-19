@@ -62,10 +62,28 @@ Read `CLAUDE.md` silently before touching any code. Understand the app architect
 
 Work through each Prioritized issue **one at a time**:
 
-1. Parse the issue body to extract Goal, Details, and Technical Notes.
-2. Read all files that will be affected before editing any of them.
-3. Implement the change following all patterns in `CLAUDE.md` (design tokens, date strings, makeStyles, etc.).
-4. Move on to the next ticket.
+1. **Parse the issue body** to extract:
+   - **Description** — the problem, motivation, and what this adds
+   - **Technical Implementation** — specific files, components, state changes, and patterns to follow
+   - **Acceptance Criteria** — the checklist of what "done" looks like
+
+2. **Scope strictly to the issue.** Only make changes described in the Technical Implementation section. Do NOT:
+   - Refactor surrounding code that isn't mentioned in the issue
+   - Add features, improvements, or "nice-to-haves" beyond what the issue asks for
+   - Fix unrelated bugs you happen to notice
+   - Add comments, docstrings, or type annotations to code you didn't change
+   - Create abstractions or utilities beyond what the issue requires
+
+3. **Read before writing.** Read all files listed in Technical Implementation before editing any of them.
+
+4. **Implement the change** following all patterns in `CLAUDE.md` (design tokens, date strings, makeStyles, etc.).
+
+5. **Verify against Acceptance Criteria.** After implementing, walk through every acceptance criterion in the issue checklist. For each criterion:
+   - Confirm the code change directly satisfies it
+   - If a criterion requires UI behavior, verify the logic is in place
+   - If a criterion is NOT met, continue implementing until it is
+
+   Do not move to the next ticket until every acceptance criterion is addressed.
 
 **Do not commit between tickets** — accumulate all changes across the full set.
 
@@ -83,6 +101,9 @@ After all tickets have been implemented (or attempted), invoke the `/push-change
 
 After `/push-changes` completes, summarize:
 
-- **Implemented** — list of ticket titles + issue numbers
+- **Implemented** — for each ticket, list:
+  - Title + issue number
+  - Acceptance criteria checklist with pass/fail status for each criterion
+  - Any notes on implementation decisions
 - **Skipped** — list of any tickets that were skipped, with a brief reason for each
 - **Branch** — the branch name created and pushed by `/push-changes`
