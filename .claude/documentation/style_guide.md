@@ -1,0 +1,764 @@
+# HealthTracker UI Style Guide
+
+> **Purpose:** This is the single source of truth for all UI styling decisions in the HealthTracker app. Consult this guide before creating or modifying any component. All patterns documented here reflect the current codebase and must be followed exactly.
+
+---
+
+## Table of Contents
+
+1. [Core Principles](#1-core-principles)
+2. [Design Tokens](#2-design-tokens)
+3. [Color System](#3-color-system)
+4. [Typography](#4-typography)
+5. [Spacing & Layout](#5-spacing--layout)
+6. [Border Radius](#6-border-radius)
+7. [Shadows & Elevation](#7-shadows--elevation)
+8. [Dark Mode](#8-dark-mode)
+9. [Component Patterns](#9-component-patterns)
+10. [Icons](#10-icons)
+11. [Fixed Color Rules](#11-fixed-color-rules)
+
+---
+
+## 1. Core Principles
+
+- **Always use design tokens** — never hardcode colors, spacing, font sizes, or border radii. Import from `constants/theme.ts`.
+- **Always use `useColors()` + `makeStyles(colors)`** — this is the only way to create component styles. No exceptions.
+- **Water UI is always fixed blue** — `#2196F3` and `#E3F2FD`. Never use `colors.primary` for water-related visuals.
+- **Calorie proximity colors are computed** — use `ringColorForProximity()` from `utils/calorieColor.ts`. Never hardcode calorie indicator colors.
+- **Macro colors are fixed** — Protein `#3B82F6`, Carbs `#F59E0B`, Fat `#EF4444`. These never change with theme.
+- **All collapsible sections default to collapsed** — `useState(true)`.
+- **One shadow style for all cards** — no variations.
+
+---
+
+## 2. Design Tokens
+
+All tokens are defined in `constants/theme.ts`. Import them as:
+
+```typescript
+import { Colors, Typography, Spacing, Radius, useColors, LightColors } from '@/constants/theme';
+```
+
+---
+
+## 3. Color System
+
+### Theme Colors (via `useColors()`)
+
+| Token            | Light Mode   | Dark Mode    | Usage                          |
+|------------------|-------------|-------------|--------------------------------|
+| `primary`        | `#4CAF50`   | `#4CAF50`   | Accent, active states, CTAs    |
+| `primaryLight`   | `#E8F5E9`   | `#1A3D20`   | Accent backgrounds, highlights |
+| `background`     | `#F7F8FA`   | `#1C1C1E`   | Page background                |
+| `card`           | `#FFFFFF`   | `#2C2C2E`   | Card/panel backgrounds         |
+| `text`           | `#1A1A2E`   | `#F2F2F7`   | Primary text                   |
+| `textSecondary`  | `#6B7280`   | `#8E8E93`   | Labels, hints, muted text      |
+| `border`         | `#E5E7EB`   | `#3A3A3C`   | Dividers, borders, bar backgrounds |
+| `danger`         | `#EF4444`   | `#FF453A`   | Delete, errors, warnings       |
+| `dangerLight`    | `#FEE2E2`   | `#3D1919`   | Error/warning backgrounds      |
+| `white`          | `#FFFFFF`   | `#FFFFFF`   | Text on colored backgrounds    |
+
+> **Note:** `primary` and `primaryLight` are overridden by the user's selected accent color via `ThemeContext`. The 6 accent presets are defined in `ACCENT_PRESETS`:
+>
+> | Preset | Primary   | Light (light mode) | Light (dark mode) |
+> |--------|-----------|-------------------|-------------------|
+> | Green  | `#4CAF50` | `#E8F5E9`        | `#1A3D20`         |
+> | Blue   | `#2196F3` | `#E3F2FD`        | `#1A2D4A`         |
+> | Orange | `#FF9800` | `#FFF3E0`        | `#3D2A10`         |
+> | Purple | `#9C27B0` | `#F3E5F5`        | `#2A1A3D`         |
+> | Red    | `#F44336` | `#FFEBEE`        | `#3D1919`         |
+> | Teal   | `#009688` | `#E0F2F1`        | `#1A3333`         |
+
+### Fixed Colors (Never Change with Theme)
+
+| Color     | Hex       | Usage                                         |
+|-----------|-----------|-----------------------------------------------|
+| Water Blue      | `#2196F3` | All water UI elements (tracker, bottle, bars, presets) |
+| Water Blue Light | `#E3F2FD` | Water entry badges, water light backgrounds    |
+| Water Glow      | `#64B5F6` | Bottle glow shadow when goal is met            |
+| Water Border    | `#1565C0` | Default preset button border, goal-met bottle border |
+| Save-as-Meal    | `#2196F3` | Swipe action button for "Save as Meal"         |
+| Protein         | `#3B82F6` | Macro progress bar and label                   |
+| Carbs           | `#F59E0B` | Macro progress bar and label                   |
+| Fat             | `#EF4444` | Macro progress bar and label                   |
+
+### Calorie Proximity Colors (Computed)
+
+Use `ringColorForProximity(consumed, target, fallback)` from `utils/calorieColor.ts`:
+
+| Delta (|consumed − target|) | Color     | Meaning    |
+|-----------------------------|-----------|------------|
+| ≤ 25 calories              | `#2E7D32` | Dark green (on target) |
+| ≤ 50 calories              | `#4CAF50` | Green      |
+| ≤ 100 calories             | `#FFC107` | Yellow     |
+| ≤ 200 calories             | `#FF9800` | Orange     |
+| > 200 calories             | `#F44336` | Red        |
+
+Falls back to `fallback` (typically `colors.primary`) when `target ≤ 0`.
+
+---
+
+## 4. Typography
+
+All typography is defined as style objects. Always spread them — never set `fontSize` or `fontWeight` independently.
+
+| Token            | Font Size | Font Weight | Usage                              |
+|------------------|-----------|-------------|-------------------------------------|
+| `Typography.h1`  | 28        | `'700'`     | Screen titles, large numbers        |
+| `Typography.h2`  | 22        | `'600'`     | Section headers, modal titles       |
+| `Typography.h3`  | 18        | `'600'`     | Card headers, collapsible titles    |
+| `Typography.body`| 16        | `'400'`     | Body text, input text, food names   |
+| `Typography.small`| 13       | `'400'`     | Labels, hints, badges, detail text  |
+
+### Correct Usage
+
+```typescript
+// CORRECT — spread the token, then add color
+headerTitle: {
+  ...Typography.h3,
+  color: colors.text,
+},
+
+// CORRECT — override weight when needed
+selectedItem: {
+  ...Typography.body,
+  color: colors.text,
+  fontWeight: '700',
+},
+```
+
+### Font Weight Reference
+
+Only use these weights (do not invent others):
+- `'400'` — normal body text
+- `'500'` — medium emphasis (calorie values, secondary labels)
+- `'600'` — semi-bold (headers, button labels, active states)
+- `'700'` — bold (h1, selected drum items, preset button text)
+
+---
+
+## 5. Spacing & Layout
+
+### Spacing Tokens
+
+| Token        | Value | Usage                                        |
+|-------------|-------|----------------------------------------------|
+| `Spacing.xs` | 4px   | Tight gaps, icon padding, inline spacing     |
+| `Spacing.sm` | 8px   | Element gaps, row spacing, small padding     |
+| `Spacing.md` | 16px  | Standard padding, section margins, card padding |
+| `Spacing.lg` | 24px  | Large section gaps, generous padding         |
+| `Spacing.xl` | 32px  | Bottom scroll padding, page-level spacing    |
+
+### Standard Layout Patterns
+
+```typescript
+// Card container padding
+padding: Spacing.md,
+
+// Gap between form elements
+gap: Spacing.sm,
+
+// Gap between sections / cards
+marginBottom: Spacing.md,
+
+// Content area horizontal padding
+paddingHorizontal: Spacing.md,
+
+// ScrollView bottom padding (prevent content hidden by tab bar)
+paddingBottom: Spacing.xl,
+
+// Tight icon touch areas
+padding: Spacing.xs,
+```
+
+### Flex Layout Conventions
+
+```typescript
+// Row layout (header, list item, button row)
+flexDirection: 'row',
+alignItems: 'center',
+justifyContent: 'space-between',
+
+// Centered content
+alignItems: 'center',
+justifyContent: 'center',
+```
+
+### Line Height
+
+| Context              | Value |
+|----------------------|-------|
+| Body/description text | 18    |
+| Warning/info banners  | 17    |
+| Default (most text)   | Not set (inherits) |
+
+---
+
+## 6. Border Radius
+
+| Token       | Value | Usage                                  |
+|------------|-------|----------------------------------------|
+| `Radius.sm` | 8px   | Small elements: badges, input fields, pills, highlight boxes |
+| `Radius.md` | 12px  | Buttons, input fields, drum containers |
+| `Radius.lg` | 16px  | Cards, containers, modal sheets        |
+
+### Correct Usage
+
+```typescript
+// Card container
+borderRadius: Radius.lg,
+
+// Button
+borderRadius: Radius.md,
+
+// Badge or pill
+borderRadius: Radius.sm,
+
+// Progress bar (special case — uses raw value)
+borderRadius: 4,
+```
+
+---
+
+## 7. Shadows & Elevation
+
+### Standard Card Shadow (One Pattern for All Cards)
+
+Every card/container in the app uses this exact shadow. Do not modify or create variations.
+
+```typescript
+shadowColor: '#000',
+shadowOffset: { width: 0, height: 1 },
+shadowOpacity: 0.06,
+shadowRadius: 4,
+elevation: 2,
+```
+
+Used on: `MealCategory`, `MacroProgressBars`, `WaterTracker`, `WeightChart`, `WeightEntryList`, summary cards, and all card-style containers.
+
+### Water Bottle Glow (Special Case — Only for WaterBottleVisual)
+
+Applied when the water goal is met (`rawPct >= 1.0`):
+
+```typescript
+// On the full bottle wrapper (cap + neck + body)
+shadowColor: '#64B5F6',
+shadowOffset: { width: 0, height: 0 },
+shadowOpacity: 0.85,
+shadowRadius: 10,
+elevation: 10,
+
+// On the bottleBody View only
+borderColor: '#64B5F6',
+```
+
+Do not use this glow pattern anywhere else.
+
+---
+
+## 8. Dark Mode
+
+### How It Works
+
+1. `useColors()` detects the system color scheme via `useColorScheme()`
+2. Returns `DarkColors` or `LightColors` base palette
+3. Overlays the user's accent color (from `ThemeContext`) onto `primary` and `primaryLight`
+4. Components receive the correct colors automatically
+
+### The `makeStyles` Pattern (Required for Every Component)
+
+```typescript
+import { useColors, LightColors, Spacing, Typography, Radius } from '@/constants/theme';
+
+// Define styles as a function that takes colors
+const makeStyles = (colors: typeof LightColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.card,
+      borderRadius: Radius.lg,
+      padding: Spacing.md,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    title: {
+      ...Typography.h3,
+      color: colors.text,
+    },
+    subtitle: {
+      ...Typography.small,
+      color: colors.textSecondary,
+    },
+  });
+
+export default function MyComponent() {
+  const colors = useColors();
+  const styles = makeStyles(colors);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Title</Text>
+      <Text style={styles.subtitle}>Subtitle</Text>
+    </View>
+  );
+}
+```
+
+### Rules
+
+- Never use `StyleSheet.create()` at the module level — always wrap it in `makeStyles(colors)`.
+- Never hardcode `'#FFFFFF'` or `'#000000'` for backgrounds or text — use `colors.card`, `colors.background`, `colors.text`.
+- The only hardcoded colors allowed are the fixed colors listed in Section 3 (water blue, macro colors, calorie proximity colors, shadow `#000`).
+- SVG elements that can't use StyleSheet must receive colors as props from the component's `useColors()` call.
+
+---
+
+## 9. Component Patterns
+
+### 9.1 Card Container
+
+The standard container for any content section.
+
+```typescript
+container: {
+  backgroundColor: colors.card,
+  borderRadius: Radius.lg,
+  padding: Spacing.md,
+  marginBottom: Spacing.md,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.06,
+  shadowRadius: 4,
+  elevation: 2,
+  overflow: 'hidden',
+},
+```
+
+### 9.2 Collapsible Section
+
+All collapsible sections follow this exact pattern:
+
+```typescript
+// State — always default to collapsed
+const [collapsed, setCollapsed] = useState(true);
+
+// Header (entire row is touchable)
+<TouchableOpacity
+  style={styles.header}
+  onPress={() => setCollapsed(!collapsed)}
+  activeOpacity={0.7}
+>
+  <Ionicons
+    name={collapsed ? 'chevron-forward' : 'chevron-down'}
+    size={18}
+    color={colors.textSecondary}
+  />
+  <Text style={styles.headerTitle}>Section Title</Text>
+</TouchableOpacity>
+
+// Content — conditionally rendered
+{!collapsed && (
+  <View style={styles.content}>
+    {/* section content */}
+  </View>
+)}
+```
+
+Header styles:
+
+```typescript
+header: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingVertical: Spacing.sm,
+  paddingHorizontal: Spacing.md,
+  backgroundColor: colors.card,
+},
+headerTitle: {
+  ...Typography.h3,
+  color: colors.text,
+},
+```
+
+### 9.3 Buttons
+
+#### Primary Button (Call to Action)
+
+```typescript
+button: {
+  backgroundColor: colors.primary,
+  borderRadius: Radius.md,
+  paddingVertical: Spacing.md,
+  paddingHorizontal: Spacing.md,
+  alignItems: 'center',
+},
+buttonText: {
+  color: colors.white,
+  fontWeight: '600',
+  ...Typography.body,
+},
+// activeOpacity={0.8}
+```
+
+#### Secondary Button (Inactive/Toggle Off)
+
+```typescript
+button: {
+  backgroundColor: colors.background,
+  borderRadius: Radius.md,
+  paddingVertical: Spacing.sm,
+  paddingHorizontal: Spacing.md,
+  alignItems: 'center',
+},
+buttonText: {
+  color: colors.textSecondary,
+  fontWeight: '600',
+  ...Typography.body,
+},
+// activeOpacity={0.8}
+```
+
+#### Active Toggle State
+
+Same as Primary Button — `backgroundColor: colors.primary`, `color: colors.white`.
+
+#### Danger Button (Delete/Remove)
+
+```typescript
+button: {
+  backgroundColor: colors.danger,
+  paddingHorizontal: Spacing.md,
+  paddingVertical: Spacing.sm,
+  borderRadius: Radius.md,
+  alignItems: 'center',
+},
+buttonText: {
+  color: colors.white,
+  fontWeight: '600',
+},
+```
+
+#### Water Preset Button
+
+```typescript
+button: {
+  backgroundColor: '#2196F3',  // fixed water blue
+  borderRadius: Radius.md,
+  paddingVertical: Spacing.sm,
+  paddingHorizontal: Spacing.sm,
+  alignItems: 'center',
+},
+buttonText: {
+  color: '#FFFFFF',
+  fontWeight: '700',
+},
+// Middle preset (index 1) adds:
+defaultPreset: {
+  borderWidth: 2,
+  borderColor: '#1565C0',
+},
+```
+
+#### Icon-Only Touch Area
+
+```typescript
+iconButton: {
+  padding: Spacing.xs,
+},
+// activeOpacity={0.7}
+// Icon color: colors.textSecondary (default) or colors.primary (active)
+```
+
+### 9.4 Text Inputs
+
+```typescript
+input: {
+  backgroundColor: colors.background,
+  borderRadius: Radius.md,
+  borderWidth: 1,
+  borderColor: colors.border,
+  paddingHorizontal: Spacing.md,
+  paddingVertical: Spacing.sm,
+  ...Typography.body,
+  color: colors.text,
+},
+// placeholderTextColor={colors.textSecondary}
+// textAlign: 'center' for numeric inputs, 'left' for text inputs
+```
+
+### 9.5 List Items
+
+```typescript
+row: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: colors.card,
+  paddingVertical: Spacing.sm,
+  paddingHorizontal: Spacing.md,
+  borderBottomWidth: 1,
+  borderBottomColor: colors.border,
+},
+rowName: {
+  ...Typography.body,
+  color: colors.text,
+},
+rowDetail: {
+  ...Typography.small,
+  color: colors.textSecondary,
+},
+rowValue: {
+  ...Typography.body,
+  color: colors.textSecondary,
+  fontWeight: '500',
+},
+```
+
+Active/drag state:
+
+```typescript
+activeRow: {
+  backgroundColor: colors.primaryLight,
+  elevation: 5,
+},
+```
+
+### 9.6 Modal / Bottom Sheet
+
+```typescript
+modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.35)',
+  justifyContent: 'flex-end',
+},
+sheet: {
+  backgroundColor: colors.card,
+  borderTopLeftRadius: Radius.lg,
+  borderTopRightRadius: Radius.lg,
+  maxHeight: '85%',
+},
+sheetHeader: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingHorizontal: Spacing.md,
+  paddingVertical: Spacing.md,
+},
+sheetTitle: {
+  ...Typography.h2,
+  color: colors.text,
+},
+// Close icon: Ionicons "close", size={22}, color={colors.text}
+```
+
+### 9.7 Drum Picker (Scroll Wheel)
+
+```typescript
+drumContainer: {
+  width: 110,           // 220 for wide drums (GoalsSection)
+  height: 132,          // ITEM_HEIGHT (44) × VISIBLE_ITEMS (3)
+  overflow: 'hidden',
+  borderRadius: Radius.md,
+  backgroundColor: colors.background,
+},
+drumItem: {
+  height: 44,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+drumItemText: {
+  ...Typography.body,
+  color: colors.textSecondary,
+},
+drumSelectedText: {
+  ...Typography.h3,
+  color: colors.text,
+  fontWeight: '700',
+},
+drumHighlight: {
+  position: 'absolute',
+  top: 44,              // ITEM_HEIGHT × PAD_COUNT
+  height: 44,
+  borderTopWidth: 1,
+  borderBottomWidth: 1,
+  borderColor: colors.primary,
+  backgroundColor: colors.primaryLight,
+  borderRadius: Radius.sm,
+},
+```
+
+### 9.8 Banner / Alert Box
+
+#### Warning Banner
+
+```typescript
+banner: {
+  flexDirection: 'row',
+  alignItems: 'flex-start',
+  gap: Spacing.xs,
+  backgroundColor: colors.dangerLight,
+  borderRadius: Radius.sm,
+  padding: Spacing.sm,
+},
+bannerText: {
+  ...Typography.small,
+  color: colors.danger,
+  flex: 1,
+  lineHeight: 17,
+},
+// Icon: Ionicons "warning-outline", size={14}, color={colors.danger}
+```
+
+#### Info Banner
+
+```typescript
+banner: {
+  backgroundColor: colors.primaryLight,
+  borderRadius: Radius.sm,
+  padding: Spacing.sm,
+},
+bannerText: {
+  ...Typography.small,
+  color: colors.primary,
+  lineHeight: 17,
+},
+```
+
+### 9.9 Progress Bars (Macros)
+
+```typescript
+barContainer: {
+  height: 8,
+  backgroundColor: colors.border,
+  borderRadius: 4,
+  marginHorizontal: Spacing.sm,
+  overflow: 'hidden',
+},
+barFill: {
+  height: '100%',
+  borderRadius: 4,
+  backgroundColor: macroColor,  // #3B82F6, #F59E0B, or #EF4444
+  // width set dynamically as percentage, clamped to 100%
+},
+```
+
+### 9.10 Swipeable Actions
+
+```typescript
+actionButton: {
+  justifyContent: 'center',
+  alignItems: 'center',
+  width: 70,
+},
+// Save as Meal: backgroundColor: '#2196F3' (fixed blue)
+// Delete/Remove: backgroundColor: colors.danger
+// overshootRight={false}
+```
+
+### 9.11 Empty State
+
+```typescript
+emptyText: {
+  ...Typography.small,
+  color: colors.textSecondary,
+  textAlign: 'center',
+  paddingVertical: Spacing.md,
+},
+```
+
+---
+
+## 10. Icons
+
+All icons use `@expo/vector-icons` Ionicons.
+
+### Size Guide
+
+| Size | Usage                                         |
+|------|-----------------------------------------------|
+| 24   | Tab bar icons, primary action icons            |
+| 22   | Header actions, close buttons, list action icons |
+| 20   | Inline icons (reorder, secondary actions)      |
+| 18   | Collapsible section chevrons                   |
+| 16   | Meal group chevrons, small indicators          |
+| 14   | Warning/info icons in banners                  |
+| 12   | Dropdown indicators                            |
+
+### Color Guide
+
+| Context               | Color                  |
+|-----------------------|------------------------|
+| Active / primary      | `colors.primary`       |
+| Default / secondary   | `colors.textSecondary` |
+| On dark background    | `colors.white`         |
+| Danger / delete       | `colors.danger`        |
+| Header actions        | `colors.text`          |
+
+### Common Icon Names
+
+| Icon Name                    | Usage                   |
+|------------------------------|-------------------------|
+| `chevron-forward`            | Collapsed section       |
+| `chevron-down`               | Expanded section        |
+| `add-circle-outline`         | Add action              |
+| `trash-outline`              | Delete action           |
+| `copy-outline`               | Copy from yesterday     |
+| `bookmark-outline`           | Pin / save as meal      |
+| `bookmark`                   | Pinned state            |
+| `close`                      | Close modal/sheet       |
+| `reorder-three`              | Drag handle             |
+| `settings-outline`           | Settings                |
+| `information-circle-outline` | Info tooltip            |
+| `chatbubble-outline`         | Feedback                |
+| `warning-outline`            | Warning banner icon     |
+| `checkmark`                  | Selected/confirmed      |
+| `create-outline`             | Edit (pencil)           |
+
+---
+
+## 11. Fixed Color Rules
+
+These rules are absolute and must never be violated:
+
+1. **Water UI (`#2196F3` / `#E3F2FD`)** — `WaterTracker`, `WaterBottleVisual`, water bars in `WeeklyIntakeGraph`, water entry badges, water preset buttons, and the "Save as Meal" swipe action all use fixed blue. Never use `colors.primary` for any water element.
+
+2. **Macro colors** — Protein `#3B82F6`, Carbs `#F59E0B`, Fat `#EF4444`. These are fixed across all screens (Nutrition, Settings macro section).
+
+3. **Calorie proximity** — Always computed via `ringColorForProximity()`. Used in `CalorieRing` and `WeeklyIntakeGraph` calorie bars. Never hardcode calorie indicator colors inline.
+
+4. **Modal overlay** — Always `rgba(0,0,0,0.35)`. Never change opacity.
+
+5. **Card shadows** — Always the standard shadow values. Never create custom shadow variations.
+
+6. **Accent color** — `colors.primary` and `colors.primaryLight` reflect the user's chosen accent. Use these for all interactive accent elements except water, macros, and calorie proximity indicators.
+
+---
+
+## Quick Reference: `activeOpacity` Values
+
+| Element Type         | Value |
+|---------------------|-------|
+| Large buttons        | 0.8   |
+| Standard touchables  | 0.7   |
+| Small icon areas     | 0.6–0.7 |
+
+---
+
+## File Reference
+
+| File                          | Contains                                   |
+|-------------------------------|---------------------------------------------|
+| `constants/theme.ts`          | All design tokens, `useColors()`, `ACCENT_PRESETS` |
+| `utils/calorieColor.ts`       | `ringColorForProximity()` function          |
+| `utils/waterCalculation.ts`   | Water goal logic                            |
+| `utils/tdeeCalculation.ts`    | TDEE calculation                            |
+| `components/nutrition/MealCategory.tsx` | Canonical card + collapsible pattern |
+| `components/nutrition/WaterTracker.tsx` | Water UI color usage reference      |
+| `components/nutrition/FoodItem.tsx`     | List item + bottom sheet pattern    |
+| `components/nutrition/PortionSelector.tsx` | Drum picker pattern              |
+| `components/nutrition/CalorieRing.tsx`  | SVG ring + proximity colors         |
+| `components/nutrition/MacroProgressBars.tsx` | Progress bar pattern            |
+| `components/settings/ThemeColorPicker.tsx` | Accent color swatch pattern      |

@@ -25,6 +25,19 @@ No test runner or lint script exists in package.json.
 - **TDEE**: Mifflin-St Jeor equation in `utils/tdeeCalculation.ts`; requires user profile + latest weight entry
 - **Food Search**: filters user-created `customFoods` by name in `AddFoodTab`, `CreateMealFlow`, and `EditMealFlow`; no external API
 
+## UI Style Guide
+
+**IMPORTANT:** Before making ANY UI changes (colors, sizing, spacing, typography, shadows, buttons, icons, or component styling), you MUST read and follow `.claude/documentation/style_guide.md`. This guide documents every design token, component pattern, and fixed color rule in the app. Deviating from it will introduce visual inconsistencies.
+
+Key rules:
+- Always use `useColors()` + `makeStyles(colors)` — never hardcode colors or use `StyleSheet.create()` at module level
+- Always use `Spacing`, `Typography`, `Radius` tokens — never hardcode pixel values for spacing, font sizes, or border radii
+- Water UI is always fixed blue `#2196F3` — never `colors.primary`
+- Calorie indicators use `ringColorForProximity()` — never hardcode
+- Macro colors are fixed: Protein `#3B82F6`, Carbs `#F59E0B`, Fat `#EF4444`
+- All cards use the one standard shadow (see style guide Section 7)
+- All collapsible sections default to collapsed (`useState(true)`)
+
 ## Key Patterns
 
 - **Design tokens**: always import from `constants/theme.ts` (`Colors`, `Typography`, `Spacing`, `Radius`)
