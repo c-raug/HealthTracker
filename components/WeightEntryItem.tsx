@@ -16,7 +16,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: Spacing.sm,
     marginBottom: Spacing.xs,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -30,16 +30,14 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   date: {
     ...Typography.small,
     color: colors.textSecondary,
-    marginBottom: 2,
+    marginBottom: Spacing.xs,
   },
   weight: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...Typography.h2,
     color: colors.text,
   },
   unit: {
-    fontSize: 14,
-    fontWeight: '400',
+    ...Typography.small,
     color: colors.textSecondary,
   },
   deleteBtn: {

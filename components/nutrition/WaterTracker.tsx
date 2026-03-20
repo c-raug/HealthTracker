@@ -67,7 +67,7 @@ const makeStyles = (colors: typeof LightColors) =>
     quickAddBtn: {
       backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
-      paddingVertical: 4,
+      paddingVertical: Spacing.xs,
       paddingHorizontal: Spacing.sm,
     },
     quickAddBtnText: {
@@ -105,9 +105,9 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '600',
     },
     editHint: {
-      fontSize: 10,
+      ...Typography.small,
       color: colors.textSecondary,
-      marginTop: 2,
+      marginTop: Spacing.xs,
     },
     presetEditInput: {
       width: '100%',

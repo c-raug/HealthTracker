@@ -56,7 +56,7 @@ const makeStyles = (colors: typeof LightColors) =>
     resultName: {
       ...Typography.body,
       color: colors.text,
-      marginBottom: 2,
+      marginBottom: Spacing.xs,
     },
     resultInfo: {
       ...Typography.small,
@@ -71,7 +71,7 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.xs,
     },
     empty: {
-      ...Typography.body,
+      ...Typography.small,
       color: colors.textSecondary,
       textAlign: 'center',
       padding: Spacing.lg,

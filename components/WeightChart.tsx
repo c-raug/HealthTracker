@@ -59,7 +59,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     backgroundColor: colors.primaryLight,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: Spacing.xs,
   },
   rangeDropdownText: {
     ...Typography.small,
@@ -81,7 +81,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   summaryLabel: {
     ...Typography.small,
     color: colors.textSecondary,
-    marginBottom: 2,
+    marginBottom: Spacing.xs,
   },
   summaryValue: {
     ...Typography.body,
