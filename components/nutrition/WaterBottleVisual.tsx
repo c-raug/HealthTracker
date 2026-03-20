@@ -23,6 +23,9 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingHorizontal: Spacing.sm,
       marginBottom: Spacing.md,
     },
+    bottleContainer: {
+      alignItems: 'center',
+    },
     cap: {
       width: CAP_WIDTH,
       height: CAP_HEIGHT,
@@ -133,24 +136,28 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
 
   return (
     <TouchableOpacity style={styles.wrapper} onPress={onPress} activeOpacity={0.8}>
-      <View style={styles.cap} />
-      <View style={styles.neck} />
       <View style={[
-        styles.bottleBody,
+        styles.bottleContainer,
         rawPct >= 1 && {
           shadowColor: GLOW_BLUE,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.85,
           shadowRadius: 10,
           elevation: 10,
-          borderColor: GLOW_BLUE,
         },
       ]}>
-        <Animated.View
-          style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
-        />
-        <View style={styles.pctLabel}>
-          <Text style={styles.pctText}>{pctDisplay}%</Text>
+        <View style={styles.cap} />
+        <View style={styles.neck} />
+        <View style={[
+          styles.bottleBody,
+          rawPct >= 1 && { borderColor: GLOW_BLUE },
+        ]}>
+          <Animated.View
+            style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
+          />
+          <View style={styles.pctLabel}>
+            <Text style={styles.pctText}>{pctDisplay}%</Text>
+          </View>
         </View>
       </View>
       <Text style={styles.label} numberOfLines={1}>

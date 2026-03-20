@@ -120,7 +120,7 @@ const makeStyles = (colors: typeof LightColors) =>
     modalOverlay: {
       flex: 1,
       justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.3)',
+      backgroundColor: 'rgba(0,0,0,0.35)',
     },
     pickerSheet: {
       backgroundColor: colors.card,

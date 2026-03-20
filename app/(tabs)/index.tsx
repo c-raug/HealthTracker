@@ -119,11 +119,11 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     paddingVertical: Spacing.md,
     alignItems: 'center',
     marginTop: Spacing.xl,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   saveButtonText: {
     ...Typography.h3,
@@ -143,7 +143,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   pickerSheet: {
     backgroundColor: colors.card,
