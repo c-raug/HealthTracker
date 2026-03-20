@@ -472,6 +472,28 @@ export default function SettingsScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
+              <View style={{ marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flex: 1, marginRight: Spacing.md }}>
+                  <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Expand sections by default</Text>
+                  <Text style={[styles.settingDescription, { marginBottom: 0 }]}>
+                    When on, meal categories start expanded on the Nutrition tab.
+                  </Text>
+                </View>
+                <View style={[styles.toggle, { width: 100 }]}>
+                  {([false, true] as const).map((val) => (
+                    <TouchableOpacity
+                      key={String(val)}
+                      style={[styles.toggleOption, (preferences.sectionsExpanded ?? false) === val && styles.toggleOptionActive]}
+                      onPress={() => dispatch({ type: 'SET_SECTIONS_EXPANDED', enabled: val })}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.toggleText, (preferences.sectionsExpanded ?? false) === val && styles.toggleTextActive]}>
+                        {val ? 'On' : 'Off'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
             </View>
           )}
         </View>

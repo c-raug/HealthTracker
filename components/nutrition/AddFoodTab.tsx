@@ -225,7 +225,18 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   };
 
   if (showCreateForm) {
-    return <CustomFoodForm onDone={() => setShowCreateForm(false)} initialName={query.trim()} />;
+    return (
+      <CustomFoodForm
+        onDone={(createdFood) => {
+          setShowCreateForm(false);
+          if (createdFood) {
+            setSelectedItem(toNutritionItem(createdFood));
+            setServings(1);
+          }
+        }}
+        initialName={query.trim()}
+      />
+    );
   }
 
   if (editingFood) {

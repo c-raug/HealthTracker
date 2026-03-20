@@ -101,6 +101,7 @@ export interface UserPreferences {
   waterGoalMode?: 'auto' | 'manual';
   waterCreatineAdjustment?: boolean;
   waterPresets?: [number, number, number];
+  sectionsExpanded?: boolean;
 }
 
 export type ExerciseType = 'weight_lifting';
