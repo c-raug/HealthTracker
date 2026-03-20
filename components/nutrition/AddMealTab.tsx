@@ -64,14 +64,14 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.body,
       color: colors.text,
       fontWeight: '600',
-      marginBottom: 2,
+      marginBottom: Spacing.xs,
     },
     mealInfo: {
       ...Typography.small,
       color: colors.textSecondary,
     },
     empty: {
-      ...Typography.body,
+      ...Typography.small,
       color: colors.textSecondary,
       textAlign: 'center',
       padding: Spacing.xl,

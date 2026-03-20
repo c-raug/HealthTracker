@@ -1,6 +1,6 @@
 # HealthTracker — Product Requirements
 
-## Phase 2: UI Style Guide Consistency Fixes [IN PROGRESS]
+## Phase 2: UI Style Guide Consistency Fixes [COMPLETE]
 
 This phase addresses all UI styling inconsistencies found by auditing the codebase against the newly created style guide (`.claude/documentation/style_guide.md`). These violations cause visual inconsistencies across screens — mismatched modal dimming, non-uniform shadows, hardcoded spacing/font values, and wrong icon sizes.
 
@@ -37,46 +37,46 @@ The style guide mandates one shadow for all cards: `shadowColor: '#000', shadowO
 Typography tokens should always be spread from `Typography.*`. These files set `fontSize` directly without spreading a token.
 
 **Changes:**
-- `app/(tabs)/index.tsx` (line 109): `fontSize: 32, fontWeight: '600'` on weight input → `...Typography.h1` (fontSize 28, fontWeight '700'). Accept this as a large-number input exception OR use `Typography.h1`.
-- `components/WeightEntryItem.tsx` (line 36): `fontSize: 20, fontWeight: '700'` → `...Typography.h2` (closest match at fontSize 22)
-- `components/WeightEntryItem.tsx` (line 41): `fontSize: 14` → `...Typography.small` (fontSize 13)
-- `components/nutrition/WaterTracker.tsx` (line 108): `fontSize: 10` for edit hint → `...Typography.small` (fontSize 13, smallest available token)
+- `app/(tabs)/index.tsx` (line 109): `fontSize: 32, fontWeight: '600'` on weight input → `...Typography.h1` (fontSize 28, fontWeight '700'). Accept this as a large-number input exception OR use `Typography.h1`. ✅ DONE
+- `components/WeightEntryItem.tsx` (line 36): `fontSize: 20, fontWeight: '700'` → `...Typography.h2` (closest match at fontSize 22) ✅ DONE
+- `components/WeightEntryItem.tsx` (line 41): `fontSize: 14` → `...Typography.small` (fontSize 13) ✅ DONE
+- `components/nutrition/WaterTracker.tsx` (line 108): `fontSize: 10` for edit hint → `...Typography.small` (fontSize 13, smallest available token) ✅ DONE
 
 ### 2.4 — Hardcoded Spacing Values (8 files)
 
 Raw pixel values that should use `Spacing` tokens. Two categories:
 
 **`paddingVertical: 4` → `paddingVertical: Spacing.xs`** (value matches but should use token for consistency):
-- `app/(tabs)/nutrition.tsx` — todayPill
-- `app/(tabs)/activities.tsx` — todayPill
-- `app/(tabs)/index.tsx` — todayPill
-- `components/WeightChart.tsx` — rangeDropdown
-- `components/nutrition/WaterTracker.tsx` — quickAddBtn
+- `app/(tabs)/nutrition.tsx` — todayPill ✅ DONE
+- `app/(tabs)/activities.tsx` — todayPill ✅ DONE
+- `app/(tabs)/index.tsx` — todayPill ✅ DONE
+- `components/WeightChart.tsx` — rangeDropdown ✅ DONE
+- `components/nutrition/WaterTracker.tsx` — quickAddBtn ✅ DONE
 
 **`marginBottom: 2` or `marginTop: 2` → `Spacing.xs` (4px)** (closest token — 2px has no token):
-- `components/WeightChart.tsx` — summaryLabel `marginBottom: 2`
-- `components/WeightEntryItem.tsx` — `paddingVertical: Spacing.sm + 2` (mixed token + raw) → `paddingVertical: Spacing.sm`
-- `components/nutrition/WaterTracker.tsx` — editHint `marginTop: 2`
-- `components/nutrition/AddFoodTab.tsx` — resultName `marginBottom: 2`
-- `components/nutrition/AddMealTab.tsx` — mealName `marginBottom: 2`
-- `app/(tabs)/activities.tsx` — activityDetail `marginTop: 2`
-- `app/(tabs)/settings.tsx` — creatine label `marginBottom: 2`
+- `components/WeightChart.tsx` — summaryLabel `marginBottom: 2` ✅ DONE
+- `components/WeightEntryItem.tsx` — `paddingVertical: Spacing.sm + 2` (mixed token + raw) → `paddingVertical: Spacing.sm` ✅ DONE
+- `components/nutrition/WaterTracker.tsx` — editHint `marginTop: 2` ✅ DONE
+- `components/nutrition/AddFoodTab.tsx` — resultName `marginBottom: 2` ✅ DONE
+- `components/nutrition/AddMealTab.tsx` — mealName `marginBottom: 2` ✅ DONE
+- `app/(tabs)/activities.tsx` — activityDetail `marginTop: 2` ✅ DONE
+- `app/(tabs)/settings.tsx` — creatine label `marginBottom: 2` ✅ DONE
 
 ### 2.5 — Non-Standard Icon Sizes (1 file)
 
 Standard sizes: 24 (primary), 22 (header/close), 20 (inline), 18 (chevrons), 16 (group/info), 14 (banner), 12 (dropdown). Size 17 is non-standard.
 
 **Changes:**
-- `components/settings/GoalsSection.tsx` (line 360): `information-circle-outline` `size={17}` → `size={16}`
-- `components/settings/GoalsSection.tsx` (line 410): `information-circle-outline` `size={17}` → `size={16}`
+- `components/settings/GoalsSection.tsx` (line 360): `information-circle-outline` `size={17}` → `size={16}` ✅ DONE
+- `components/settings/GoalsSection.tsx` (line 410): `information-circle-outline` `size={17}` → `size={16}` ✅ DONE
 
 ### 2.6 — Empty State Typography (2 files)
 
 Style guide requires `Typography.small` for empty state text. Two components incorrectly use `Typography.body`.
 
 **Changes:**
-- `components/nutrition/AddMealTab.tsx`: empty style uses `...Typography.body` → `...Typography.small`
-- `components/nutrition/AddFoodTab.tsx`: empty style uses `...Typography.body` → `...Typography.small`
+- `components/nutrition/AddMealTab.tsx`: empty style uses `...Typography.body` → `...Typography.small` ✅ DONE
+- `components/nutrition/AddFoodTab.tsx`: empty style uses `...Typography.body` → `...Typography.small` ✅ DONE
 
 ### 2.7 — Intentional Exceptions (No Changes Needed)
 

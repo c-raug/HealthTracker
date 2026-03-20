@@ -357,7 +357,7 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
               hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
               activeOpacity={0.6}
             >
-              <Ionicons name="information-circle-outline" size={17} color={colors.textSecondary} />
+              <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         ))}
@@ -407,7 +407,7 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
                   hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
                   activeOpacity={0.6}
                 >
-                  <Ionicons name="information-circle-outline" size={17} color={colors.textSecondary} />
+                  <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
             ))}

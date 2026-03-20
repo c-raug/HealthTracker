@@ -76,9 +76,11 @@ Work through each Prioritized issue **one at a time**:
 
 3. **Read before writing.** Read all files listed in Technical Implementation before editing any of them.
 
-4. **Implement the change** following all patterns in `CLAUDE.md` (design tokens, date strings, makeStyles, etc.).
+4. **Check the style guide for UI changes.** If the ticket involves any UI change (colors, spacing, typography, shadows, icons, buttons, modals, cards, or component styling), read `.claude/documentation/style_guide.md` before implementing. Follow every design token, component pattern, and fixed color rule documented there. After implementing, if the change introduces a new UI element, pattern, or token usage that is not yet covered by the style guide, add it to the appropriate section in `.claude/documentation/style_guide.md`.
 
-5. **Verify against Acceptance Criteria.** After implementing, walk through every acceptance criterion in the issue checklist. For each criterion:
+5. **Implement the change** following all patterns in `CLAUDE.md` (design tokens, date strings, makeStyles, etc.).
+
+6. **Verify against Acceptance Criteria.** After implementing, walk through every acceptance criterion in the issue checklist. For each criterion:
    - Confirm the code change directly satisfies it
    - If a criterion requires UI behavior, verify the logic is in place
    - If a criterion is NOT met, continue implementing until it is
@@ -97,13 +99,54 @@ After all tickets have been implemented (or attempted), invoke the `/push-change
 - Commit all changes with a descriptive message
 - Push to GitHub
 
-## Step 5 — Report
+## Step 5 — Move completed issues to In Review
 
-After `/push-changes` completes, summarize:
+After `/push-changes` completes, move each **successfully implemented** issue to the **"In Review"** column on the project board. Do NOT move skipped issues.
+
+For each completed issue, look up its project item ID and update the Status field:
+
+```bash
+GH_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+
+# Get the issue's node ID
+NODE_ID=$(gh api repos/$GH_REPO/issues/{number} --jq .node_id)
+
+# Find the item ID on the project board
+ITEM_ID=$(gh api graphql -f query='
+{
+  node(id: "'"$GH_PROJECT_BOARD_ID"'") {
+    ... on ProjectV2 {
+      items(first: 100) {
+        nodes {
+          id
+          content { ... on Issue { number } }
+        }
+      }
+    }
+  }
+}' --jq '.data.node.items.nodes[] | select(.content.number == {number}) | .id')
+
+# Move to In Review
+gh api graphql -f query='mutation {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: "'"$GH_PROJECT_BOARD_ID"'",
+    itemId: "'"$ITEM_ID"'",
+    fieldId: "'"$GH_PROJECT_FIELD_ID"'",
+    value: { singleSelectOptionId: "'"$GH_PROJECT_IN_REVIEW_OPTION_ID"'" }
+  }) { projectV2Item { id } }
+}'
+```
+
+Read `GH_PROJECT_BOARD_ID`, `GH_PROJECT_FIELD_ID`, and `GH_PROJECT_IN_REVIEW_OPTION_ID` from environment variables.
+
+## Step 6 — Report
+
+After all moves complete, summarize:
 
 - **Implemented** — for each ticket, list:
   - Title + issue number
   - Acceptance criteria checklist with pass/fail status for each criterion
   - Any notes on implementation decisions
+  - Moved to **In Review** ✓
 - **Skipped** — list of any tickets that were skipped, with a brief reason for each
 - **Branch** — the branch name created and pushed by `/push-changes`

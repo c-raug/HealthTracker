@@ -339,7 +339,7 @@ export default function SettingsScreen() {
               {waterGoalMode === 'auto' && (
                 <View style={{ marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flex: 1, marginRight: Spacing.md }}>
-                    <Text style={[styles.settingLabel, { marginBottom: 2 }]}>Creatine Adjustment</Text>
+                    <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Creatine Adjustment</Text>
                     <Text style={[styles.settingDescription, { marginBottom: 0 }]}>
                       Adds +{preferences.unit === 'lbs' ? '16 oz' : '500 mL'} to your daily goal.
                     </Text>

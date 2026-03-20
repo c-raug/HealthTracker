@@ -51,7 +51,7 @@ const makeStyles = (colors: typeof LightColors) =>
       alignSelf: 'center',
       backgroundColor: colors.primaryLight,
       borderRadius: Radius.md,
-      paddingVertical: 4,
+      paddingVertical: Spacing.xs,
       paddingHorizontal: Spacing.md,
       marginBottom: Spacing.xs,
     },
@@ -281,7 +281,7 @@ const makeStyles = (colors: typeof LightColors) =>
     activityDetail: {
       ...Typography.small,
       color: colors.textSecondary,
-      marginTop: 2,
+      marginTop: Spacing.xs,
     },
     activityCalories: {
       ...Typography.body,

@@ -46,7 +46,7 @@ const makeStyles = (colors: typeof LightColors) =>
       alignSelf: 'center',
       backgroundColor: colors.primaryLight,
       borderRadius: Radius.md,
-      paddingVertical: 4,
+      paddingVertical: Spacing.xs,
       paddingHorizontal: Spacing.md,
       marginBottom: Spacing.xs,
     },
