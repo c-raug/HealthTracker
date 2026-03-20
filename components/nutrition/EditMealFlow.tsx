@@ -158,7 +158,7 @@ const makeStyles = (colors: typeof LightColors) =>
     modalOverlay: {
       flex: 1,
       justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      backgroundColor: 'rgba(0,0,0,0.35)',
     },
     modalSheet: {
       backgroundColor: colors.card,

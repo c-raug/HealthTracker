@@ -20,9 +20,9 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     marginBottom: Spacing.xs,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   info: {
     flex: 1,
