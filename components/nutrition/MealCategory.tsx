@@ -141,9 +141,9 @@ type MealGroup = {
 export default function MealCategoryComponent({ category, foods, date }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { dispatch, nutritionLog } = useApp();
+  const { dispatch, nutritionLog, preferences } = useApp();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(!(preferences.sectionsExpanded ?? false));
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const swipeableRef = useRef<Swipeable>(null);
   const groupSwipeableRefs = useRef<Record<string, Swipeable | null>>({});

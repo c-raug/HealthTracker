@@ -148,10 +148,7 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
       ]}>
         <View style={styles.cap} />
         <View style={styles.neck} />
-        <View style={[
-          styles.bottleBody,
-          rawPct >= 1 && { borderColor: GLOW_BLUE },
-        ]}>
+        <View style={styles.bottleBody}>
           <Animated.View
             style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
           />

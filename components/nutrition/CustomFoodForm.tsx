@@ -156,7 +156,7 @@ const makeStyles = (colors: typeof LightColors) =>
   });
 
 interface Props {
-  onDone: () => void;
+  onDone: (createdFood?: CustomFood) => void;
   initialFood?: CustomFood;
   mode?: 'create' | 'edit';
   initialName?: string;
@@ -243,23 +243,21 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
           servingSize,
         },
       });
+      onDone();
     } else {
-      dispatch({
-        type: 'ADD_CUSTOM_FOOD',
-        food: {
-          id: generateId(),
-          name: name.trim(),
-          calories: cal,
-          protein: parseFloat(protein) || 0,
-          carbs: parseFloat(carbs) || 0,
-          fat: parseFloat(fat) || 0,
-          servingSize,
-          createdAt: new Date().toISOString(),
-        },
-      });
+      const newFood: CustomFood = {
+        id: generateId(),
+        name: name.trim(),
+        calories: cal,
+        protein: parseFloat(protein) || 0,
+        carbs: parseFloat(carbs) || 0,
+        fat: parseFloat(fat) || 0,
+        servingSize,
+        createdAt: new Date().toISOString(),
+      };
+      dispatch({ type: 'ADD_CUSTOM_FOOD', food: newFood });
+      onDone(newFood);
     }
-
-    onDone();
   };
 
   return (

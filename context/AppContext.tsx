@@ -85,7 +85,8 @@ type Action =
   | { type: 'SET_WATER_GOAL_OVERRIDE'; amount: number | undefined }
   | { type: 'SET_WATER_GOAL_MODE'; mode: 'auto' | 'manual' }
   | { type: 'SET_WATER_CREATINE'; enabled: boolean }
-  | { type: 'SET_WATER_PRESETS'; presets: [number, number, number] };
+  | { type: 'SET_WATER_PRESETS'; presets: [number, number, number] }
+  | { type: 'SET_SECTIONS_EXPANDED'; enabled: boolean };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -331,6 +332,11 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, waterPresets: action.presets },
+      };
+    case 'SET_SECTIONS_EXPANDED':
+      return {
+        ...state,
+        preferences: { ...state.preferences, sectionsExpanded: action.enabled },
       };
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.date };
