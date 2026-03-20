@@ -76,9 +76,11 @@ Work through each Prioritized issue **one at a time**:
 
 3. **Read before writing.** Read all files listed in Technical Implementation before editing any of them.
 
-4. **Implement the change** following all patterns in `CLAUDE.md` (design tokens, date strings, makeStyles, etc.).
+4. **Check the style guide for UI changes.** If the ticket involves any UI change (colors, spacing, typography, shadows, icons, buttons, modals, cards, or component styling), read `.claude/documentation/style_guide.md` before implementing. Follow every design token, component pattern, and fixed color rule documented there. After implementing, if the change introduces a new UI element, pattern, or token usage that is not yet covered by the style guide, add it to the appropriate section in `.claude/documentation/style_guide.md`.
 
-5. **Verify against Acceptance Criteria.** After implementing, walk through every acceptance criterion in the issue checklist. For each criterion:
+5. **Implement the change** following all patterns in `CLAUDE.md` (design tokens, date strings, makeStyles, etc.).
+
+6. **Verify against Acceptance Criteria.** After implementing, walk through every acceptance criterion in the issue checklist. For each criterion:
    - Confirm the code change directly satisfies it
    - If a criterion requires UI behavior, verify the logic is in place
    - If a criterion is NOT met, continue implementing until it is
