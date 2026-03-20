@@ -99,13 +99,54 @@ After all tickets have been implemented (or attempted), invoke the `/push-change
 - Commit all changes with a descriptive message
 - Push to GitHub
 
-## Step 5 — Report
+## Step 5 — Move completed issues to In Review
 
-After `/push-changes` completes, summarize:
+After `/push-changes` completes, move each **successfully implemented** issue to the **"In Review"** column on the project board. Do NOT move skipped issues.
+
+For each completed issue, look up its project item ID and update the Status field:
+
+```bash
+GH_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+
+# Get the issue's node ID
+NODE_ID=$(gh api repos/$GH_REPO/issues/{number} --jq .node_id)
+
+# Find the item ID on the project board
+ITEM_ID=$(gh api graphql -f query='
+{
+  node(id: "'"$GH_PROJECT_BOARD_ID"'") {
+    ... on ProjectV2 {
+      items(first: 100) {
+        nodes {
+          id
+          content { ... on Issue { number } }
+        }
+      }
+    }
+  }
+}' --jq '.data.node.items.nodes[] | select(.content.number == {number}) | .id')
+
+# Move to In Review
+gh api graphql -f query='mutation {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: "'"$GH_PROJECT_BOARD_ID"'",
+    itemId: "'"$ITEM_ID"'",
+    fieldId: "'"$GH_PROJECT_FIELD_ID"'",
+    value: { singleSelectOptionId: "'"$GH_PROJECT_IN_REVIEW_OPTION_ID"'" }
+  }) { projectV2Item { id } }
+}'
+```
+
+Read `GH_PROJECT_BOARD_ID`, `GH_PROJECT_FIELD_ID`, and `GH_PROJECT_IN_REVIEW_OPTION_ID` from environment variables.
+
+## Step 6 — Report
+
+After all moves complete, summarize:
 
 - **Implemented** — for each ticket, list:
   - Title + issue number
   - Acceptance criteria checklist with pass/fail status for each criterion
   - Any notes on implementation decisions
+  - Moved to **In Review** ✓
 - **Skipped** — list of any tickets that were skipped, with a brief reason for each
 - **Branch** — the branch name created and pushed by `/push-changes`
