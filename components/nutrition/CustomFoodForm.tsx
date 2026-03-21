@@ -274,6 +274,9 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
         placeholder="e.g. Homemade Granola"
         placeholderTextColor={colors.textSecondary}
         autoFocus={mode === 'create'}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        onSubmitEditing={() => proteinRef.current?.focus()}
       />
 
       <Text style={styles.label}>Serving Size</Text>

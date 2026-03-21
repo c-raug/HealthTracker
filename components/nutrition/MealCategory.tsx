@@ -52,6 +52,8 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
       backgroundColor: colors.card,
+      borderTopLeftRadius: Radius.lg,
+      borderTopRightRadius: Radius.lg,
     },
     headerLeft: {
       flexDirection: 'row',
