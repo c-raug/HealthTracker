@@ -88,6 +88,89 @@ These use non-token values but are intentional design choices for decorative mic
 
 ---
 
+## Phase 3: Split & Enhanced Weekly Graphs [IN PROGRESS]
+
+The `WeeklyIntakeGraph` currently stacks calorie and water charts on a single pager page. Axis labels clip, values are hard to read, and there is no per-day detail. This phase splits the graphs onto their own dedicated pages, surrounds each in a proper card, adds readable axes, a goal line label, and a tap-to-tooltip interaction for per-day detail.
+
+---
+
+### 3.1 — 3-Page Nutrition Pager with Graph Cards
+
+**Pager order (left → right):**
+- **Page 0** — `WeeklyCalorieGraph` (reached by swiping left from the ring)
+- **Page 1** — CalorieRing + WaterBottleVisual (center / default, shown on tab focus)
+- **Page 2** — `WeeklyWaterGraph` (reached by swiping right from the ring)
+
+On `useFocusEffect`, reset pager to index 1 via `scrollTo({ x: pagerWidth, animated: false })` and set `activePagerPage` to 1.
+
+Dot indicators: 3 dots, all same size, active dot filled (`colors.primary`), inactive dots dimmed (`colors.border`). Update the dot render in `nutrition.tsx` (currently 2 dots, map over `[0,1,2]`).
+
+**Changes:**
+- `app/(tabs)/nutrition.tsx`: expand `ScrollView` pager to 3 pages in [CalorieGraph, Ring+Bottle, WaterGraph] order; update dot count to 3; change focus-reset `scrollTo` to `x: pagerWidth` (index 1); pass `calorieData`, `waterData`, `calorieGoal`, and `waterGoal` to the two new graph components.
+
+### 3.2 — WeeklyCalorieGraph Component
+
+Split out from `WeeklyIntakeGraph.tsx` (keep file, rename/add export). Renders a `colors.card` rounded card with standard shadow.
+
+**Card structure:**
+- `backgroundColor: colors.card`, `borderRadius: Radius.lg`, standard shadow (style guide Section 7), `padding: Spacing.md`
+- Title row: `"Calories — 7 Days"` in `Typography.h3` + `colors.text`, left-aligned
+
+**SVG chart internals:**
+- Left margin: 36px reserved for Y-axis labels (so bars are never clipped)
+- Bottom margin: 20px reserved for X-axis day labels (Mon, Tue… formatted from date string)
+- Bar area height: ~160px (increased from current since chart no longer shares space)
+- Y-axis: compute 3–4 evenly spaced ticks from 0 → `maxCalories` (round up to nearest 100 or 500). Render each as `SvgText` right-aligned within the 36px margin, `fontSize: Typography.caption.fontSize`, `fill: colors.textSecondary`
+- Grid lines: horizontal `Line` at each Y-tick spanning the full bar area width; `stroke={colors.border}`, `strokeOpacity={0.3}`, `strokeDasharray="4 4"`
+- Bars: proximity colors via `ringColorForProximity(consumed, goal, colors.primary)` — unchanged
+- Goal line: dashed `Line` across full bar area width; right-end label `"Goal: {value}"` in `SvgText`, `fontSize: Typography.caption.fontSize`, `fill: colors.textSecondary`
+- Tappable bars: each bar is wrapped in a `<TouchableOpacity>` (or `Pressable`). Tapping sets `selectedBar: string | null` state (date string of tapped bar); tapping same bar or the tooltip × clears it.
+
+**Tooltip (calorie):**
+Positioned absolutely above the tapped bar. Contains:
+- Date label: `"Mon Mar 18"` format — `Typography.small`, `colors.textSecondary`
+- Calories: `"{n} cal"` — `Typography.body`, `fontWeight: '600'`, `colors.text`
+- Macro row: three colored chips — `■ P: {n}g` (`#3B82F6`), `■ C: {n}g` (`#F59E0B`), `■ F: {n}g` (`#EF4444`) — `Typography.caption`
+- × close button: top-right corner, `Ionicons` `close` size 14, `colors.textSecondary`
+- Background: `colors.card`, `borderRadius: Radius.md`, standard shadow, `padding: Spacing.sm`
+- Dismissed by: tapping × OR tapping anywhere outside the bars (outer `TouchableWithoutFeedback` wrapping the chart)
+- If the day has no log entry, tooltip shows `"No data logged"` instead of macros
+
+**Props:** `width: number`, `calorieData: DayEntry[]`, `mealData: DayNutrition[]` (for macros — sourced from `state.entries` in `nutrition.tsx`), `calorieGoal?: number | null`
+
+**Changes:**
+- `components/nutrition/WeeklyIntakeGraph.tsx`: add `WeeklyCalorieGraph` named export with the above design.
+
+### 3.3 — WeeklyWaterGraph Component
+
+Same card and axis treatment as `WeeklyCalorieGraph` but for water.
+
+**Card structure:** identical — `colors.card`, `Radius.lg`, standard shadow, `Spacing.md` padding. Title: `"Water — 7 Days"`.
+
+**SVG chart internals:**
+- Same left/bottom margins, bar area height, Y-axis tick/grid-line approach
+- Bars: fixed `#2196F3` — unchanged
+- Goal line: same dashed line + right-end `"Goal: {value} {unit}"` label
+
+**Tooltip (water):**
+- Date label + total water consumed (e.g. `"48 oz"` or `"1 200 mL"`) + × close button
+- No macro breakdown for water
+- Same dismiss behavior (× or tap outside)
+
+**Props:** `width: number`, `waterData: DayWater[]`, `waterGoal?: number | null`, `waterUnit: string`
+
+**Changes:**
+- `components/nutrition/WeeklyIntakeGraph.tsx`: add `WeeklyWaterGraph` named export.
+
+---
+
+## Files Changed in Phase 3
+
+- `components/nutrition/WeeklyIntakeGraph.tsx` — add `WeeklyCalorieGraph` and `WeeklyWaterGraph` named exports; split existing stacked component into two dedicated card-wrapped graph components with fixed axes, grid lines, goal line labels, and tap-to-tooltip interactions
+- `app/(tabs)/nutrition.tsx` — expand pager to 3 pages; update dot indicators; fix focus-reset scroll target to index 1 (center); pass data props to new graph components
+
+---
+
 ## Files Changed in Phase 2
 
 - `components/InfoModal.tsx` — overlay opacity fix
