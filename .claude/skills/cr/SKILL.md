@@ -119,7 +119,7 @@ Use `AskUserQuestion` to confirm:
 > "Ready to create and push tag `<tag>`. This will:
 > - Create an annotated git tag at the current HEAD
 > - Trigger the GitHub Actions APK build pipeline
-> - Create a GitHub Release with the compiled release notes
+> - Create a draft GitHub Release with the compiled release notes (published automatically by the workflow once the APK is attached)
 > - Archive all Done items on the project board
 >
 > Proceed?"
@@ -142,15 +142,16 @@ git push origin <tag>
 
 **Retry policy for push:** Retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s) on network errors. Do NOT retry on 403 — report to the user.
 
-After a successful tag push, create the GitHub Release:
+After a successful tag push, create the GitHub Release **as a draft** so the workflow can upload the APK and publish it (a published/non-draft release is immutable due to tag protection rules and cannot be updated by the workflow):
 ```
 gh release create <tag> \
   --title "HealthTracker <tag>" \
   --notes "<release-notes-string>" \
+  --draft \
   --verify-tag
 ```
 
-If the release already exists (output contains "already exists"), update the notes instead:
+If the release already exists as a draft (output contains "already exists"), update the notes instead:
 ```
 gh release edit <tag> --notes "<release-notes-string>"
 ```
