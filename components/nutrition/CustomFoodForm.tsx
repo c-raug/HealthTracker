@@ -398,7 +398,7 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.cancelBtn} onPress={onDone} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.cancelBtn} onPress={() => onDone()} activeOpacity={0.8}>
         <Text style={styles.cancelText}>Cancel</Text>
       </TouchableOpacity>
     </ScrollView>

@@ -171,7 +171,7 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.text,
     },
     entryBadge: {
-      backgroundColor: WATER_BLUE_LIGHT,
+      backgroundColor: WATER_BLUE,
       borderRadius: Radius.sm,
       paddingHorizontal: Spacing.xs,
       paddingVertical: 2,
@@ -179,7 +179,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     entryBadgeText: {
       ...Typography.small,
-      color: WATER_BLUE,
+      color: '#FFFFFF',
       fontWeight: '600',
     },
     entryActions: {
