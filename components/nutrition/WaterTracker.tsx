@@ -97,12 +97,19 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     presetBtnDefault: {
       borderWidth: 2,
-      borderColor: '#1565C0',
+      borderColor: '#FFFFFF',
     },
     presetBtnText: {
       ...Typography.small,
       color: colors.white,
       fontWeight: '600',
+    },
+    quickAddLabel: {
+      fontSize: 9,
+      color: '#FFFFFF',
+      fontWeight: '500',
+      marginTop: 2,
+      opacity: 0.85,
     },
     editHint: {
       ...Typography.small,
@@ -385,6 +392,9 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
                         delayLongPress={500}
                       >
                         <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
+                        {idx === 1 && (
+                          <Text style={styles.quickAddLabel}>Quick Add</Text>
+                        )}
                       </TouchableOpacity>
                     )}
                     {editingPreset !== idx && (

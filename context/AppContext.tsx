@@ -86,7 +86,9 @@ type Action =
   | { type: 'SET_WATER_GOAL_MODE'; mode: 'auto' | 'manual' }
   | { type: 'SET_WATER_CREATINE'; enabled: boolean }
   | { type: 'SET_WATER_PRESETS'; presets: [number, number, number] }
-  | { type: 'SET_SECTIONS_EXPANDED'; enabled: boolean };
+  | { type: 'SET_SECTIONS_EXPANDED'; enabled: boolean }
+  | { type: 'REORDER_PINNED_FOODS'; ids: string[] }
+  | { type: 'REORDER_PINNED_MEALS'; category: MealCategory; ids: string[] };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -340,6 +342,26 @@ function reducer(state: State, action: Action): State {
       };
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.date };
+    case 'REORDER_PINNED_FOODS':
+      return {
+        ...state,
+        customFoods: state.customFoods.map((f) => {
+          const idx = action.ids.indexOf(f.id);
+          return idx !== -1 ? { ...f, pinnedOrder: idx } : f;
+        }),
+      };
+    case 'REORDER_PINNED_MEALS':
+      return {
+        ...state,
+        savedMeals: state.savedMeals.map((m) => {
+          const idx = action.ids.indexOf(m.id);
+          if (idx === -1) return m;
+          return {
+            ...m,
+            pinnedOrder: { ...(m.pinnedOrder ?? {}), [action.category]: idx },
+          };
+        }),
+      };
     default:
       return state;
   }

@@ -42,11 +42,8 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     gap: Spacing.xs,
   },
   sectionTitle: {
-    ...Typography.small,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    fontWeight: '600',
+    ...Typography.h3,
+    color: colors.text,
   },
   card: {
     backgroundColor: colors.card,
@@ -256,7 +253,7 @@ export default function SettingsScreen() {
             <View style={styles.collapsibleHeaderLeft}>
               <Ionicons
                 name={profileExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={16}
+                size={18}
                 color={colors.textSecondary}
               />
               <Text style={styles.sectionTitle}>Profile</Text>
@@ -275,7 +272,7 @@ export default function SettingsScreen() {
             <View style={styles.collapsibleHeaderLeft}>
               <Ionicons
                 name={goalsExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={16}
+                size={18}
                 color={colors.textSecondary}
               />
               <Text style={styles.sectionTitle}>Goals &amp; Calorie Target</Text>
@@ -296,7 +293,7 @@ export default function SettingsScreen() {
             <View style={styles.collapsibleHeaderLeft}>
               <Ionicons
                 name={macroExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={16}
+                size={18}
                 color={colors.textSecondary}
               />
               <Text style={styles.sectionTitle}>Macros</Text>
@@ -317,7 +314,7 @@ export default function SettingsScreen() {
             <View style={styles.collapsibleHeaderLeft}>
               <Ionicons
                 name={waterGoalExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={16}
+                size={18}
                 color={colors.textSecondary}
               />
               <Text style={styles.sectionTitle}>Daily Water Goal</Text>
@@ -432,7 +429,7 @@ export default function SettingsScreen() {
             <View style={styles.collapsibleHeaderLeft}>
               <Ionicons
                 name={appConfigExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={16}
+                size={18}
                 color={colors.textSecondary}
               />
               <Text style={styles.sectionTitle}>App Configuration</Text>

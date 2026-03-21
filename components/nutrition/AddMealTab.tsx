@@ -3,13 +3,18 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SectionList,
   StyleSheet,
   Alert,
   Modal,
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  NestableScrollContainer,
+  NestableDraggableFlatList,
+  ScaleDecorator,
+  RenderItemParams,
+} from 'react-native-draggable-flatlist';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { MealCategory, NutritionFoodItem, SavedMeal } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -88,6 +93,10 @@ const makeStyles = (colors: typeof LightColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.xs,
+    },
+    dragHandle: {
+      paddingRight: Spacing.sm,
+      paddingVertical: Spacing.xs,
     },
     // Pin modal styles
     modalOverlay: {
@@ -220,83 +229,150 @@ export default function AddMealTab({ date, category, onDone }: Props) {
   const totalCalories = (foods: NutritionFoodItem[]) =>
     foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 
-  const pinnedMeals = savedMeals.filter((m) => m.pinnedCategories?.includes(category));
+  const sortedPinned = savedMeals
+    .filter((m) => m.pinnedCategories?.includes(category))
+    .sort((a, b) => {
+      const aOrder = a.pinnedOrder?.[category] ?? Infinity;
+      const bOrder = b.pinnedOrder?.[category] ?? Infinity;
+      return aOrder - bOrder;
+    });
   const otherMeals = savedMeals.filter((m) => !m.pinnedCategories?.includes(category));
 
-  const hasPinned = pinnedMeals.length > 0;
+  const isEmpty = sortedPinned.length === 0 && otherMeals.length === 0;
 
-  const sections = [
-    ...(hasPinned ? [{ title: 'Pinned', data: pinnedMeals }] : []),
-    { title: hasPinned ? 'All Meals' : '', data: otherMeals },
-  ];
-
-  const renderMealItem = ({ item }: { item: SavedMeal }) => {
+  const renderPinnedMealItem = ({ item, drag, isActive }: RenderItemParams<SavedMeal>) => {
     const isPinnedHere = item.pinnedCategories?.includes(category) ?? false;
     return (
-      <TouchableOpacity
-        style={styles.mealItem}
-        onPress={() => handleAddMeal(item.id)}
-      >
-        <View style={styles.mealRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.mealName}>{item.name}</Text>
-            <Text style={styles.mealInfo}>
-              {item.foods.length} food{item.foods.length !== 1 ? 's' : ''} · {totalCalories(item.foods)} cal
-            </Text>
+      <ScaleDecorator>
+        <TouchableOpacity
+          style={[styles.mealItem, isActive && { opacity: 0.8 }]}
+          onPress={() => handleAddMeal(item.id)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.mealRow}>
+            <TouchableOpacity style={styles.dragHandle} onLongPress={drag} activeOpacity={0.4}>
+              <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.mealName}>{item.name}</Text>
+              <Text style={styles.mealInfo}>
+                {item.foods.length} food{item.foods.length !== 1 ? 's' : ''} · {totalCalories(item.foods)} cal
+              </Text>
+            </View>
+            <View style={styles.actionBtns}>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => handleOpenPin(item)}
+              >
+                <Ionicons
+                  name={isPinnedHere ? 'bookmark' : 'bookmark-outline'}
+                  size={18}
+                  color={isPinnedHere ? colors.primary : colors.textSecondary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => setEditingMeal(item)}
+              >
+                <Ionicons name="pencil-outline" size={18} color={colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={() => handleDeleteMeal(item.id)}
+              >
+                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.actionBtns}>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => handleOpenPin(item)}
-            >
-              <Ionicons
-                name={isPinnedHere ? 'bookmark' : 'bookmark-outline'}
-                size={18}
-                color={isPinnedHere ? colors.primary : colors.textSecondary}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => setEditingMeal(item)}
-            >
-              <Ionicons name="pencil-outline" size={18} color={colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => handleDeleteMeal(item.id)}
-            >
-              <Ionicons name="trash-outline" size={18} color={colors.danger} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </ScaleDecorator>
     );
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.createBtn}
-        onPress={() => setShowCreate(true)}
-      >
-        <Ionicons name="add-circle" size={20} color={colors.primary} />
-        <Text style={styles.createText}>Create New Meal</Text>
-      </TouchableOpacity>
+      <NestableScrollContainer keyboardShouldPersistTaps="handled">
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={() => setShowCreate(true)}
+        >
+          <Ionicons name="add-circle" size={20} color={colors.primary} />
+          <Text style={styles.createText}>Create New Meal</Text>
+        </TouchableOpacity>
 
-      <SectionList
-        sections={sections}
-        keyExtractor={(item, index) => item.id + index}
-        renderItem={renderMealItem}
-        renderSectionHeader={({ section }) =>
-          section.title ? (
-            <Text style={styles.sectionHeader}>{section.title}</Text>
-          ) : null
-        }
-        stickySectionHeadersEnabled={false}
-        ListEmptyComponent={
+        {sortedPinned.length > 0 && (
+          <>
+            <Text style={styles.sectionHeader}>Pinned</Text>
+            <NestableDraggableFlatList
+              data={sortedPinned}
+              keyExtractor={(item) => item.id}
+              renderItem={renderPinnedMealItem}
+              onDragEnd={({ data }) =>
+                dispatch({
+                  type: 'REORDER_PINNED_MEALS',
+                  category,
+                  ids: data.map((m) => m.id),
+                })
+              }
+            />
+          </>
+        )}
+
+        {otherMeals.length > 0 && (
+          <>
+            {sortedPinned.length > 0 && (
+              <Text style={styles.sectionHeader}>All Meals</Text>
+            )}
+            {otherMeals.map((item) => {
+              const isPinnedHere = item.pinnedCategories?.includes(category) ?? false;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.mealItem}
+                  onPress={() => handleAddMeal(item.id)}
+                >
+                  <View style={styles.mealRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.mealName}>{item.name}</Text>
+                      <Text style={styles.mealInfo}>
+                        {item.foods.length} food{item.foods.length !== 1 ? 's' : ''} · {totalCalories(item.foods)} cal
+                      </Text>
+                    </View>
+                    <View style={styles.actionBtns}>
+                      <TouchableOpacity
+                        style={styles.actionBtn}
+                        onPress={() => handleOpenPin(item)}
+                      >
+                        <Ionicons
+                          name={isPinnedHere ? 'bookmark' : 'bookmark-outline'}
+                          size={18}
+                          color={isPinnedHere ? colors.primary : colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionBtn}
+                        onPress={() => setEditingMeal(item)}
+                      >
+                        <Ionicons name="pencil-outline" size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionBtn}
+                        onPress={() => handleDeleteMeal(item.id)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+
+        {isEmpty && (
           <Text style={styles.empty}>No saved meals yet</Text>
-        }
-      />
+        )}
+      </NestableScrollContainer>
 
       {/* Pin category modal */}
       <Modal
