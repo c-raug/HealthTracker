@@ -156,7 +156,7 @@ export default function NutritionScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
   const [sectionKey, setSectionKey] = useState(0);
-  const [activePagerPage, setActivePagerPage] = useState(0);
+  const [activePagerPage, setActivePagerPage] = useState(1);
   const scrollRef = useRef<ScrollView>(null);
   const pagerScrollRef = useRef<ScrollView>(null);
 
@@ -164,9 +164,9 @@ export default function NutritionScreen() {
     useCallback(() => {
       setSectionKey((k) => k + 1);
       scrollRef.current?.scrollTo({ y: 0, animated: false });
-      pagerScrollRef.current?.scrollTo({ x: 0, animated: false });
-      setActivePagerPage(0);
-    }, []),
+      pagerScrollRef.current?.scrollTo({ x: pagerWidth, animated: false });
+      setActivePagerPage(1);
+    }, [pagerWidth]),
   );
 
   const today = getToday();
@@ -288,6 +288,21 @@ export default function NutritionScreen() {
     return { date, consumed, goal: baseTdee + dayBurned };
   });
 
+  const weeklyMacroData = last7Days.map((date) => {
+    const dayNut = nutritionLog.find((d) => d.date === date);
+    let protein = 0, carbs = 0, fat = 0;
+    if (dayNut) {
+      MEAL_CATEGORIES.forEach((cat) => {
+        dayNut.meals[cat]?.forEach((f) => {
+          protein += f.protein ?? 0;
+          carbs += f.carbs ?? 0;
+          fat += f.fat ?? 0;
+        });
+      });
+    }
+    return { date, protein, carbs, fat };
+  });
+
   // Activity-adjusted calorie goal for the graph dashed line:
   // average caloriesBurned across days in the 7-day window that had activity (exclude zero-activity days)
   const activityDaysInWindow = last7Days
@@ -397,7 +412,7 @@ export default function NutritionScreen() {
           </View>
         ) : (
           <>
-            {/* Swipeable pager: Page 1 = ring+bottle, Page 2 = weekly graph */}
+            {/* Swipeable pager: Page 0 = calorie graph, Page 1 = ring+bottle, Page 2 = water graph */}
             <View style={styles.pagerContainer}>
               <ScrollView
                 ref={pagerScrollRef}
@@ -405,12 +420,23 @@ export default function NutritionScreen() {
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 scrollEventThrottle={32}
+                contentOffset={{ x: pagerWidth, y: 0 }}
                 onMomentumScrollEnd={(e) => {
                   const page = Math.round(e.nativeEvent.contentOffset.x / pagerWidth);
                   setActivePagerPage(page);
                 }}
               >
-                {/* Page 1: Calorie ring + water bottle */}
+                {/* Page 0: Calorie graph */}
+                <View style={{ width: pagerWidth }}>
+                  <WeeklyCalorieGraph
+                    width={pagerWidth}
+                    calorieData={weeklyCalorieData}
+                    macroData={weeklyMacroData}
+                    calorieGoal={adjustedCalorieGoal}
+                  />
+                </View>
+
+                {/* Page 1: Calorie ring + water bottle (default) */}
                 <View style={{ width: pagerWidth }}>
                   <View style={styles.ringRow}>
                     <CalorieRing consumed={consumed} target={calorieTarget} />
@@ -423,21 +449,13 @@ export default function NutritionScreen() {
                   )}
                 </View>
 
-                {/* Page 2: Calorie graph */}
-                <View style={{ width: pagerWidth }}>
-                  <WeeklyCalorieGraph
-                    width={pagerWidth}
-                    calorieData={weeklyCalorieData}
-                    calorieGoal={adjustedCalorieGoal}
-                  />
-                </View>
-
-                {/* Page 3: Water graph */}
+                {/* Page 2: Water graph */}
                 <View style={{ width: pagerWidth }}>
                   <WeeklyWaterGraph
                     width={pagerWidth}
                     waterData={weeklyWaterData}
                     waterGoal={waterGoalValue > 0 ? waterGoalValue : null}
+                    waterUnit={waterUnit}
                   />
                 </View>
               </ScrollView>
