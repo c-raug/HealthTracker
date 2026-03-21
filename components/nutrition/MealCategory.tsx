@@ -10,7 +10,7 @@ import {
   RenderItemParams,
   NestableDraggableFlatList,
 } from 'react-native-draggable-flatlist';
-import { Swipeable } from 'react-native-gesture-handler';
+import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -99,8 +99,8 @@ const makeStyles = (colors: typeof LightColors) =>
       justifyContent: 'space-between',
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
-      backgroundColor: colors.background,
-      borderTopWidth: 1,
+      backgroundColor: colors.card,
+      borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.border,
     },
     groupHeaderLeft: {
@@ -111,7 +111,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     groupName: {
       ...Typography.body,
-      color: colors.text,
+      color: colors.textSecondary,
       fontWeight: '600',
     },
     groupInfo: {
@@ -357,7 +357,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
                   )}
                   overshootRight={false}
                 >
-                  <TouchableOpacity
+                  <GHTouchableOpacity
                     style={styles.groupHeader}
                     onPress={() =>
                       setCollapsedGroups((prev) => ({
@@ -376,7 +376,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
                       <Text style={styles.groupName} numberOfLines={1}>{group.mealGroupName}</Text>
                       <Text style={styles.groupInfo}>· {groupCal} cal</Text>
                     </View>
-                  </TouchableOpacity>
+                  </GHTouchableOpacity>
                 </Swipeable>
                 {!isGroupCollapsed && group.foods.map((food) => (
                   <FoodItem

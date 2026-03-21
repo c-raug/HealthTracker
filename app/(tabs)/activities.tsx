@@ -14,7 +14,6 @@ import {
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -327,14 +326,6 @@ const makeStyles = (colors: typeof LightColors) =>
       flex: 1,
       lineHeight: 17,
     },
-    changeModeLinkRow: {
-      alignItems: 'center',
-      marginBottom: Spacing.md,
-    },
-    changeModeLink: {
-      ...Typography.small,
-      color: colors.primary,
-    },
     activityWarningRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -392,7 +383,6 @@ export default function ActivitiesScreen() {
   const { entries, preferences, activityLog, dispatch, isLoading, selectedDate } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
-  const router = useRouter();
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [exerciseCollapsed, setExerciseCollapsed] = useState(false);
@@ -642,13 +632,6 @@ export default function ActivitiesScreen() {
             </Text>
           </View>
         )}
-
-        {/* Change tracking mode link */}
-        <View style={styles.changeModeLinkRow}>
-          <TouchableOpacity onPress={() => router.navigate('/(tabs)/settings?focusActivityMode=1')} activeOpacity={0.7}>
-            <Text style={styles.changeModeLink}>Change tracking mode →</Text>
-          </TouchableOpacity>
-        </View>
 
         {/* Calories burned summary */}
         <View style={styles.summaryCard}>
