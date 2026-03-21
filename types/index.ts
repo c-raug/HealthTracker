@@ -78,6 +78,7 @@ export interface CustomFood {
   servingSize: string;
   createdAt: string;
   pinned?: boolean;
+  pinnedOrder?: number;
 }
 
 export interface SavedMeal {
@@ -86,6 +87,7 @@ export interface SavedMeal {
   foods: NutritionFoodItem[];
   createdAt: string;
   pinnedCategories?: MealCategory[];
+  pinnedOrder?: Record<string, number>;
 }
 
 export interface UserPreferences {

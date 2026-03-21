@@ -28,7 +28,7 @@ import MacroProgressBars from '../../components/nutrition/MacroProgressBars';
 import MealCategoryComponent from '../../components/nutrition/MealCategory';
 import WaterTracker from '../../components/nutrition/WaterTracker';
 import WaterBottleVisual from '../../components/nutrition/WaterBottleVisual';
-import WeeklyIntakeGraph from '../../components/nutrition/WeeklyIntakeGraph';
+import { WeeklyCalorieGraph, WeeklyWaterGraph } from '../../components/nutrition/WeeklyIntakeGraph';
 
 const MEAL_CATEGORIES: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
@@ -423,14 +423,20 @@ export default function NutritionScreen() {
                   )}
                 </View>
 
-                {/* Page 2: Weekly intake graph */}
+                {/* Page 2: Calorie graph */}
                 <View style={{ width: pagerWidth }}>
-                  <WeeklyIntakeGraph
+                  <WeeklyCalorieGraph
                     width={pagerWidth}
                     calorieData={weeklyCalorieData}
-                    waterData={weeklyWaterData}
-                    waterUnit={waterUnit}
                     calorieGoal={adjustedCalorieGoal}
+                  />
+                </View>
+
+                {/* Page 3: Water graph */}
+                <View style={{ width: pagerWidth }}>
+                  <WeeklyWaterGraph
+                    width={pagerWidth}
+                    waterData={weeklyWaterData}
                     waterGoal={waterGoalValue > 0 ? waterGoalValue : null}
                   />
                 </View>
@@ -440,6 +446,7 @@ export default function NutritionScreen() {
               <View style={styles.pageDots}>
                 <View style={[styles.dot, activePagerPage === 0 && styles.dotActive]} />
                 <View style={[styles.dot, activePagerPage === 1 && styles.dotActive]} />
+                <View style={[styles.dot, activePagerPage === 2 && styles.dotActive]} />
               </View>
             </View>
             <MacroProgressBars

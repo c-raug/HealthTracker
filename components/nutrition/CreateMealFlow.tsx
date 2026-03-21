@@ -187,7 +187,9 @@ export default function CreateMealFlow({ onDone, initialFoods, initialName }: Pr
     trimmed.length === 0
       ? customFoods
       : customFoods.filter((f) => f.name.toLowerCase().includes(trimmed));
-  const pinnedCustom = filtered.filter((f) => f.pinned);
+  const pinnedCustom = filtered
+    .filter((f) => f.pinned)
+    .sort((a, b) => (a.pinnedOrder ?? Infinity) - (b.pinnedOrder ?? Infinity));
   const unpinnedCustom = filtered.filter((f) => !f.pinned);
 
   const sections: { title: string; data: SectionItem[] }[] = [];

@@ -5,9 +5,10 @@ import { ringColorForProximity } from '../../utils/calorieColor';
 
 const WATER_BLUE = '#2196F3';
 
-const CHART_HEIGHT = 72;
+const CHART_HEIGHT = 120;
 const LABEL_HEIGHT = 16;
 const SIDE_PAD = 6;
+const Y_AXIS_WIDTH = 36;
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -17,9 +18,6 @@ const makeStyles = (colors: typeof LightColors) =>
       flex: 1,
       paddingHorizontal: Spacing.sm,
       paddingTop: Spacing.sm,
-    },
-    chartSection: {
-      marginBottom: Spacing.xs,
     },
     chartTitle: {
       ...Typography.small,
@@ -41,38 +39,66 @@ interface DayEntry {
 interface BarChartProps {
   data: DayEntry[];
   width: number;
-  /** When true, over-goal bars keep accent color instead of turning danger red */
-  keepAccentWhenOver?: boolean;
-  /** When true, each bar color is computed from proximity to the day's goal */
   useProximityColors?: boolean;
-  /** When provided, all bars use this fixed color */
   fixedBarColor?: string;
-  /** Explicit goal value for the dashed goal line; falls back to first non-zero day goal */
   goalLine?: number | null;
 }
 
-function BarChart({ data, width, keepAccentWhenOver, useProximityColors, fixedBarColor, goalLine }: BarChartProps) {
+function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine }: BarChartProps) {
   const colors = useColors();
-  const usableWidth = width - SIDE_PAD * 2;
+  const chartWidth = width - Y_AXIS_WIDTH - SIDE_PAD;
+  const usableWidth = chartWidth - SIDE_PAD;
   const slotWidth = usableWidth / 7;
   const barWidth = slotWidth * 0.55;
+  const svgWidth = width;
   const svgHeight = CHART_HEIGHT + LABEL_HEIGHT;
 
   const maxValue = Math.max(...data.map((d) => Math.max(d.goal, d.consumed)), 1);
 
-  // Use explicit goalLine if provided, otherwise fall back to first non-zero day goal
   const resolvedGoal = goalLine != null && goalLine > 0
     ? goalLine
     : (data.find((d) => d.goal > 0)?.goal ?? 0);
   const goalLineY = resolvedGoal > 0 ? CHART_HEIGHT - (resolvedGoal / maxValue) * CHART_HEIGHT : null;
 
+  // Y-axis ticks: 3 evenly spaced values
+  const tickCount = 3;
+  const ticks = Array.from({ length: tickCount }, (_, i) =>
+    Math.round((maxValue / (tickCount)) * (i + 1)),
+  );
+
   return (
-    <Svg width={width} height={svgHeight}>
+    <Svg width={svgWidth} height={svgHeight}>
+      {/* Y-axis grid lines and labels */}
+      {ticks.map((tick) => {
+        const y = CHART_HEIGHT - (tick / maxValue) * CHART_HEIGHT;
+        return (
+          <G key={tick}>
+            <Line
+              x1={Y_AXIS_WIDTH}
+              y1={y}
+              x2={svgWidth - SIDE_PAD}
+              y2={y}
+              stroke={colors.border}
+              strokeWidth={1}
+              strokeOpacity={0.3}
+            />
+            <SvgText
+              x={Y_AXIS_WIDTH - 4}
+              y={y + 4}
+              textAnchor="end"
+              fontSize={9}
+              fill={colors.textSecondary}
+            >
+              {tick >= 1000 ? `${(tick / 1000).toFixed(1)}k` : tick}
+            </SvgText>
+          </G>
+        );
+      })}
+
       {data.map((day, i) => {
-        const x = SIDE_PAD + slotWidth * i + (slotWidth - barWidth) / 2;
+        const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * i + (slotWidth - barWidth) / 2;
         const consumedH = Math.min((day.consumed / maxValue) * CHART_HEIGHT, CHART_HEIGHT);
 
-        // Parse date safely (avoid timezone issues)
         const parts = day.date.split('-').map(Number);
         const d = new Date(parts[0], parts[1] - 1, parts[2]);
         const dayLabel = DAY_LABELS[d.getDay()];
@@ -83,8 +109,7 @@ function BarChart({ data, width, keepAccentWhenOver, useProximityColors, fixedBa
         } else if (useProximityColors) {
           barFill = ringColorForProximity(day.consumed, day.goal, colors.primary);
         } else {
-          const isOver = day.consumed > day.goal && day.goal > 0;
-          barFill = isOver && !keepAccentWhenOver ? colors.danger : colors.primary;
+          barFill = colors.primary;
         }
 
         return (
@@ -100,6 +125,20 @@ function BarChart({ data, width, keepAccentWhenOver, useProximityColors, fixedBa
                 fill={barFill}
               />
             )}
+            {/* Value label above bar */}
+            {day.consumed > 0 && (
+              <SvgText
+                x={x + barWidth / 2}
+                y={CHART_HEIGHT - consumedH - 3}
+                textAnchor="middle"
+                fontSize={8}
+                fill={colors.textSecondary}
+              >
+                {day.consumed >= 1000
+                  ? `${(day.consumed / 1000).toFixed(1)}k`
+                  : day.consumed}
+              </SvgText>
+            )}
             {/* Day label */}
             <SvgText
               x={x + barWidth / 2}
@@ -113,20 +152,61 @@ function BarChart({ data, width, keepAccentWhenOver, useProximityColors, fixedBa
           </G>
         );
       })}
+
       {/* Dotted goal line overlay */}
       {goalLineY !== null && (
-        <Line
-          x1={SIDE_PAD}
-          y1={goalLineY}
-          x2={width - SIDE_PAD}
-          y2={goalLineY}
-          stroke={colors.textSecondary}
-          strokeWidth={1.5}
-          strokeDasharray="4,3"
-          strokeOpacity={0.7}
-        />
+        <>
+          <Line
+            x1={Y_AXIS_WIDTH}
+            y1={goalLineY}
+            x2={svgWidth - SIDE_PAD - 44}
+            y2={goalLineY}
+            stroke={colors.textSecondary}
+            strokeWidth={1.5}
+            strokeDasharray="4,3"
+            strokeOpacity={0.7}
+          />
+          <SvgText
+            x={svgWidth - SIDE_PAD - 42}
+            y={goalLineY + 4}
+            fontSize={8}
+            fill={colors.textSecondary}
+            opacity={0.7}
+          >
+            {`Goal: ${resolvedGoal >= 1000 ? `${(resolvedGoal / 1000).toFixed(1)}k` : resolvedGoal}`}
+          </SvgText>
+        </>
       )}
     </Svg>
+  );
+}
+
+interface GraphProps {
+  width: number;
+  data: DayEntry[];
+  goalLine?: number | null;
+  title: string;
+  useProximityColors?: boolean;
+  fixedBarColor?: string;
+}
+
+function SingleGraph({ width, data, goalLine, title, useProximityColors, fixedBarColor }: GraphProps) {
+  const colors = useColors();
+  const styles = makeStyles(colors);
+
+  if (width === 0) return null;
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.chartTitle}>{title}</Text>
+      <BarChart
+        data={data}
+        width={width}
+        useProximityColors={useProximityColors}
+        fixedBarColor={fixedBarColor}
+        goalLine={goalLine}
+      />
+    </View>
   );
 }
 
@@ -135,12 +215,35 @@ interface Props {
   calorieData: DayEntry[];
   waterData: DayEntry[];
   waterUnit: string;
-  /** Activity-adjusted calorie goal for the dashed line */
   calorieGoal?: number | null;
-  /** Water goal (with creatine if applicable) for the dashed line */
   waterGoal?: number | null;
 }
 
+export function WeeklyCalorieGraph({ width, calorieData, calorieGoal }: Pick<Props, 'width' | 'calorieData' | 'calorieGoal'>) {
+  return (
+    <SingleGraph
+      width={width}
+      data={calorieData}
+      goalLine={calorieGoal}
+      title="Calories — 7 Days"
+      useProximityColors
+    />
+  );
+}
+
+export function WeeklyWaterGraph({ width, waterData, waterGoal }: Pick<Props, 'width' | 'waterData' | 'waterGoal'>) {
+  return (
+    <SingleGraph
+      width={width}
+      data={waterData}
+      goalLine={waterGoal}
+      title="Water — 7 Days"
+      fixedBarColor={WATER_BLUE}
+    />
+  );
+}
+
+// Keep default export for backward compatibility
 export default function WeeklyIntakeGraph({ width, calorieData, waterData, calorieGoal, waterGoal }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
@@ -148,8 +251,8 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData, calor
   if (width === 0) return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.chartSection}>
+    <View>
+      <View style={styles.container}>
         <Text style={styles.chartTitle}>Calories — 7 Days</Text>
         <BarChart
           data={calorieData}
@@ -158,7 +261,7 @@ export default function WeeklyIntakeGraph({ width, calorieData, waterData, calor
           goalLine={calorieGoal}
         />
       </View>
-      <View style={styles.chartSection}>
+      <View style={styles.container}>
         <Text style={styles.chartTitle}>Water — 7 Days</Text>
         <BarChart
           data={waterData}
