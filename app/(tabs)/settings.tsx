@@ -124,6 +124,8 @@ export default function SettingsScreen() {
   const [macroExpanded, setMacroExpanded] = useState(false);
   const [waterGoalExpanded, setWaterGoalExpanded] = useState(false);
   const [appConfigExpanded, setAppConfigExpanded] = useState(false);
+  const [waterGoalSaved, setWaterGoalSaved] = useState(false);
+  const waterGoalSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [waterGoalInput, setWaterGoalInput] = useState(
     preferences.waterGoalOverride !== undefined ? preferences.waterGoalOverride.toString() : '',
   );
@@ -158,6 +160,13 @@ export default function SettingsScreen() {
   const waterGoalMode =
     preferences.waterGoalMode ??
     (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
+
+  // Clean up waterGoalSaved timer on unmount
+  useEffect(() => {
+    return () => {
+      if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
+    };
+  }, []);
 
   // When deep-linked with focusFeedback, scroll to end and focus the feedback input
   useEffect(() => {
@@ -385,20 +394,26 @@ export default function SettingsScreen() {
                     onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
                   />
                   <TouchableOpacity
-                    style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }]}
+                    style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }, waterGoalSaved && { backgroundColor: '#2E7D32' }]}
                     onPress={() => {
                       const val = parseInt(waterGoalInput, 10);
                       if (waterGoalInput.trim() === '') {
                         dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: undefined });
+                        setWaterGoalSaved(true);
+                        if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
+                        waterGoalSavedTimerRef.current = setTimeout(() => setWaterGoalSaved(false), 1200);
                       } else if (!isNaN(val) && val > 0) {
                         dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: val });
+                        setWaterGoalSaved(true);
+                        if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
+                        waterGoalSavedTimerRef.current = setTimeout(() => setWaterGoalSaved(false), 1200);
                       } else {
                         Alert.alert('Invalid', 'Please enter a positive number.');
                       }
                     }}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.toggleText, styles.toggleTextActive]}>Save</Text>
+                    <Text style={[styles.toggleText, styles.toggleTextActive]}>{waterGoalSaved ? 'Saved!' : 'Save'}</Text>
                   </TouchableOpacity>
                 </View>
               )}

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   NestableDraggableFlatList,
 } from 'react-native-draggable-flatlist';
 import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { NutritionFoodItem, MealCategory as MealCategoryType } from '../../types';
@@ -146,6 +146,14 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   const [collapsed, setCollapsed] = useState(!(preferences.sectionsExpanded ?? false));
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const swipeableRef = useRef<Swipeable>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (!preferences.sectionsExpanded) setCollapsed(true);
+      };
+    }, [preferences.sectionsExpanded]),
+  );
   const groupSwipeableRefs = useRef<Record<string, Swipeable | null>>({});
 
   // Split foods into ungrouped and grouped

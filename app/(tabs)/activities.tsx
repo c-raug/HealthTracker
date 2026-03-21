@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import { useFocusEffect } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
@@ -385,8 +386,19 @@ export default function ActivitiesScreen() {
   const styles = makeStyles(colors);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [exerciseCollapsed, setExerciseCollapsed] = useState(false);
-  const [stepsCollapsed, setStepsCollapsed] = useState(false);
+  const [exerciseCollapsed, setExerciseCollapsed] = useState(!(preferences.sectionsExpanded ?? false));
+  const [stepsCollapsed, setStepsCollapsed] = useState(!(preferences.sectionsExpanded ?? false));
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (!preferences.sectionsExpanded) {
+          setExerciseCollapsed(true);
+          setStepsCollapsed(true);
+        }
+      };
+    }, [preferences.sectionsExpanded]),
+  );
 
   // Exercise form state
   const [selectedHours, setSelectedHours] = useState(0);
