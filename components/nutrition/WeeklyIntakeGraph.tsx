@@ -6,6 +6,9 @@ import { ringColorForProximity } from '../../utils/calorieColor';
 
 const WATER_BLUE = '#2196F3';
 
+const TOOLTIP_WIDTH_CALORIE = 160;
+const TOOLTIP_WIDTH_WATER = 120;
+
 const CHART_HEIGHT = 160;
 const LABEL_HEIGHT = 20;
 const SIDE_PAD = 6;
@@ -56,7 +59,7 @@ const makeStyles = (colors: typeof LightColors) =>
       elevation: 6,
       borderWidth: 1,
       borderColor: colors.border,
-      minWidth: 120,
+      minWidth: TOOLTIP_WIDTH_WATER,
     },
     tooltipClose: {
       position: 'absolute',
@@ -307,7 +310,7 @@ export function WeeklyCalorieGraph({ width, calorieData, macroData, calorieGoal 
   if (selectedBar !== null && selectedDay) {
     const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * selectedBar + (slotWidth - barWidth) / 2;
     const consumedH = Math.min((selectedDay.consumed / Math.max(...calorieData.map((d) => Math.max(d.goal, d.consumed)), 1)) * CHART_HEIGHT, CHART_HEIGHT);
-    tooltipLeft = Math.min(Math.max(x - 55, 0), innerWidth - 145);
+    tooltipLeft = Math.min(Math.max(x - TOOLTIP_WIDTH_CALORIE / 2, 0), innerWidth - TOOLTIP_WIDTH_CALORIE);
     tooltipTop = Math.max(CHART_HEIGHT - consumedH - 90, 4);
   }
 
@@ -382,7 +385,7 @@ export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit }: Wat
   if (selectedBar !== null && selectedDay) {
     const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * selectedBar + (slotWidth - barWidth) / 2;
     const consumedH = Math.min((selectedDay.consumed / Math.max(...waterData.map((d) => Math.max(d.goal, d.consumed)), 1)) * CHART_HEIGHT, CHART_HEIGHT);
-    tooltipLeft = Math.min(Math.max(x - 55, 0), innerWidth - 145);
+    tooltipLeft = Math.min(Math.max(x - TOOLTIP_WIDTH_WATER / 2, 0), innerWidth - TOOLTIP_WIDTH_WATER);
     tooltipTop = Math.max(CHART_HEIGHT - consumedH - 75, 4);
   }
 
