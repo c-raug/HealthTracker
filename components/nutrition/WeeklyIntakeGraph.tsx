@@ -11,6 +11,7 @@ const TOOLTIP_WIDTH_WATER = 120;
 
 const CHART_HEIGHT = 160;
 const LABEL_HEIGHT = 20;
+const TOP_PAD = 12;
 const SIDE_PAD = 6;
 const Y_AXIS_WIDTH = 36;
 
@@ -137,14 +138,17 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
   const slotWidth = usableWidth / 7;
   const barWidth = slotWidth * 0.55;
   const svgWidth = width;
-  const svgHeight = CHART_HEIGHT + LABEL_HEIGHT;
+  const svgHeight = CHART_HEIGHT + LABEL_HEIGHT + TOP_PAD;
 
-  const maxValue = Math.max(...data.map((d) => Math.max(d.goal, d.consumed)), 1);
-
+  const dataMax = Math.max(...data.map((d) => Math.max(d.goal, d.consumed)), 1);
   const resolvedGoal = goalLine != null && goalLine > 0
     ? goalLine
     : (data.find((d) => d.goal > 0)?.goal ?? 0);
-  const goalLineY = resolvedGoal > 0 ? CHART_HEIGHT - (resolvedGoal / maxValue) * CHART_HEIGHT : null;
+  const maxValue = Math.max(dataMax, resolvedGoal > 0 ? resolvedGoal * 1.15 : dataMax);
+
+  const goalLineY = resolvedGoal > 0
+    ? TOP_PAD + CHART_HEIGHT - (resolvedGoal / maxValue) * CHART_HEIGHT
+    : null;
 
   const tickCount = 3;
   const ticks = Array.from({ length: tickCount }, (_, i) =>
@@ -169,7 +173,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
           />
           {/* Y-axis grid lines and labels */}
           {ticks.map((tick) => {
-            const y = CHART_HEIGHT - (tick / maxValue) * CHART_HEIGHT;
+            const y = TOP_PAD + CHART_HEIGHT - (tick / maxValue) * CHART_HEIGHT;
             return (
               <G key={tick}>
                 <Line
@@ -219,7 +223,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
                 {/* Tap area */}
                 <Rect
                   x={x - (slotWidth - barWidth) / 2}
-                  y={0}
+                  y={TOP_PAD}
                   width={slotWidth}
                   height={CHART_HEIGHT}
                   fill="rgba(0,0,0,0.001)"
@@ -228,7 +232,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
                 {day.consumed > 0 && (
                   <Rect
                     x={x}
-                    y={CHART_HEIGHT - consumedH}
+                    y={TOP_PAD + CHART_HEIGHT - consumedH}
                     width={barWidth}
                     height={consumedH}
                     rx={3}
@@ -309,9 +313,12 @@ export function WeeklyCalorieGraph({ width, calorieData, macroData, calorieGoal 
   let tooltipTop: number | null = null;
   if (selectedBar !== null && selectedDay) {
     const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * selectedBar + (slotWidth - barWidth) / 2;
-    const consumedH = Math.min((selectedDay.consumed / Math.max(...calorieData.map((d) => Math.max(d.goal, d.consumed)), 1)) * CHART_HEIGHT, CHART_HEIGHT);
+    const dataMax = Math.max(...calorieData.map((d) => Math.max(d.goal, d.consumed)), 1);
+    const resolvedGoal = calorieGoal != null && calorieGoal > 0 ? calorieGoal : (calorieData.find((d) => d.goal > 0)?.goal ?? 0);
+    const maxVal = Math.max(dataMax, resolvedGoal > 0 ? resolvedGoal * 1.15 : dataMax);
+    const consumedH = Math.min((selectedDay.consumed / maxVal) * CHART_HEIGHT, CHART_HEIGHT);
     tooltipLeft = Math.min(Math.max(x - TOOLTIP_WIDTH_CALORIE / 2, 0), innerWidth - TOOLTIP_WIDTH_CALORIE);
-    tooltipTop = Math.max(CHART_HEIGHT - consumedH - 90, 4);
+    tooltipTop = Math.max(TOP_PAD + CHART_HEIGHT - consumedH - 90, 4);
   }
 
   return (
@@ -384,9 +391,12 @@ export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit }: Wat
   let tooltipTop: number | null = null;
   if (selectedBar !== null && selectedDay) {
     const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * selectedBar + (slotWidth - barWidth) / 2;
-    const consumedH = Math.min((selectedDay.consumed / Math.max(...waterData.map((d) => Math.max(d.goal, d.consumed)), 1)) * CHART_HEIGHT, CHART_HEIGHT);
+    const dataMax = Math.max(...waterData.map((d) => Math.max(d.goal, d.consumed)), 1);
+    const resolvedGoal = waterGoal != null && waterGoal > 0 ? waterGoal : (waterData.find((d) => d.goal > 0)?.goal ?? 0);
+    const maxVal = Math.max(dataMax, resolvedGoal > 0 ? resolvedGoal * 1.15 : dataMax);
+    const consumedH = Math.min((selectedDay.consumed / maxVal) * CHART_HEIGHT, CHART_HEIGHT);
     tooltipLeft = Math.min(Math.max(x - TOOLTIP_WIDTH_WATER / 2, 0), innerWidth - TOOLTIP_WIDTH_WATER);
-    tooltipTop = Math.max(CHART_HEIGHT - consumedH - 75, 4);
+    tooltipTop = Math.max(TOP_PAD + CHART_HEIGHT - consumedH - 75, 4);
   }
 
   return (

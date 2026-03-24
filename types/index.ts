@@ -104,6 +104,7 @@ export interface UserPreferences {
   waterCreatineAdjustment?: boolean;
   waterPresets?: [number, number, number];
   sectionsExpanded?: boolean;
+  appearanceMode?: 'light' | 'dark' | 'system';
 }
 
 export type ExerciseType = 'weight_lifting';

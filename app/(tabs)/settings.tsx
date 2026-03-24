@@ -10,6 +10,7 @@ import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
 import ThemeColorPicker from '../../components/settings/ThemeColorPicker';
+import AppearanceModePicker from '../../components/settings/AppearanceModePicker';
 import FeedbackSection, { FeedbackSectionHandle } from '../../components/settings/FeedbackSection';
 import { saveBackup } from '../../storage/backupStorage';
 
@@ -454,6 +455,9 @@ export default function SettingsScreen() {
                     </Text>
                   </TouchableOpacity>
                 ))}
+              </View>
+              <View style={{ marginTop: Spacing.md }}>
+                <AppearanceModePicker />
               </View>
               <View style={{ marginTop: Spacing.md }}>
                 <ThemeColorPicker />

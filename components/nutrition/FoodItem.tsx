@@ -167,9 +167,8 @@ export default function FoodItem({ item, onDelete, drag, isActive, date, categor
           ]}
         >
           <TouchableOpacity
-            onLongPress={drag}
+            onPressIn={drag}
             style={styles.dragHandle}
-            delayLongPress={150}
           >
             <Ionicons name="reorder-three" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
