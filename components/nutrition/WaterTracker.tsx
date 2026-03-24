@@ -384,18 +384,20 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
                         selectTextOnFocus
                       />
                     ) : (
-                      <TouchableOpacity
-                        style={[styles.presetBtn, idx === 1 && styles.presetBtnDefault]}
-                        onPress={() => handlePresetAdd(presets[idx])}
-                        onLongPress={() => startEditPreset(idx)}
-                        activeOpacity={0.8}
-                        delayLongPress={500}
-                      >
-                        <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
+                      <>
+                        <TouchableOpacity
+                          style={[styles.presetBtn, idx === 1 && styles.presetBtnDefault]}
+                          onPress={() => handlePresetAdd(presets[idx])}
+                          onLongPress={() => startEditPreset(idx)}
+                          activeOpacity={0.8}
+                          delayLongPress={500}
+                        >
+                          <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
+                        </TouchableOpacity>
                         {idx === 1 && (
                           <Text style={styles.quickAddLabel}>Quick Add</Text>
                         )}
-                      </TouchableOpacity>
+                      </>
                     )}
                     {editingPreset !== idx && (
                       <Text style={styles.editHint}>hold to edit</Text>
