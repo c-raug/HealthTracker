@@ -433,6 +433,7 @@ export default function NutritionScreen() {
                     calorieData={weeklyCalorieData}
                     macroData={weeklyMacroData}
                     calorieGoal={adjustedCalorieGoal}
+                    activePageIndex={activePagerPage}
                   />
                 </View>
 
@@ -456,6 +457,7 @@ export default function NutritionScreen() {
                     waterData={weeklyWaterData}
                     waterGoal={waterGoalValue > 0 ? waterGoalValue : null}
                     waterUnit={waterUnit}
+                    activePageIndex={activePagerPage}
                   />
                 </View>
               </ScrollView>

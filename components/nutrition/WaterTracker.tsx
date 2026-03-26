@@ -92,7 +92,7 @@ const makeStyles = (colors: typeof LightColors) =>
       width: '100%',
       backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
-      paddingVertical: Spacing.md,
+      height: 56,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -109,7 +109,7 @@ const makeStyles = (colors: typeof LightColors) =>
       fontSize: 9,
       color: '#FFFFFF',
       fontWeight: '500',
-      marginTop: 3,
+      marginTop: 0,
       opacity: 0.85,
     },
     editHint: {
