@@ -92,8 +92,9 @@ const makeStyles = (colors: typeof LightColors) =>
       width: '100%',
       backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
-      paddingVertical: Spacing.sm,
+      paddingVertical: Spacing.md,
       alignItems: 'center',
+      justifyContent: 'center',
     },
     presetBtnDefault: {
       borderWidth: 2,
@@ -108,7 +109,7 @@ const makeStyles = (colors: typeof LightColors) =>
       fontSize: 9,
       color: '#FFFFFF',
       fontWeight: '500',
-      marginTop: 2,
+      marginTop: 3,
       opacity: 0.85,
     },
     editHint: {
@@ -384,20 +385,18 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
                         selectTextOnFocus
                       />
                     ) : (
-                      <>
-                        <TouchableOpacity
-                          style={[styles.presetBtn, idx === 1 && styles.presetBtnDefault]}
-                          onPress={() => handlePresetAdd(presets[idx])}
-                          onLongPress={() => startEditPreset(idx)}
-                          activeOpacity={0.8}
-                          delayLongPress={500}
-                        >
-                          <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
-                        </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.presetBtn, idx === 1 && styles.presetBtnDefault]}
+                        onPress={() => handlePresetAdd(presets[idx])}
+                        onLongPress={() => startEditPreset(idx)}
+                        activeOpacity={0.8}
+                        delayLongPress={500}
+                      >
+                        <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
                         {idx === 1 && (
                           <Text style={styles.quickAddLabel}>Quick Add</Text>
                         )}
-                      </>
+                      </TouchableOpacity>
                     )}
                     {editingPreset !== idx && (
                       <Text style={styles.editHint}>hold to edit</Text>

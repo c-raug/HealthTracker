@@ -88,7 +88,8 @@ type Action =
   | { type: 'SET_WATER_PRESETS'; presets: [number, number, number] }
   | { type: 'SET_SECTIONS_EXPANDED'; enabled: boolean }
   | { type: 'REORDER_PINNED_FOODS'; ids: string[] }
-  | { type: 'REORDER_PINNED_MEALS'; category: MealCategory; ids: string[] };
+  | { type: 'REORDER_PINNED_MEALS'; category: MealCategory; ids: string[] }
+  | { type: 'SET_APPEARANCE_MODE'; mode: 'light' | 'dark' | 'system' };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -339,6 +340,11 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, sectionsExpanded: action.enabled },
+      };
+    case 'SET_APPEARANCE_MODE':
+      return {
+        ...state,
+        preferences: { ...state.preferences, appearanceMode: action.mode },
       };
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.date };

@@ -9,6 +9,7 @@ import {
 import {
   RenderItemParams,
   NestableDraggableFlatList,
+  ScaleDecorator,
 } from 'react-native-draggable-flatlist';
 import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -279,14 +280,16 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   };
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<NutritionFoodItem>) => (
-    <FoodItem
-      item={item}
-      onDelete={() => handleDelete(item.id)}
-      drag={drag}
-      isActive={isActive}
-      date={date}
-      category={category}
-    />
+    <ScaleDecorator>
+      <FoodItem
+        item={item}
+        onDelete={() => handleDelete(item.id)}
+        drag={drag}
+        isActive={isActive}
+        date={date}
+        category={category}
+      />
+    </ScaleDecorator>
   );
 
   return (

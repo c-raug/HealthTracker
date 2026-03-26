@@ -69,7 +69,7 @@ function RootNavigator() {
 function ThemeColorSync({ children }: { children: React.ReactNode }) {
   const { preferences } = useApp();
   return (
-    <ThemeContext.Provider value={{ accentColor: preferences.themeColor ?? null }}>
+    <ThemeContext.Provider value={{ accentColor: preferences.themeColor ?? null, appearanceMode: preferences.appearanceMode ?? 'system' }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -305,7 +305,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         onPress={() => handleSelectFood(item)}
         activeOpacity={0.7}
       >
-        <TouchableOpacity style={styles.dragHandle} onLongPress={drag} activeOpacity={0.4}>
+        <TouchableOpacity style={styles.dragHandle} onPressIn={drag} activeOpacity={0.4}>
           <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
         <View style={styles.foodInfo}>

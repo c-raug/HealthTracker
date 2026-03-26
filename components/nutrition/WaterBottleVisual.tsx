@@ -7,11 +7,11 @@ import { ageFromDob } from '../../utils/tdeeCalculation';
 
 const WATER_BLUE = '#2196F3';
 
-const BOTTLE_WIDTH = 52;
-const BOTTLE_BODY_HEIGHT = 90;
-const CAP_WIDTH = 28;
-const CAP_HEIGHT = 12;
-const NECK_HEIGHT = 6;
+const BOTTLE_WIDTH = 68;
+const BOTTLE_BODY_HEIGHT = 115;
+const CAP_WIDTH = 36;
+const CAP_HEIGHT = 14;
+const NECK_HEIGHT = 8;
 
 const GLOW_BLUE = '#64B5F6';
 
@@ -43,7 +43,7 @@ const makeStyles = (colors: typeof LightColors) =>
       height: BOTTLE_BODY_HEIGHT,
       borderWidth: 2,
       borderColor: colors.border,
-      borderRadius: 10,
+      borderRadius: 13,
       overflow: 'hidden',
       backgroundColor: colors.background,
     },

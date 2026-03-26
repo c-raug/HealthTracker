@@ -38,12 +38,13 @@ export const ACCENT_PRESETS = [
 
 type AccentPresetId = typeof ACCENT_PRESETS[number]['id'];
 
-type ThemeContextValue = { accentColor: string | null };
+type ThemeContextValue = { accentColor: string | null; appearanceMode?: 'light' | 'dark' | 'system' };
 export const ThemeContext = createContext<ThemeContextValue>({ accentColor: null });
 
 export function useColors() {
-  const scheme = useColorScheme();
-  const { accentColor } = useContext(ThemeContext);
+  const systemScheme = useColorScheme();
+  const { accentColor, appearanceMode } = useContext(ThemeContext);
+  const scheme = appearanceMode === 'light' ? 'light' : appearanceMode === 'dark' ? 'dark' : systemScheme;
   const base = scheme === 'dark' ? DarkColors : LightColors;
   if (!accentColor) return base;
   const preset = ACCENT_PRESETS.find((p) => p.primary === accentColor);
