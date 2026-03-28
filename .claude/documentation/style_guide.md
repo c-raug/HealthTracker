@@ -17,6 +17,7 @@
 9. [Component Patterns](#9-component-patterns)
 10. [Icons](#10-icons)
 11. [Fixed Color Rules](#11-fixed-color-rules)
+12. [Drag-to-Reorder Pattern](#12-drag-to-reorder-pattern)
 
 ---
 
@@ -744,6 +745,189 @@ These rules are absolute and must never be violated:
 | Large buttons        | 0.8   |
 | Standard touchables  | 0.7   |
 | Small icon areas     | 0.6–0.7 |
+
+---
+
+---
+
+## 12. Drag-to-Reorder Pattern
+
+> **Read this entire section before touching any drag-to-reorder code.** Two bugs were introduced by violating these rules.
+
+### 12.1 Library Compatibility Rules (Critical)
+
+The app uses `react-native-draggable-flatlist@^4.0.3` with RN 0.81 / React 19. This combination has a known breaking incompatibility:
+
+#### ❌ NEVER use `NestableDraggableFlatList` or `NestableScrollContainer`
+
+These nestable variants call `ref.measureLayout` on non-native component refs under RN 0.81+ / React 19, producing:
+
+```
+ERROR  Warning: ref.measureLayout must be called with a ref to a native component.
+```
+
+The drag list will appear to render but will be non-functional.
+
+#### ✅ Always use `DraggableFlatList` (the non-nestable default export)
+
+```typescript
+import DraggableFlatList, {
+  ScaleDecorator,
+  RenderItemParams,
+} from 'react-native-draggable-flatlist';
+```
+
+If a scrollable container is needed around the list, use a standard `ScrollView` from `react-native` — not `NestableScrollContainer`.
+
+### 12.2 Drag Activation (Critical)
+
+#### ❌ NEVER use `onPressIn={drag}` on a `TouchableOpacity` drag handle
+
+`onPressIn` fires immediately and causes a gesture conflict between React Native's touch responder system and `react-native-gesture-handler`. The item highlights but freezes — it never actually moves.
+
+#### ✅ Always use `onLongPress={drag}` with `delayLongPress={100}`
+
+```typescript
+<TouchableOpacity
+  style={styles.dragHandle}
+  onLongPress={drag}
+  delayLongPress={100}
+  activeOpacity={0.4}
+>
+  <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
+</TouchableOpacity>
+```
+
+`delayLongPress={100}` (100ms) is short enough to feel responsive while giving the gesture system enough time to coordinate. Do not lower this value.
+
+### 12.3 Full Drag List Pattern
+
+```typescript
+import DraggableFlatList, {
+  ScaleDecorator,
+  RenderItemParams,
+} from 'react-native-draggable-flatlist';
+
+// renderItem — must be defined outside JSX to avoid re-creation on every render
+const renderItem = ({ item, drag, isActive }: RenderItemParams<MyItem>) => (
+  <ScaleDecorator>
+    <View style={[styles.row, isActive && { opacity: 0.8 }]}>
+      {/* Drag handle — left side */}
+      <TouchableOpacity
+        style={styles.dragHandle}
+        onLongPress={drag}
+        delayLongPress={100}
+        activeOpacity={0.4}
+      >
+        <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
+      </TouchableOpacity>
+      {/* Item content */}
+      <View style={{ flex: 1 }}>
+        <Text style={styles.itemName}>{item.name}</Text>
+      </View>
+    </View>
+  </ScaleDecorator>
+);
+
+// In the component render
+<DraggableFlatList
+  data={items}
+  keyExtractor={(item) => item.id}
+  renderItem={renderItem}
+  onDragEnd={({ data }) => {
+    dispatch({ type: 'REORDER_...', ...payload });
+  }}
+/>
+```
+
+Drag handle styles:
+
+```typescript
+dragHandle: {
+  paddingRight: Spacing.xs,
+  paddingVertical: Spacing.xs,
+  justifyContent: 'center',
+},
+```
+
+### 12.4 Edit Mode Pattern (for Pinned Lists)
+
+When drag-to-reorder is an opt-in mode (like pinned foods/meals), use a split rendering approach:
+
+- **Normal mode**: render items with a plain `ScrollView` + `.map()` — no dragging. Show "Edit" button in section header.
+- **Edit mode**: render an early return with only the `DraggableFlatList`. Hide all other content. Show "Done" button.
+
+```typescript
+if (editingPinned) {
+  return (
+    <View style={styles.container}>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionHeader}>Pinned</Text>
+        <TouchableOpacity onPress={() => setEditingPinned(false)}>
+          <Text style={styles.editModeBtn}>Done</Text>
+        </TouchableOpacity>
+      </View>
+      <DraggableFlatList
+        data={sortedPinned}
+        keyExtractor={(item) => item.id}
+        renderItem={renderPinnedItem}
+        onDragEnd={({ data }) => dispatch({ type: 'REORDER_PINNED_...', ids: data.map(i => i.id) })}
+      />
+    </View>
+  );
+}
+
+// Normal mode render (ScrollView + .map())
+return (
+  <View style={styles.container}>
+    <ScrollView keyboardShouldPersistTaps="handled">
+      ...
+      {sortedPinned.length > 0 && (
+        <>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeader}>Pinned</Text>
+            <TouchableOpacity onPress={() => setEditingPinned(true)}>
+              <Text style={styles.editModeBtn}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+          {sortedPinned.map((item) => (
+            // static list item
+          ))}
+        </>
+      )}
+    </ScrollView>
+  </View>
+);
+```
+
+**Why an early return instead of conditional rendering?** Conditionally mounting `DraggableFlatList` inside a `ScrollView` can still trigger the `measureLayout` error on some RN versions. A separate render path avoids this entirely.
+
+### 12.5 Where Drag-to-Reorder Is Used
+
+| Location | Type | Action |
+|---|---|---|
+| `MealCategory.tsx` — ungrouped foods | Inline (always visible via drag handle) | `REORDER_MEAL_FOODS` |
+| `AddFoodTab.tsx` — Pinned section | Edit mode toggle | `REORDER_PINNED_FOODS` |
+| `AddMealTab.tsx` — Pinned section | Edit mode toggle | `REORDER_PINNED_MEALS` |
+
+Grouped foods (saved meal groups) in `MealCategory` are **not** draggable — only ungrouped foods are.
+
+### 12.6 Edit Mode Button Styles
+
+```typescript
+editModeBtn: {
+  ...Typography.small,
+  color: colors.primary,
+  fontWeight: '600',
+},
+sectionHeaderRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingRight: Spacing.md,
+  backgroundColor: colors.background,
+},
+```
 
 ---
 
