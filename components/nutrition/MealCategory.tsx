@@ -6,11 +6,6 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
-import {
-  RenderItemParams,
-  NestableDraggableFlatList,
-  ScaleDecorator,
-} from 'react-native-draggable-flatlist';
 import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -177,10 +172,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
     dispatch({ type: 'DELETE_FOOD_FROM_MEAL', date, category, foodId });
   };
 
-  const handleReorder = (data: NutritionFoodItem[]) => {
-    dispatch({ type: 'REORDER_MEAL_FOODS', date, category, foods: data });
-  };
-
   const handleAdd = () => {
     router.push({
       pathname: '/add-food-modal',
@@ -279,19 +270,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
     );
   };
 
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<NutritionFoodItem>) => (
-    <ScaleDecorator>
-      <FoodItem
-        item={item}
-        onDelete={() => handleDelete(item.id)}
-        drag={drag}
-        isActive={isActive}
-        date={date}
-        category={category}
-      />
-    </ScaleDecorator>
-  );
-
   return (
     <View style={styles.container}>
       <Swipeable
@@ -343,12 +321,15 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
           {/* Ungrouped foods */}
           {ungroupedFoods.length > 0 && (
             <View>
-              <NestableDraggableFlatList
-                data={ungroupedFoods}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                onDragEnd={({ data }) => handleReorder([...data, ...foods.filter((f) => f.mealGroupId)])}
-              />
+              {ungroupedFoods.map((item) => (
+                <FoodItem
+                  key={item.id}
+                  item={item}
+                  onDelete={() => handleDelete(item.id)}
+                  date={date}
+                  category={category}
+                />
+              ))}
             </View>
           )}
 

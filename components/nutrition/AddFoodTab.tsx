@@ -94,6 +94,18 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.xs,
       backgroundColor: colors.background,
     },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingRight: Spacing.md,
+      backgroundColor: colors.background,
+    },
+    editModeBtn: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '600',
+    },
     portionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -176,6 +188,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const [servings, setServings] = useState<number>(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingFood, setEditingFood] = useState<CustomFood | null>(null);
+  const [editingPinned, setEditingPinned] = useState(false);
 
   // Filter custom foods by query
   const trimmed = query.trim().toLowerCase();
@@ -302,12 +315,14 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
     <ScaleDecorator>
       <TouchableOpacity
         style={[styles.resultItem, isActive && styles.resultSelected]}
-        onPress={() => handleSelectFood(item)}
+        onPress={() => !editingPinned && handleSelectFood(item)}
         activeOpacity={0.7}
       >
-        <TouchableOpacity style={styles.dragHandle} onPressIn={drag} activeOpacity={0.4}>
-          <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
-        </TouchableOpacity>
+        {editingPinned && (
+          <TouchableOpacity style={styles.dragHandle} onPressIn={drag} activeOpacity={0.4}>
+            <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
         <View style={styles.foodInfo}>
           <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.resultInfo}>
@@ -316,62 +331,73 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
             {item.protein != null ? ` · P: ${item.protein}g` : ''}
           </Text>
         </View>
-        <View style={styles.actionBtns}>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => handleTogglePin(item)}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={item.pinned ? 'bookmark' : 'bookmark-outline'}
-              size={18}
-              color={item.pinned ? colors.primary : colors.textSecondary}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => { setSelectedItem(null); setEditingFood(item); }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => handleDelete(item.id)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="trash-outline" size={18} color={colors.danger} />
-          </TouchableOpacity>
-        </View>
+        {!editingPinned && (
+          <View style={styles.actionBtns}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => handleTogglePin(item)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                size={18}
+                color={item.pinned ? colors.primary : colors.textSecondary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => { setSelectedItem(null); setEditingFood(item); }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => handleDelete(item.id)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            </TouchableOpacity>
+          </View>
+        )}
       </TouchableOpacity>
     </ScaleDecorator>
   );
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchRow}>
-        <TextInput
-          style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search foods..."
-          placeholderTextColor={colors.textSecondary}
-          returnKeyType="search"
-        />
-      </View>
+      {!editingPinned && (
+        <View style={styles.searchRow}>
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search foods..."
+            placeholderTextColor={colors.textSecondary}
+            returnKeyType="search"
+          />
+        </View>
+      )}
 
       <NestableScrollContainer keyboardShouldPersistTaps="handled">
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => setShowCreateForm(true)}
-        >
-          <Ionicons name="add-circle" size={20} color={colors.primary} />
-          <Text style={styles.createText}>Create Custom Food</Text>
-        </TouchableOpacity>
+        {!editingPinned && (
+          <TouchableOpacity
+            style={styles.createBtn}
+            onPress={() => setShowCreateForm(true)}
+          >
+            <Ionicons name="add-circle" size={20} color={colors.primary} />
+            <Text style={styles.createText}>Create Custom Food</Text>
+          </TouchableOpacity>
+        )}
 
         {sortedPinned.length > 0 && (
           <>
-            <Text style={styles.sectionHeader}>Pinned</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeader}>Pinned</Text>
+              <TouchableOpacity onPress={() => setEditingPinned((v) => !v)}>
+                <Text style={styles.editModeBtn}>{editingPinned ? 'Done' : 'Edit'}</Text>
+              </TouchableOpacity>
+            </View>
             <NestableDraggableFlatList
               data={sortedPinned}
               keyExtractor={(item) => item.id}
@@ -383,7 +409,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {unpinned.length > 0 && (
+        {!editingPinned && unpinned.length > 0 && (
           <>
             <Text style={styles.sectionHeader}>My Foods</Text>
             {unpinned.map((item) => (
@@ -433,7 +459,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {isEmpty && (
+        {!editingPinned && isEmpty && (
           <Text style={styles.empty}>
             {trimmed.length > 0
               ? 'No matching foods found'
