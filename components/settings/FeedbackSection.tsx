@@ -87,19 +87,32 @@ const FeedbackSection = forwardRef<FeedbackSectionHandle, Props>(function Feedba
     const trimmed = message.trim();
     if (!trimmed || submitting) return;
 
+    if (!GOOGLE_FORM_ID || !GOOGLE_FORM_ENTRY) {
+      Alert.alert('Configuration Error', 'Feedback is not configured. Please contact the developer.');
+      return;
+    }
+
     setSubmitting(true);
+    const body = `${encodeURIComponent(GOOGLE_FORM_ENTRY)}=${encodeURIComponent(trimmed)}`;
     try {
-      const body = `${encodeURIComponent(GOOGLE_FORM_ENTRY)}=${encodeURIComponent(trimmed)}`;
-      await fetch(FORM_URL, {
+      const response = await fetch(FORM_URL, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body,
       });
+      if (__DEV__) {
+        console.warn('[FeedbackSection] submit', { url: FORM_URL, body, status: response.status });
+      }
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
       setMessage('');
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 4000);
-    } catch {
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('[FeedbackSection] submit error', err);
+      }
       Alert.alert('Error', 'Could not send feedback. Please try again later.');
     } finally {
       setSubmitting(false);
