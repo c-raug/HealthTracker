@@ -5,12 +5,11 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
   Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  NestableScrollContainer,
-  NestableDraggableFlatList,
+import DraggableFlatList, {
   ScaleDecorator,
   RenderItemParams,
 } from 'react-native-draggable-flatlist';
@@ -319,7 +318,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         activeOpacity={0.7}
       >
         {editingPinned && (
-          <TouchableOpacity style={styles.dragHandle} onPressIn={drag} activeOpacity={0.4}>
+          <TouchableOpacity style={styles.dragHandle} onLongPress={drag} delayLongPress={100} activeOpacity={0.4}>
             <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
         )}
@@ -364,41 +363,18 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
     </ScaleDecorator>
   );
 
-  return (
-    <View style={styles.container}>
-      {!editingPinned && (
-        <View style={styles.searchRow}>
-          <TextInput
-            style={styles.searchInput}
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search foods..."
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="search"
-          />
-        </View>
-      )}
-
-      <NestableScrollContainer keyboardShouldPersistTaps="handled">
-        {!editingPinned && (
-          <TouchableOpacity
-            style={styles.createBtn}
-            onPress={() => setShowCreateForm(true)}
-          >
-            <Ionicons name="add-circle" size={20} color={colors.primary} />
-            <Text style={styles.createText}>Create Custom Food</Text>
-          </TouchableOpacity>
-        )}
-
+  if (editingPinned) {
+    return (
+      <View style={styles.container}>
         {sortedPinned.length > 0 && (
           <>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeader}>Pinned</Text>
-              <TouchableOpacity onPress={() => setEditingPinned((v) => !v)}>
-                <Text style={styles.editModeBtn}>{editingPinned ? 'Done' : 'Edit'}</Text>
+              <TouchableOpacity onPress={() => setEditingPinned(false)}>
+                <Text style={styles.editModeBtn}>Done</Text>
               </TouchableOpacity>
             </View>
-            <NestableDraggableFlatList
+            <DraggableFlatList
               data={sortedPinned}
               keyExtractor={(item) => item.id}
               renderItem={renderPinnedItem}
@@ -408,8 +384,88 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
             />
           </>
         )}
+      </View>
+    );
+  }
 
-        {!editingPinned && unpinned.length > 0 && (
+  return (
+    <View style={styles.container}>
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search foods..."
+          placeholderTextColor={colors.textSecondary}
+          returnKeyType="search"
+        />
+      </View>
+
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={() => setShowCreateForm(true)}
+        >
+          <Ionicons name="add-circle" size={20} color={colors.primary} />
+          <Text style={styles.createText}>Create Custom Food</Text>
+        </TouchableOpacity>
+
+        {sortedPinned.length > 0 && (
+          <>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeader}>Pinned</Text>
+              <TouchableOpacity onPress={() => setEditingPinned(true)}>
+                <Text style={styles.editModeBtn}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+            {sortedPinned.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.resultItem}
+                onPress={() => handleSelectFood(item)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.foodInfo}>
+                  <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.resultInfo}>
+                    {item.calories} cal
+                    {item.servingSize ? ` · ${item.servingSize}` : ''}
+                    {item.protein != null ? ` · P: ${item.protein}g` : ''}
+                  </Text>
+                </View>
+                <View style={styles.actionBtns}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleTogglePin(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                      size={18}
+                      color={item.pinned ? colors.primary : colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => { setSelectedItem(null); setEditingFood(item); }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleDelete(item.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {unpinned.length > 0 && (
           <>
             <Text style={styles.sectionHeader}>My Foods</Text>
             {unpinned.map((item) => (
@@ -459,14 +515,14 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {!editingPinned && isEmpty && (
+        {isEmpty && (
           <Text style={styles.empty}>
             {trimmed.length > 0
               ? 'No matching foods found'
               : 'No custom foods yet. Tap "Create Custom Food" to add one.'}
           </Text>
         )}
-      </NestableScrollContainer>
+      </ScrollView>
     </View>
   );
 }
