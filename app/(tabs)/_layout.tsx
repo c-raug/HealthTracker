@@ -20,7 +20,7 @@ function FeedbackHeaderButton() {
   const colors = useColors();
   return (
     <TouchableOpacity
-      onPress={() => router.push({ pathname: '/(tabs)/settings', params: { focusFeedback: '1' } })}
+      onPress={() => router.push({ pathname: '/app-settings-modal', params: { focusFeedback: '1' } })}
       style={{ marginRight: 8, padding: 4 }}
       activeOpacity={0.7}
     >
@@ -78,10 +78,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: 'Profile',
           headerRight: () => null,
           tabBarIcon: ({ color }) => (
-            <TabIcon name="settings-outline" color={color} />
+            <TabIcon name="person-circle" color={color} />
           ),
         }}
       />

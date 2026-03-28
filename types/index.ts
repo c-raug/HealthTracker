@@ -105,6 +105,7 @@ export interface UserPreferences {
   waterPresets?: [number, number, number];
   sectionsExpanded?: boolean;
   appearanceMode?: 'light' | 'dark' | 'system';
+  avatarUri?: string;
 }
 
 export type ExerciseType = 'weight_lifting';

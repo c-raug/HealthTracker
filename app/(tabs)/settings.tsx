@@ -6,13 +6,13 @@ import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
 import { ActivityMode } from '../../types';
+import ProfileCard from '../../components/profile/ProfileCard';
+import BadgesSection from '../../components/profile/BadgesSection';
 import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
 import ThemeColorPicker from '../../components/settings/ThemeColorPicker';
 import AppearanceModePicker from '../../components/settings/AppearanceModePicker';
-import FeedbackSection, { FeedbackSectionHandle } from '../../components/settings/FeedbackSection';
-import { saveBackup } from '../../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: {
@@ -45,17 +45,6 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   sectionTitle: {
     ...Typography.h3,
     color: colors.text,
-  },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
   settingLabel: {
     ...Typography.body,
@@ -98,6 +87,25 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   toggleTextActive: {
     color: colors.white,
   },
+  appSettingsRow: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    marginBottom: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+  },
+  appSettingsText: {
+    ...Typography.h3,
+    color: colors.text,
+  },
   footer: {
     ...Typography.small,
     color: colors.textSecondary,
@@ -114,42 +122,35 @@ export default function SettingsScreen() {
   const { focusActivityMode, focusFeedback } = useLocalSearchParams<{ focusActivityMode?: string; focusFeedback?: string }>();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
-  const feedbackRef = useRef<FeedbackSectionHandle>(null);
   const [goalsSectionY, setGoalsSectionY] = useState(0);
 
   const [profileExpanded, setProfileExpanded] = useState(false);
   const [goalsExpanded, setGoalsExpanded] = useState(false);
   const [macroExpanded, setMacroExpanded] = useState(false);
   const [waterGoalExpanded, setWaterGoalExpanded] = useState(false);
-  const [appConfigExpanded, setAppConfigExpanded] = useState(false);
+  const [appearanceExpanded, setAppearanceExpanded] = useState(false);
   const [waterGoalSaved, setWaterGoalSaved] = useState(false);
   const waterGoalSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [waterGoalInput, setWaterGoalInput] = useState(
     preferences.waterGoalOverride !== undefined ? preferences.waterGoalOverride.toString() : '',
   );
 
-  // Reset all sections to collapsed and scroll to top when screen comes back into focus.
-  // When focusActivityMode is present, expand Goals & Calorie Target and scroll to it instead.
-  // After handling focusActivityMode, clear the param so repeated tab switches don't re-expand.
   useFocusEffect(
     useCallback(() => {
       setProfileExpanded(false);
       setMacroExpanded(false);
       setWaterGoalExpanded(false);
-      setAppConfigExpanded(false);
+      setAppearanceExpanded(false);
       if (focusActivityMode) {
         setGoalsExpanded(true);
         setTimeout(() => {
           scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
         }, 150);
-        // Clear the param so subsequent tab-switches don't re-expand Goals
         router.setParams({ focusActivityMode: undefined });
       } else {
         setGoalsExpanded(false);
         scrollRef.current?.scrollTo({ y: 0, animated: false });
       }
-    // goalsSectionY intentionally excluded: re-running on layout changes would
-    // re-expand Goals whenever a sibling section (e.g. Profile) changes height.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [focusActivityMode]),
   );
@@ -159,31 +160,23 @@ export default function SettingsScreen() {
     preferences.waterGoalMode ??
     (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
 
-  // Clean up waterGoalSaved timer on unmount
   useEffect(() => {
     return () => {
       if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
     };
   }, []);
 
-  // When deep-linked with focusFeedback, scroll to end and focus the feedback input
+  // When deep-linked with focusFeedback, redirect to app-settings-modal
   useEffect(() => {
     if (focusFeedback) {
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 150);
-      setTimeout(() => {
-        feedbackRef.current?.focus();
-      }, 350);
+      router.setParams({ focusFeedback: undefined });
+      router.push({ pathname: '/app-settings-modal', params: { focusFeedback: '1' } });
     }
   }, [focusFeedback]);
-
-  const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
 
   const activityMode: ActivityMode = preferences.activityMode ?? 'auto';
   const setActivityMode = (mode: ActivityMode) => dispatch({ type: 'SET_ACTIVITY_MODE', mode });
 
-  // Compute goalCalories (same pattern as nutrition.tsx)
   const profile = preferences.profile;
   const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
   const latestWeight = sortedEntries[0];
@@ -207,7 +200,6 @@ export default function SettingsScreen() {
         )
       : null;
 
-  // Compute 7-day average activity calories (same filtering logic as nutrition.tsx)
   const last7Dates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - i);
@@ -227,7 +219,7 @@ export default function SettingsScreen() {
           .filter((a) => a.type === 'smartwatch')
           .reduce((s, a) => s + a.caloriesBurned, 0);
       }
-      return 0; // 'auto' mode — activity already baked into TDEE
+      return 0;
     });
     const activeDays = dailyBurned.filter((v) => v > 0);
     return activeDays.length > 0
@@ -244,7 +236,13 @@ export default function SettingsScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView style={styles.container} ref={scrollRef} keyboardShouldPersistTaps="handled">
-        {/* 1. Profile — biometrics only */}
+        {/* 1. Profile Card — always visible */}
+        <ProfileCard />
+
+        {/* 2. Badges — collapsible */}
+        <BadgesSection />
+
+        {/* 3. Profile — biometrics */}
         <View style={styles.collapsibleCard}>
           <TouchableOpacity
             style={styles.collapsibleHeader}
@@ -263,7 +261,7 @@ export default function SettingsScreen() {
           {profileExpanded && <ProfileSection />}
         </View>
 
-        {/* 2. Goals & Calorie Target */}
+        {/* 4. Goals & Calorie Target */}
         <View style={styles.collapsibleCard} onLayout={(e) => setGoalsSectionY(e.nativeEvent.layout.y)}>
           <TouchableOpacity
             style={styles.collapsibleHeader}
@@ -284,7 +282,7 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        {/* 3. Macros — collapsible */}
+        {/* 5. Macros */}
         <View style={styles.collapsibleCard}>
           <TouchableOpacity
             style={styles.collapsibleHeader}
@@ -305,7 +303,7 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        {/* 4. Daily Water Goal — collapsible */}
+        {/* 6. Daily Water Goal */}
         <View style={styles.collapsibleCard}>
           <TouchableOpacity
             style={styles.collapsibleHeader}
@@ -326,7 +324,6 @@ export default function SettingsScreen() {
               <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
                 Auto-calculates from your weight and activity level. Switch to Manual to set a custom goal.
               </Text>
-              {/* Auto / Manual toggle */}
               <View style={styles.toggle}>
                 {(['auto', 'manual'] as const).map((mode) => (
                   <TouchableOpacity
@@ -342,7 +339,6 @@ export default function SettingsScreen() {
                 ))}
               </View>
 
-              {/* Auto mode: creatine toggle */}
               {waterGoalMode === 'auto' && (
                 <View style={{ marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flex: 1, marginRight: Spacing.md }}>
@@ -368,7 +364,6 @@ export default function SettingsScreen() {
                 </View>
               )}
 
-              {/* Manual mode: custom goal input */}
               {waterGoalMode === 'manual' && (
                 <View style={{ marginTop: Spacing.md, flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
                   <TextInput
@@ -415,135 +410,45 @@ export default function SettingsScreen() {
                   </TouchableOpacity>
                 </View>
               )}
-
             </View>
           )}
         </View>
 
-        {/* 5. App Configuration */}
+        {/* 7. Appearance */}
         <View style={styles.collapsibleCard}>
           <TouchableOpacity
             style={styles.collapsibleHeader}
-            onPress={() => setAppConfigExpanded((v) => !v)}
+            onPress={() => setAppearanceExpanded((v) => !v)}
             activeOpacity={0.7}
           >
             <View style={styles.collapsibleHeaderLeft}>
               <Ionicons
-                name={appConfigExpanded ? 'chevron-down' : 'chevron-forward'}
+                name={appearanceExpanded ? 'chevron-down' : 'chevron-forward'}
                 size={18}
                 color={colors.textSecondary}
               />
-              <Text style={styles.sectionTitle}>App Configuration</Text>
+              <Text style={styles.sectionTitle}>Appearance</Text>
             </View>
           </TouchableOpacity>
-          {appConfigExpanded && (
+          {appearanceExpanded && (
             <View style={{ padding: Spacing.md, paddingTop: 0 }}>
-              <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Default Tab</Text>
-              <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
-                Choose which tab opens when you launch the app.
-              </Text>
-              <View style={styles.toggle}>
-                {(['weight', 'nutrition', 'activity'] as const).map((tab) => (
-                  <TouchableOpacity
-                    key={tab}
-                    style={[styles.toggleOption, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleOptionActive]}
-                    onPress={() => dispatch({ type: 'SET_DEFAULT_TAB', tab })}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.toggleText, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleTextActive]}>
-                      {tab === 'weight' ? 'Weight' : tab === 'nutrition' ? 'Nutrition' : 'Activity'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <View style={{ marginTop: Spacing.md }}>
-                <AppearanceModePicker />
-              </View>
+              <AppearanceModePicker />
               <View style={{ marginTop: Spacing.md }}>
                 <ThemeColorPicker />
-              </View>
-              <View style={{ marginTop: Spacing.md }}>
-                <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Weight Unit</Text>
-                <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
-                  Applies to new entries and the history chart. Existing entries keep their original unit.
-                </Text>
-                <View style={styles.toggle}>
-                  <TouchableOpacity
-                    style={[styles.toggleOption, preferences.unit === 'lbs' && styles.toggleOptionActive]}
-                    onPress={() => setUnit('lbs')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.toggleText, preferences.unit === 'lbs' && styles.toggleTextActive]}>
-                      lbs
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.toggleOption, preferences.unit === 'kg' && styles.toggleOptionActive]}
-                    onPress={() => setUnit('kg')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.toggleText, preferences.unit === 'kg' && styles.toggleTextActive]}>
-                      kg
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={{ marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flex: 1, marginRight: Spacing.md }}>
-                  <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Expand sections by default</Text>
-                  <Text style={[styles.settingDescription, { marginBottom: 0 }]}>
-                    When on, meal categories start expanded on the Nutrition tab.
-                  </Text>
-                </View>
-                <View style={[styles.toggle, { width: 100 }]}>
-                  {([false, true] as const).map((val) => (
-                    <TouchableOpacity
-                      key={String(val)}
-                      style={[styles.toggleOption, (preferences.sectionsExpanded ?? false) === val && styles.toggleOptionActive]}
-                      onPress={() => dispatch({ type: 'SET_SECTIONS_EXPANDED', enabled: val })}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.toggleText, (preferences.sectionsExpanded ?? false) === val && styles.toggleTextActive]}>
-                        {val ? 'On' : 'Off'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
               </View>
             </View>
           )}
         </View>
 
-        {/* 6. Data Backup */}
-        <View style={styles.card}>
-          <Text style={styles.settingLabel}>Data Backup</Text>
-          <Text style={styles.settingDescription}>
-            Save all app data to a file that persists across reinstalls.
-          </Text>
-          <TouchableOpacity
-            style={[styles.toggleOption, styles.toggleOptionActive, { paddingVertical: Spacing.sm }]}
-            onPress={async () => {
-              try {
-                await saveBackup({ entries, preferences, nutritionLog, customFoods, savedMeals, activityLog, waterLog });
-                Alert.alert('Success', 'Data saved successfully.');
-              } catch {
-                Alert.alert('Error', 'Failed to save data.');
-              }
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 7. Send Feedback */}
-        <View style={styles.card}>
-          <FeedbackSection ref={feedbackRef} onFocusInput={() => {
-            setTimeout(() => {
-              scrollRef.current?.scrollToEnd({ animated: true });
-            }, 150);
-          }} />
-        </View>
+        {/* 8. App Settings → sub-screen */}
+        <TouchableOpacity
+          style={styles.appSettingsRow}
+          onPress={() => router.push('/app-settings-modal')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.appSettingsText}>App Settings</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
 
         {/* Footer */}
         <Text style={styles.footer}>HealthTracker v{(require('../../app.json') as { expo: { version: string } }).expo.version}</Text>

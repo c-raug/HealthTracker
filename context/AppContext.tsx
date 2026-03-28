@@ -89,7 +89,8 @@ type Action =
   | { type: 'REORDER_PINNED_FOODS'; ids: string[] }
   | { type: 'REORDER_PINNED_MEALS'; category: MealCategory; ids: string[] }
   | { type: 'REORDER_MEAL_FOODS'; date: string; category: MealCategory; foods: NutritionFoodItem[] }
-  | { type: 'SET_APPEARANCE_MODE'; mode: 'light' | 'dark' | 'system' };
+  | { type: 'SET_APPEARANCE_MODE'; mode: 'light' | 'dark' | 'system' }
+  | { type: 'SET_AVATAR'; uri: string | undefined };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -334,6 +335,11 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, appearanceMode: action.mode },
+      };
+    case 'SET_AVATAR':
+      return {
+        ...state,
+        preferences: { ...state.preferences, avatarUri: action.uri },
       };
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.date };
