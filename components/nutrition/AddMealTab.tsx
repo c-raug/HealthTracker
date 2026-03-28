@@ -264,7 +264,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
         >
           <View style={styles.mealRow}>
             {editingPinned && (
-              <TouchableOpacity style={styles.dragHandle} onPressIn={drag} activeOpacity={0.4}>
+              <TouchableOpacity style={styles.dragHandle} onLongPress={drag} delayLongPress={100} activeOpacity={0.4}>
                 <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             )}
