@@ -1,14 +1,32 @@
 /**
- * Unit tests for the REORDER_PINNED_FOODS and REORDER_PINNED_MEALS reducer
- * actions. We replicate the reducer logic directly (same pattern as the
- * FeedbackSection tests) to verify ordering behaviour without mounting React.
+ * Unit tests for the REORDER_PINNED_FOODS, REORDER_PINNED_MEALS, and
+ * REORDER_MEAL_FOODS reducer actions. We replicate the reducer logic directly
+ * (same pattern as the FeedbackSection tests) to verify ordering behaviour
+ * without mounting React.
  */
 
-import { CustomFood, SavedMeal, MealCategory } from '../types';
+import { CustomFood, SavedMeal, MealCategory, NutritionFoodItem, DayNutrition } from '../types';
 
 // ---------------------------------------------------------------------------
 // Reducer logic extracted from context/AppContext.tsx
 // ---------------------------------------------------------------------------
+
+function reorderMealFoods(
+  nutritionLog: DayNutrition[],
+  date: string,
+  category: MealCategory,
+  foods: NutritionFoodItem[],
+): DayNutrition[] {
+  const day = nutritionLog.find((d) => d.date === date) ?? {
+    date,
+    meals: { breakfast: [], lunch: [], dinner: [], snacks: [] },
+  };
+  const updatedDay: DayNutrition = {
+    ...day,
+    meals: { ...day.meals, [category]: foods },
+  };
+  return [updatedDay, ...nutritionLog.filter((d) => d.date !== date)];
+}
 
 function reorderPinnedFoods(
   customFoods: CustomFood[],
@@ -183,5 +201,76 @@ describe('REORDER_PINNED_MEALS', () => {
     const m1 = result.find((m) => m.id === 'm1')!;
     expect(m1.name).toBe('Morning Meal');
     expect(m1.pinnedCategories).toEqual(['breakfast']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REORDER_MEAL_FOODS tests
+// ---------------------------------------------------------------------------
+
+const makeNutritionItem = (id: string, name: string, cal: number): NutritionFoodItem => ({
+  id,
+  name,
+  calories: cal,
+});
+
+describe('REORDER_MEAL_FOODS', () => {
+  const date = '2026-03-28';
+  const makeDayLog = (): DayNutrition[] => [
+    {
+      date,
+      meals: {
+        breakfast: [
+          makeNutritionItem('f1', 'Eggs', 150),
+          makeNutritionItem('f2', 'Toast', 120),
+          makeNutritionItem('f3', 'Bacon', 200),
+        ],
+        lunch: [makeNutritionItem('f4', 'Salad', 300)],
+        dinner: [],
+        snacks: [],
+      },
+    },
+  ];
+
+  it('reorders foods in the specified category', () => {
+    const reordered = [
+      makeNutritionItem('f3', 'Bacon', 200),
+      makeNutritionItem('f1', 'Eggs', 150),
+      makeNutritionItem('f2', 'Toast', 120),
+    ];
+    const result = reorderMealFoods(makeDayLog(), date, 'breakfast', reordered);
+    const day = result.find((d) => d.date === date)!;
+    expect(day.meals.breakfast.map((f) => f.id)).toEqual(['f3', 'f1', 'f2']);
+  });
+
+  it('does not affect other categories', () => {
+    const reordered = [
+      makeNutritionItem('f3', 'Bacon', 200),
+      makeNutritionItem('f1', 'Eggs', 150),
+      makeNutritionItem('f2', 'Toast', 120),
+    ];
+    const result = reorderMealFoods(makeDayLog(), date, 'breakfast', reordered);
+    const day = result.find((d) => d.date === date)!;
+    expect(day.meals.lunch.map((f) => f.id)).toEqual(['f4']);
+    expect(day.meals.dinner).toEqual([]);
+  });
+
+  it('creates a new day entry if one does not exist', () => {
+    const foods = [makeNutritionItem('f5', 'Soup', 250)];
+    const result = reorderMealFoods([], '2026-04-01', 'dinner', foods);
+    expect(result).toHaveLength(1);
+    expect(result[0].date).toBe('2026-04-01');
+    expect(result[0].meals.dinner).toEqual(foods);
+    expect(result[0].meals.breakfast).toEqual([]);
+  });
+
+  it('preserves food item properties through reorder', () => {
+    const foods = makeDayLog()[0].meals.breakfast;
+    const reordered = [...foods].reverse();
+    const result = reorderMealFoods(makeDayLog(), date, 'breakfast', reordered);
+    const day = result.find((d) => d.date === date)!;
+    const bacon = day.meals.breakfast[0];
+    expect(bacon.name).toBe('Bacon');
+    expect(bacon.calories).toBe(200);
   });
 });

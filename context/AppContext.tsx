@@ -88,6 +88,7 @@ type Action =
   | { type: 'SET_SECTIONS_EXPANDED'; enabled: boolean }
   | { type: 'REORDER_PINNED_FOODS'; ids: string[] }
   | { type: 'REORDER_PINNED_MEALS'; category: MealCategory; ids: string[] }
+  | { type: 'REORDER_MEAL_FOODS'; date: string; category: MealCategory; foods: NutritionFoodItem[] }
   | { type: 'SET_APPEARANCE_MODE'; mode: 'light' | 'dark' | 'system' };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
@@ -356,6 +357,17 @@ function reducer(state: State, action: Action): State {
           };
         }),
       };
+    case 'REORDER_MEAL_FOODS': {
+      const day = getOrCreateDay(state.nutritionLog, action.date);
+      const updatedDay: DayNutrition = {
+        ...day,
+        meals: {
+          ...day.meals,
+          [action.category]: action.foods,
+        },
+      };
+      return { ...state, nutritionLog: upsertDay(state.nutritionLog, updatedDay) };
+    }
     default:
       return state;
   }
