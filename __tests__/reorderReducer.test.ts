@@ -39,11 +39,20 @@ function reorderPinnedMeals(
 // Test data
 // ---------------------------------------------------------------------------
 
+const makeFood = (overrides: Partial<CustomFood> & { id: string; name: string; calories: number }): CustomFood => ({
+  protein: 0,
+  carbs: 0,
+  fat: 0,
+  servingSize: '1 serving',
+  createdAt: '2026-01-01T00:00:00Z',
+  ...overrides,
+});
+
 const makeFoods = (): CustomFood[] => [
-  { id: 'a', name: 'Apple', calories: 95, pinned: true, pinnedOrder: 0 },
-  { id: 'b', name: 'Banana', calories: 105, pinned: true, pinnedOrder: 1 },
-  { id: 'c', name: 'Carrot', calories: 25, pinned: true, pinnedOrder: 2 },
-  { id: 'd', name: 'Donut', calories: 300 }, // not pinned
+  makeFood({ id: 'a', name: 'Apple', calories: 95, pinned: true, pinnedOrder: 0 }),
+  makeFood({ id: 'b', name: 'Banana', calories: 105, pinned: true, pinnedOrder: 1 }),
+  makeFood({ id: 'c', name: 'Carrot', calories: 25, pinned: true, pinnedOrder: 2 }),
+  makeFood({ id: 'd', name: 'Donut', calories: 300 }), // not pinned
 ];
 
 const makeMeals = (): SavedMeal[] => [
@@ -51,6 +60,7 @@ const makeMeals = (): SavedMeal[] => [
     id: 'm1',
     name: 'Morning Meal',
     foods: [],
+    createdAt: '2026-01-01T00:00:00Z',
     pinnedCategories: ['breakfast' as MealCategory],
     pinnedOrder: { breakfast: 0 },
   },
@@ -58,6 +68,7 @@ const makeMeals = (): SavedMeal[] => [
     id: 'm2',
     name: 'Lunch Meal',
     foods: [],
+    createdAt: '2026-01-01T00:00:00Z',
     pinnedCategories: ['breakfast' as MealCategory, 'lunch' as MealCategory],
     pinnedOrder: { breakfast: 1, lunch: 0 },
   },
@@ -65,6 +76,7 @@ const makeMeals = (): SavedMeal[] => [
     id: 'm3',
     name: 'Dinner Meal',
     foods: [],
+    createdAt: '2026-01-01T00:00:00Z',
     pinnedCategories: ['dinner' as MealCategory],
     pinnedOrder: { dinner: 0 },
   },
@@ -90,7 +102,7 @@ describe('REORDER_PINNED_FOODS', () => {
 
   it('handles a single pinned food', () => {
     const foods: CustomFood[] = [
-      { id: 'x', name: 'X', calories: 10, pinned: true, pinnedOrder: 0 },
+      makeFood({ id: 'x', name: 'X', calories: 10, pinned: true, pinnedOrder: 0 }),
     ];
     const result = reorderPinnedFoods(foods, ['x']);
     expect(result[0].pinnedOrder).toBe(0);
@@ -153,6 +165,7 @@ describe('REORDER_PINNED_MEALS', () => {
         id: 'n1',
         name: 'New Meal',
         foods: [],
+        createdAt: '2026-01-01T00:00:00Z',
         pinnedCategories: ['snacks' as MealCategory],
         // no pinnedOrder at all
       },

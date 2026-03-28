@@ -4,14 +4,13 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  ScrollView,
   Alert,
   Modal,
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  NestableScrollContainer,
-  NestableDraggableFlatList,
+import DraggableFlatList, {
   ScaleDecorator,
   RenderItemParams,
 } from 'react-native-draggable-flatlist';
@@ -306,26 +305,18 @@ export default function AddMealTab({ date, category, onDone }: Props) {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      <NestableScrollContainer keyboardShouldPersistTaps="handled">
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => setShowCreate(true)}
-        >
-          <Ionicons name="add-circle" size={20} color={colors.primary} />
-          <Text style={styles.createText}>Create New Meal</Text>
-        </TouchableOpacity>
-
+  if (editingPinned) {
+    return (
+      <View style={styles.container}>
         {sortedPinned.length > 0 && (
           <>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeader}>Pinned</Text>
-              <TouchableOpacity onPress={() => setEditingPinned((v) => !v)}>
-                <Text style={styles.editModeBtn}>{editingPinned ? 'Done' : 'Edit'}</Text>
+              <TouchableOpacity onPress={() => setEditingPinned(false)}>
+                <Text style={styles.editModeBtn}>Done</Text>
               </TouchableOpacity>
             </View>
-            <NestableDraggableFlatList
+            <DraggableFlatList
               data={sortedPinned}
               keyExtractor={(item) => item.id}
               renderItem={renderPinnedMealItem}
@@ -340,7 +331,115 @@ export default function AddMealTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {!editingPinned && otherMeals.length > 0 && (
+      {/* Pin category modal */}
+      <Modal
+        visible={pinning !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPinning(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <SafeAreaView style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setPinning(null)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Pin to meal categories</Text>
+              <View style={{ width: 50 }} />
+            </View>
+
+            {ALL_CATEGORIES.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={styles.categoryRow}
+                onPress={() => handleToggleCategory(cat)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.categoryLabel}>{CATEGORY_LABELS[cat]}</Text>
+                <Ionicons
+                  name={selectedPins.includes(cat) ? 'checkbox' : 'square-outline'}
+                  size={22}
+                  color={selectedPins.includes(cat) ? colors.primary : colors.textSecondary}
+                />
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSavePin} activeOpacity={0.8}>
+              <Text style={styles.saveBtnText}>Save</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+        </View>
+      </Modal>
+    </View>
+  );
+  }
+
+  return (
+    <View style={styles.container}>
+      <ScrollView keyboardShouldPersistTaps="handled">
+        <TouchableOpacity
+          style={styles.createBtn}
+          onPress={() => setShowCreate(true)}
+        >
+          <Ionicons name="add-circle" size={20} color={colors.primary} />
+          <Text style={styles.createText}>Create New Meal</Text>
+        </TouchableOpacity>
+
+        {sortedPinned.length > 0 && (
+          <>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeader}>Pinned</Text>
+              <TouchableOpacity onPress={() => setEditingPinned(true)}>
+                <Text style={styles.editModeBtn}>Edit</Text>
+              </TouchableOpacity>
+            </View>
+            {sortedPinned.map((item) => {
+              const isPinnedHere = item.pinnedCategories?.includes(category) ?? false;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.mealItem}
+                  onPress={() => handleAddMeal(item.id)}
+                >
+                  <View style={styles.mealRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.mealName}>{item.name}</Text>
+                      <Text style={styles.mealInfo}>
+                        {item.foods.length} food{item.foods.length !== 1 ? 's' : ''} · {totalCalories(item.foods)} cal
+                      </Text>
+                    </View>
+                    <View style={styles.actionBtns}>
+                      <TouchableOpacity
+                        style={styles.actionBtn}
+                        onPress={() => handleOpenPin(item)}
+                      >
+                        <Ionicons
+                          name={isPinnedHere ? 'bookmark' : 'bookmark-outline'}
+                          size={18}
+                          color={isPinnedHere ? colors.primary : colors.textSecondary}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionBtn}
+                        onPress={() => setEditingMeal(item)}
+                      >
+                        <Ionicons name="pencil-outline" size={18} color={colors.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.actionBtn}
+                        onPress={() => handleDeleteMeal(item.id)}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
+
+        {otherMeals.length > 0 && (
           <>
             {sortedPinned.length > 0 && (
               <Text style={styles.sectionHeader}>All Meals</Text>
@@ -391,10 +490,10 @@ export default function AddMealTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {!editingPinned && isEmpty && (
+        {isEmpty && (
           <Text style={styles.empty}>No saved meals yet</Text>
         )}
-      </NestableScrollContainer>
+      </ScrollView>
 
       {/* Pin category modal */}
       <Modal
