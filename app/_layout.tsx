@@ -4,10 +4,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AppProvider, useApp } from '../context/AppContext';
-import { Colors, ThemeContext } from '../constants/theme';
+import { Colors, ThemeContext, useColors } from '../constants/theme';
 
 function RootNavigator() {
   const { isLoading, preferences } = useApp();
+  const colors = useColors();
   const router = useRouter();
   const segments = useSegments();
 
@@ -40,8 +41,8 @@ function RootNavigator() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: Colors.card },
-        headerTintColor: Colors.text,
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.text,
         headerShadowVisible: false,
       }}
     >
@@ -67,6 +68,16 @@ function RootNavigator() {
         options={{
           presentation: 'modal',
           title: 'App Settings',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="appearance-modal"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
         }}
       />
     </Stack>
