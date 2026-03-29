@@ -8,11 +8,8 @@ import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation'
 import { ActivityMode } from '../../types';
 import ProfileCard from '../../components/profile/ProfileCard';
 import BadgesSection from '../../components/profile/BadgesSection';
-import ProfileSection from '../../components/settings/ProfileSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
-import ThemeColorPicker from '../../components/settings/ThemeColorPicker';
-import AppearanceModePicker from '../../components/settings/AppearanceModePicker';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: {
@@ -87,7 +84,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   toggleTextActive: {
     color: colors.white,
   },
-  appSettingsRow: {
+  navRow: {
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
     marginBottom: Spacing.sm,
@@ -102,9 +99,15 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
   },
-  appSettingsText: {
+  navRowText: {
     ...Typography.h3,
     color: colors.text,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginVertical: Spacing.md,
+    marginHorizontal: Spacing.md,
   },
   footer: {
     ...Typography.small,
@@ -122,13 +125,9 @@ export default function SettingsScreen() {
   const { focusActivityMode, focusFeedback } = useLocalSearchParams<{ focusActivityMode?: string; focusFeedback?: string }>();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
-  const [goalsSectionY, setGoalsSectionY] = useState(0);
+  const [nutritionGoalsSectionY, setNutritionGoalsSectionY] = useState(0);
 
-  const [profileExpanded, setProfileExpanded] = useState(false);
-  const [goalsExpanded, setGoalsExpanded] = useState(false);
-  const [macroExpanded, setMacroExpanded] = useState(false);
-  const [waterGoalExpanded, setWaterGoalExpanded] = useState(false);
-  const [appearanceExpanded, setAppearanceExpanded] = useState(false);
+  const [nutritionGoalsExpanded, setNutritionGoalsExpanded] = useState(false);
   const [waterGoalSaved, setWaterGoalSaved] = useState(false);
   const waterGoalSavedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [waterGoalInput, setWaterGoalInput] = useState(
@@ -137,18 +136,14 @@ export default function SettingsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      setProfileExpanded(false);
-      setMacroExpanded(false);
-      setWaterGoalExpanded(false);
-      setAppearanceExpanded(false);
+      setNutritionGoalsExpanded(false);
       if (focusActivityMode) {
-        setGoalsExpanded(true);
+        setNutritionGoalsExpanded(true);
         setTimeout(() => {
-          scrollRef.current?.scrollTo({ y: goalsSectionY, animated: true });
+          scrollRef.current?.scrollTo({ y: nutritionGoalsSectionY, animated: true });
         }, 150);
         router.setParams({ focusActivityMode: undefined });
       } else {
-        setGoalsExpanded(false);
         scrollRef.current?.scrollTo({ y: 0, animated: false });
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -236,217 +231,159 @@ export default function SettingsScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView style={styles.container} ref={scrollRef} keyboardShouldPersistTaps="handled">
-        {/* 1. Profile Card — always visible */}
+        {/* 1. Profile Card — always visible, tappable to edit */}
         <ProfileCard />
 
         {/* 2. Badges — collapsible */}
         <BadgesSection />
 
-        {/* 3. Profile — biometrics */}
-        <View style={styles.collapsibleCard}>
+        {/* 3. Nutrition Goals — merged Goals, Macros, Water Goal */}
+        <View
+          style={styles.collapsibleCard}
+          onLayout={(e) => setNutritionGoalsSectionY(e.nativeEvent.layout.y)}
+        >
           <TouchableOpacity
             style={styles.collapsibleHeader}
-            onPress={() => setProfileExpanded((v) => !v)}
+            onPress={() => setNutritionGoalsExpanded((v) => !v)}
             activeOpacity={0.7}
           >
             <View style={styles.collapsibleHeaderLeft}>
               <Ionicons
-                name={profileExpanded ? 'chevron-down' : 'chevron-forward'}
+                name={nutritionGoalsExpanded ? 'chevron-down' : 'chevron-forward'}
                 size={18}
                 color={colors.textSecondary}
               />
-              <Text style={styles.sectionTitle}>Profile</Text>
+              <Text style={styles.sectionTitle}>Nutrition Goals</Text>
             </View>
           </TouchableOpacity>
-          {profileExpanded && <ProfileSection />}
-        </View>
+          {nutritionGoalsExpanded && (
+            <View>
+              {/* Goals & Calorie Target */}
+              <GoalsSection activityMode={activityMode} onActivityModeChange={setActivityMode} />
 
-        {/* 4. Goals & Calorie Target */}
-        <View style={styles.collapsibleCard} onLayout={(e) => setGoalsSectionY(e.nativeEvent.layout.y)}>
-          <TouchableOpacity
-            style={styles.collapsibleHeader}
-            onPress={() => setGoalsExpanded((v) => !v)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.collapsibleHeaderLeft}>
-              <Ionicons
-                name={goalsExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={18}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.sectionTitle}>Goals &amp; Calorie Target</Text>
-            </View>
-          </TouchableOpacity>
-          {goalsExpanded && (
-            <GoalsSection activityMode={activityMode} onActivityModeChange={setActivityMode} />
-          )}
-        </View>
+              {/* Divider */}
+              <View style={styles.divider} />
 
-        {/* 5. Macros */}
-        <View style={styles.collapsibleCard}>
-          <TouchableOpacity
-            style={styles.collapsibleHeader}
-            onPress={() => setMacroExpanded((v) => !v)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.collapsibleHeaderLeft}>
-              <Ionicons
-                name={macroExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={18}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.sectionTitle}>Macros</Text>
-            </View>
-          </TouchableOpacity>
-          {macroExpanded && (
-            <MacroSection goalCalories={adjustedGoalCalories} activityAdjusted={activityAdjusted} />
-          )}
-        </View>
+              {/* Macros */}
+              <MacroSection goalCalories={adjustedGoalCalories} activityAdjusted={activityAdjusted} />
 
-        {/* 6. Daily Water Goal */}
-        <View style={styles.collapsibleCard}>
-          <TouchableOpacity
-            style={styles.collapsibleHeader}
-            onPress={() => setWaterGoalExpanded((v) => !v)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.collapsibleHeaderLeft}>
-              <Ionicons
-                name={waterGoalExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={18}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.sectionTitle}>Daily Water Goal</Text>
-            </View>
-          </TouchableOpacity>
-          {waterGoalExpanded && (
-            <View style={{ padding: Spacing.md, paddingTop: 0 }}>
-              <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
-                Auto-calculates from your weight and activity level. Switch to Manual to set a custom goal.
-              </Text>
-              <View style={styles.toggle}>
-                {(['auto', 'manual'] as const).map((mode) => (
-                  <TouchableOpacity
-                    key={mode}
-                    style={[styles.toggleOption, waterGoalMode === mode && styles.toggleOptionActive]}
-                    onPress={() => dispatch({ type: 'SET_WATER_GOAL_MODE', mode })}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.toggleText, waterGoalMode === mode && styles.toggleTextActive]}>
-                      {mode === 'auto' ? 'Auto' : 'Manual'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              {/* Divider */}
+              <View style={styles.divider} />
 
-              {waterGoalMode === 'auto' && (
-                <View style={{ marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <View style={{ flex: 1, marginRight: Spacing.md }}>
-                    <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Creatine Adjustment</Text>
-                    <Text style={[styles.settingDescription, { marginBottom: 0 }]}>
-                      Adds +{preferences.unit === 'lbs' ? '16 oz' : '500 mL'} to your daily goal.
-                    </Text>
-                  </View>
-                  <View style={[styles.toggle, { width: 100 }]}>
-                    {([false, true] as const).map((val) => (
-                      <TouchableOpacity
-                        key={String(val)}
-                        style={[styles.toggleOption, (preferences.waterCreatineAdjustment ?? false) === val && styles.toggleOptionActive]}
-                        onPress={() => dispatch({ type: 'SET_WATER_CREATINE', enabled: val })}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={[styles.toggleText, (preferences.waterCreatineAdjustment ?? false) === val && styles.toggleTextActive]}>
-                          {val ? 'On' : 'Off'}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+              {/* Daily Water Goal */}
+              <View style={{ padding: Spacing.md, paddingTop: 0 }}>
+                <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Daily Water Goal</Text>
+                <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
+                  Auto-calculates from your weight and activity level. Switch to Manual to set a custom goal.
+                </Text>
+                <View style={styles.toggle}>
+                  {(['auto', 'manual'] as const).map((mode) => (
+                    <TouchableOpacity
+                      key={mode}
+                      style={[styles.toggleOption, waterGoalMode === mode && styles.toggleOptionActive]}
+                      onPress={() => dispatch({ type: 'SET_WATER_GOAL_MODE', mode })}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.toggleText, waterGoalMode === mode && styles.toggleTextActive]}>
+                        {mode === 'auto' ? 'Auto' : 'Manual'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              )}
 
-              {waterGoalMode === 'manual' && (
-                <View style={{ marginTop: Spacing.md, flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
-                  <TextInput
-                    style={[styles.toggleOption, {
-                      flex: 1,
-                      backgroundColor: colors.background,
-                      borderRadius: Radius.sm,
-                      paddingHorizontal: Spacing.md,
-                      paddingVertical: Spacing.sm,
-                      ...Typography.body,
-                      color: colors.text,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                    }]}
-                    value={waterGoalInput}
-                    onChangeText={setWaterGoalInput}
-                    placeholder={`e.g. ${preferences.unit === 'lbs' ? '100' : '3000'} ${preferences.unit === 'lbs' ? 'oz' : 'mL'}`}
-                    placeholderTextColor={colors.textSecondary}
-                    keyboardType="number-pad"
-                    returnKeyType="done"
-                    onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
-                  />
-                  <TouchableOpacity
-                    style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }, waterGoalSaved && { backgroundColor: '#2E7D32' }]}
-                    onPress={() => {
-                      const val = parseInt(waterGoalInput, 10);
-                      if (waterGoalInput.trim() === '') {
-                        dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: undefined });
-                        setWaterGoalSaved(true);
-                        if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
-                        waterGoalSavedTimerRef.current = setTimeout(() => setWaterGoalSaved(false), 1200);
-                      } else if (!isNaN(val) && val > 0) {
-                        dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: val });
-                        setWaterGoalSaved(true);
-                        if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
-                        waterGoalSavedTimerRef.current = setTimeout(() => setWaterGoalSaved(false), 1200);
-                      } else {
-                        Alert.alert('Invalid', 'Please enter a positive number.');
-                      }
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={[styles.toggleText, styles.toggleTextActive]}>{waterGoalSaved ? 'Saved!' : 'Save'}</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
-        </View>
+                {waterGoalMode === 'auto' && (
+                  <View style={{ marginTop: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flex: 1, marginRight: Spacing.md }}>
+                      <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Creatine Adjustment</Text>
+                      <Text style={[styles.settingDescription, { marginBottom: 0 }]}>
+                        Adds +{preferences.unit === 'lbs' ? '16 oz' : '500 mL'} to your daily goal.
+                      </Text>
+                    </View>
+                    <View style={[styles.toggle, { width: 100 }]}>
+                      {([false, true] as const).map((val) => (
+                        <TouchableOpacity
+                          key={String(val)}
+                          style={[styles.toggleOption, (preferences.waterCreatineAdjustment ?? false) === val && styles.toggleOptionActive]}
+                          onPress={() => dispatch({ type: 'SET_WATER_CREATINE', enabled: val })}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={[styles.toggleText, (preferences.waterCreatineAdjustment ?? false) === val && styles.toggleTextActive]}>
+                            {val ? 'On' : 'Off'}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
 
-        {/* 7. Appearance */}
-        <View style={styles.collapsibleCard}>
-          <TouchableOpacity
-            style={styles.collapsibleHeader}
-            onPress={() => setAppearanceExpanded((v) => !v)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.collapsibleHeaderLeft}>
-              <Ionicons
-                name={appearanceExpanded ? 'chevron-down' : 'chevron-forward'}
-                size={18}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.sectionTitle}>Appearance</Text>
-            </View>
-          </TouchableOpacity>
-          {appearanceExpanded && (
-            <View style={{ padding: Spacing.md, paddingTop: 0 }}>
-              <AppearanceModePicker />
-              <View style={{ marginTop: Spacing.md }}>
-                <ThemeColorPicker />
+                {waterGoalMode === 'manual' && (
+                  <View style={{ marginTop: Spacing.md, flexDirection: 'row', gap: Spacing.sm, alignItems: 'center' }}>
+                    <TextInput
+                      style={[styles.toggleOption, {
+                        flex: 1,
+                        backgroundColor: colors.background,
+                        borderRadius: Radius.sm,
+                        paddingHorizontal: Spacing.md,
+                        paddingVertical: Spacing.sm,
+                        ...Typography.body,
+                        color: colors.text,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }]}
+                      value={waterGoalInput}
+                      onChangeText={setWaterGoalInput}
+                      placeholder={`e.g. ${preferences.unit === 'lbs' ? '100' : '3000'} ${preferences.unit === 'lbs' ? 'oz' : 'mL'}`}
+                      placeholderTextColor={colors.textSecondary}
+                      keyboardType="number-pad"
+                      returnKeyType="done"
+                      onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
+                    />
+                    <TouchableOpacity
+                      style={[styles.toggleOption, styles.toggleOptionActive, { paddingHorizontal: Spacing.md }, waterGoalSaved && { backgroundColor: '#2E7D32' }]}
+                      onPress={() => {
+                        const val = parseInt(waterGoalInput, 10);
+                        if (waterGoalInput.trim() === '') {
+                          dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: undefined });
+                          setWaterGoalSaved(true);
+                          if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
+                          waterGoalSavedTimerRef.current = setTimeout(() => setWaterGoalSaved(false), 1200);
+                        } else if (!isNaN(val) && val > 0) {
+                          dispatch({ type: 'SET_WATER_GOAL_OVERRIDE', amount: val });
+                          setWaterGoalSaved(true);
+                          if (waterGoalSavedTimerRef.current) clearTimeout(waterGoalSavedTimerRef.current);
+                          waterGoalSavedTimerRef.current = setTimeout(() => setWaterGoalSaved(false), 1200);
+                        } else {
+                          Alert.alert('Invalid', 'Please enter a positive number.');
+                        }
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.toggleText, styles.toggleTextActive]}>{waterGoalSaved ? 'Saved!' : 'Save'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
           )}
         </View>
 
-        {/* 8. App Settings → sub-screen */}
+        {/* 4. Appearance → tappable row → appearance-modal */}
         <TouchableOpacity
-          style={styles.appSettingsRow}
+          style={styles.navRow}
+          onPress={() => router.push('/appearance-modal')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.navRowText}>Appearance</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        {/* 5. App Settings → sub-screen */}
+        <TouchableOpacity
+          style={styles.navRow}
           onPress={() => router.push('/app-settings-modal')}
           activeOpacity={0.7}
         >
-          <Text style={styles.appSettingsText}>App Settings</Text>
+          <Text style={styles.navRowText}>App Settings</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
 

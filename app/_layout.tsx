@@ -73,6 +73,13 @@ function RootNavigator() {
           headerShadowVisible: false,
         }}
       />
+      <Stack.Screen
+        name="appearance-modal"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
