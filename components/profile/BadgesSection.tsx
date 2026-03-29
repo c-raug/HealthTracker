@@ -14,6 +14,7 @@ import {
 
 interface BadgeInfo {
   label: string;
+  icon: keyof typeof Ionicons.glyphMap;
   streak: StreakResult;
 }
 
@@ -55,7 +56,7 @@ const makeStyles = (colors: typeof LightColors) =>
     streakPill: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 2,
+      gap: 4,
     },
     flameText: {
       fontSize: 14,
@@ -122,10 +123,10 @@ export default function BadgesSection() {
       : null;
 
   const badges: BadgeInfo[] = [
-    { label: 'Food', streak: foodStreak(nutritionLog) },
-    { label: 'Calorie Goal', streak: calorieGoalStreak(nutritionLog, calorieTarget) },
-    { label: 'Weight', streak: weightStreak(entries) },
-    { label: 'Activity', streak: activityStreak(activityLog) },
+    { label: 'Food', icon: 'restaurant-outline', streak: foodStreak(nutritionLog) },
+    { label: 'Calorie Goal', icon: 'flame-outline', streak: calorieGoalStreak(nutritionLog, calorieTarget) },
+    { label: 'Weight', icon: 'scale-outline', streak: weightStreak(entries) },
+    { label: 'Activity', icon: 'walk-outline', streak: activityStreak(activityLog) },
   ];
 
   return (
@@ -149,6 +150,7 @@ export default function BadgesSection() {
         <View style={styles.collapsedRow}>
           {badges.map((b) => (
             <View key={b.label} style={styles.streakPill}>
+              <Ionicons name={b.icon} size={14} color={colors.textSecondary} />
               <Text style={styles.flameText}>{'\uD83D\uDD25'}</Text>
               <Text style={styles.streakCount}>{b.streak.current}</Text>
             </View>

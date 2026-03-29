@@ -2,8 +2,8 @@ import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Keyboard } from 'react-native';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 
-const GOOGLE_FORM_ID = process.env.EXPO_PUBLIC_GOOGLE_FORM_ID ?? '';
-const GOOGLE_FORM_ENTRY = process.env.EXPO_PUBLIC_GOOGLE_FORM_ENTRY ?? '';
+const GOOGLE_FORM_ID = '1FAIpQLSd9Ul_u4gcdkK5UI68Kak-3nO7DS8xIrFsIzFmszSvYlfljgw';
+const GOOGLE_FORM_ENTRY = 'entry.1302979453';
 
 const FORM_URL = `https://docs.google.com/forms/d/e/${GOOGLE_FORM_ID}/formResponse`;
 
@@ -86,11 +86,6 @@ const FeedbackSection = forwardRef<FeedbackSectionHandle, Props>(function Feedba
   const handleSubmit = async () => {
     const trimmed = message.trim();
     if (!trimmed || submitting) return;
-
-    if (!GOOGLE_FORM_ID || !GOOGLE_FORM_ENTRY) {
-      Alert.alert('Configuration Error', 'Feedback is not configured. Please contact the developer.');
-      return;
-    }
 
     setSubmitting(true);
     const body = `${encodeURIComponent(GOOGLE_FORM_ENTRY)}=${encodeURIComponent(trimmed)}`;
