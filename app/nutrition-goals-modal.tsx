@@ -116,7 +116,6 @@ export default function NutritionGoalsModal() {
     (preferences.waterGoalOverride !== undefined ? 'manual' : 'auto');
 
   const activityMode: ActivityMode = preferences.activityMode ?? 'auto';
-  const setActivityMode = (mode: ActivityMode) => dispatch({ type: 'SET_ACTIVITY_MODE', mode });
 
   const profile = preferences.profile;
   const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
@@ -186,7 +185,7 @@ export default function NutritionGoalsModal() {
         <ScrollView style={styles.scrollContent} ref={scrollRef} keyboardShouldPersistTaps="handled">
           {/* Goals & Calorie Target */}
           <View style={styles.card}>
-            <GoalsSection activityMode={activityMode} onActivityModeChange={setActivityMode} />
+            <GoalsSection />
           </View>
 
           {/* Macros */}
