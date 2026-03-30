@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { ActivityLevel, ActivityMode, WeightGoal } from '../../types';
+import { ActivityLevel, WeightGoal } from '../../types';
 import InfoModal from '../InfoModal';
 
 const ACTIVITY_LABELS: { value: ActivityLevel; label: string }[] = [
@@ -29,29 +29,6 @@ const ACTIVITY_INFO: Record<ActivityLevel, string> = {
   active: 'Hard exercise 6–7 days/week or a physically demanding job. Calorie multiplier: ×1.725',
   very_active: 'Very hard exercise daily or twice a day; athlete-level training. Calorie multiplier: ×1.9',
 };
-
-const ACTIVITY_MODE_INFO: Record<ActivityMode, { title: string; description: string }> = {
-  auto: {
-    title: 'Auto Mode',
-    description:
-      "Your activity level multiplier is built into your daily calorie target. Exercise you log on the Activity tab is tracked for reference only — it won't increase your calorie target. Best for people with a consistent activity routine.",
-  },
-  manual: {
-    title: 'Manual Mode',
-    description:
-      'Your base calorie target assumes a sedentary lifestyle. Every workout and step count you log on the Activity tab is added directly to your daily calorie target. Best for people with variable activity day to day.',
-  },
-  smartwatch: {
-    title: 'Smart Watch Mode',
-    description:
-      'Your base calorie target assumes a sedentary lifestyle. Enter the total calories burned from your smart watch each day on the Activity tab, and that amount is added to your calorie target.',
-  },
-};
-
-interface GoalsSectionProps {
-  activityMode: ActivityMode;
-  onActivityModeChange: (mode: ActivityMode) => void;
-}
 
 // ─── Weight goal drum constants ───────────────────────────────────────────────
 const ITEM_HEIGHT = 44;
@@ -100,74 +77,6 @@ const makeStyles = (colors: typeof LightColors) =>
     infoIcon: {
       padding: Spacing.xs,
     },
-    disabledNote: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      fontStyle: 'italic',
-      marginTop: -Spacing.xs,
-      marginBottom: Spacing.md,
-    },
-    modeDescription: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      lineHeight: 18,
-      marginBottom: Spacing.sm,
-    },
-    modeRow: {
-      gap: Spacing.xs,
-      marginBottom: Spacing.sm,
-    },
-    modePillRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: Spacing.sm,
-      marginBottom: Spacing.xs,
-    },
-    modePill: {
-      flex: 1,
-      backgroundColor: colors.background,
-      borderRadius: Radius.sm,
-      paddingVertical: Spacing.sm,
-      paddingHorizontal: Spacing.md,
-      alignItems: 'center',
-    },
-    modePillActive: {
-      backgroundColor: colors.primary,
-    },
-    modePillText: {
-      ...Typography.small,
-      color: colors.textSecondary,
-      fontWeight: '600',
-    },
-    modePillTextActive: {
-      color: colors.white,
-    },
-    warningBanner: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: Spacing.xs,
-      backgroundColor: colors.dangerLight,
-      borderRadius: Radius.sm,
-      padding: Spacing.sm,
-      marginBottom: Spacing.md,
-    },
-    warningText: {
-      ...Typography.small,
-      color: colors.danger,
-      flex: 1,
-      lineHeight: 17,
-    },
-    infoBanner: {
-      backgroundColor: colors.primaryLight,
-      borderRadius: Radius.sm,
-      padding: Spacing.sm,
-      marginBottom: Spacing.md,
-    },
-    infoText: {
-      ...Typography.small,
-      color: colors.primary,
-      lineHeight: 17,
-    },
     // Weight goal drum picker
     drumWrapper: {
       alignItems: 'center',
@@ -208,13 +117,14 @@ const makeStyles = (colors: typeof LightColors) =>
     },
   });
 
-export default function GoalsSection({ activityMode, onActivityModeChange }: GoalsSectionProps) {
+export default function GoalsSection() {
   const { preferences, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
 
   const profile = preferences.profile;
   const isImperial = preferences.unit === 'lbs';
+  const activityMode = preferences.activityMode ?? 'auto';
   const activityLevelActive = activityMode === 'auto';
 
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
@@ -224,7 +134,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
     profile?.weightGoal ?? 'maintain',
   );
   const [infoModal, setInfoModal] = useState<{ title: string; description: string } | null>(null);
-  const [modeInfoModal, setModeInfoModal] = useState<{ title: string; description: string } | null>(null);
 
   const goalScrollRef = useRef<ScrollView>(null);
 
@@ -293,12 +202,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const modeLabels: Record<ActivityMode, string> = {
-    auto: 'Auto',
-    manual: 'Manual',
-    smartwatch: 'Smart Watch',
-  };
-
   return (
     <View style={styles.card}>
       {/* Weight Goal */}
@@ -333,57 +236,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
           </ScrollView>
         </View>
       </View>
-
-      {/* Activity Tracking Mode */}
-      <Text style={styles.inputLabel}>Activity Tracking Mode</Text>
-      <Text style={styles.modeDescription}>
-        Choose how your activity is factored into your calorie target.
-      </Text>
-      <View style={styles.modeRow}>
-        {(['auto', 'manual', 'smartwatch'] as ActivityMode[]).map((mode) => (
-          <View key={mode} style={styles.modePillRow}>
-            <TouchableOpacity
-              style={[styles.modePill, activityMode === mode && styles.modePillActive]}
-              onPress={() => onActivityModeChange(mode)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.modePillText, activityMode === mode && styles.modePillTextActive]}>
-                {modeLabels[mode]}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setModeInfoModal(ACTIVITY_MODE_INFO[mode])}
-              style={styles.infoIcon}
-              hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-              activeOpacity={0.6}
-            >
-              <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-      {activityMode === 'auto' && (
-        <View style={styles.warningBanner}>
-          <Ionicons name="warning-outline" size={14} color={colors.danger} />
-          <Text style={styles.warningText}>
-            In Auto mode, activities logged on the Activity tab are for reference only and do not count toward your calorie target.
-          </Text>
-        </View>
-      )}
-      {activityMode === 'manual' && (
-        <View style={styles.infoBanner}>
-          <Text style={styles.infoText}>
-            Log all your workouts on the Activity tab for an accurate calorie target. No activity is assumed in your base calculation.
-          </Text>
-        </View>
-      )}
-      {activityMode === 'smartwatch' && (
-        <View style={styles.infoBanner}>
-          <Text style={styles.infoText}>
-            Enter your smart watch's daily calorie burn on the Activity tab. No activity is assumed in your base calculation.
-          </Text>
-        </View>
-      )}
 
       {/* Activity Level — only shown in Auto mode */}
       {activityLevelActive && (
@@ -420,12 +272,6 @@ export default function GoalsSection({ activityMode, onActivityModeChange }: Goa
         title={infoModal?.title ?? ''}
         description={infoModal?.description ?? ''}
         onClose={() => setInfoModal(null)}
-      />
-      <InfoModal
-        visible={modeInfoModal !== null}
-        title={modeInfoModal?.title ?? ''}
-        description={modeInfoModal?.description ?? ''}
-        onClose={() => setModeInfoModal(null)}
       />
     </View>
   );

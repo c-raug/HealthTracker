@@ -7,8 +7,8 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { convertWeight } from '../../utils/unitConversion';
-import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
-import { UserProfile, Sex } from '../../types';
+import { UserProfile, Sex, ActivityMode } from '../../types';
+import InfoModal from '../InfoModal';
 
 const AVATAR_SIZE = 72;
 const AVATAR_PATH = (FileSystem.documentDirectory ?? '') + 'avatar.jpg';
@@ -231,6 +231,38 @@ const makeStyles = (colors: typeof LightColors) =>
     iosPicker: {
       height: 200,
     },
+    modeRow: {
+      gap: Spacing.xs,
+      marginBottom: Spacing.md,
+    },
+    modePillRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      marginBottom: Spacing.xs,
+    },
+    modePill: {
+      flex: 1,
+      backgroundColor: colors.background,
+      borderRadius: Radius.sm,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      alignItems: 'center',
+    },
+    modePillActive: {
+      backgroundColor: colors.primary,
+    },
+    modePillText: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      fontWeight: '600',
+    },
+    modePillTextActive: {
+      color: colors.white,
+    },
+    modeInfoIcon: {
+      padding: Spacing.xs,
+    },
   });
 
 const ACTIVITY_LEVEL_OPTIONS: { value: string; label: string }[] = [
@@ -240,6 +272,30 @@ const ACTIVITY_LEVEL_OPTIONS: { value: string; label: string }[] = [
   { value: 'active', label: 'Active' },
   { value: 'very_active', label: 'Very Active' },
 ];
+
+const ACTIVITY_MODE_LABELS: Record<ActivityMode, string> = {
+  auto: 'Auto',
+  manual: 'Manual',
+  smartwatch: 'Smart Watch',
+};
+
+const ACTIVITY_MODE_INFO: Record<ActivityMode, { title: string; description: string }> = {
+  auto: {
+    title: 'Auto Mode',
+    description:
+      "Your activity level multiplier is built into your daily calorie target. Exercise you log on the Activity tab is tracked for reference only — it won't increase your calorie target. Best for people with a consistent activity routine.",
+  },
+  manual: {
+    title: 'Manual Mode',
+    description:
+      'Your base calorie target assumes a sedentary lifestyle. Every workout and step count you log on the Activity tab is added directly to your daily calorie target. Best for people with variable activity day to day.',
+  },
+  smartwatch: {
+    title: 'Smart Watch Mode',
+    description:
+      'Your base calorie target assumes a sedentary lifestyle. Enter the total calories burned from your smart watch each day on the Activity tab, and that amount is added to your calorie target.',
+  },
+};
 
 export default function ProfileCard() {
   const { preferences, entries, dispatch } = useApp();
@@ -258,6 +314,10 @@ export default function ProfileCard() {
   const [heightIn, setHeightIn] = useState('');
   const [heightCm, setHeightCm] = useState('');
   const [activityLevel, setActivityLevel] = useState(profile?.activityLevel ?? 'moderately_active');
+  const [activityMode, setActivityModeState] = useState<ActivityMode>(
+    preferences.activityMode ?? 'auto',
+  );
+  const [modeInfoModal, setModeInfoModal] = useState<{ title: string; description: string } | null>(null);
 
   const isImperial = preferences.unit === 'lbs';
 
@@ -268,12 +328,18 @@ export default function ProfileCard() {
     }
   }, [preferences.avatarUri]);
 
+  const handleActivityModeChange = (mode: ActivityMode) => {
+    setActivityModeState(mode);
+    dispatch({ type: 'SET_ACTIVITY_MODE', mode });
+  };
+
   // Sync edit form when profile changes externally
   useEffect(() => {
     setName(profile?.name ?? '');
     setDob(profile?.dob ?? null);
     setSex(profile?.sex ?? 'male');
     setActivityLevel(profile?.activityLevel ?? 'moderately_active');
+    setActivityModeState(preferences.activityMode ?? 'auto');
     if (profile) {
       if (profile.heightUnit === 'in') {
         setHeightFt(Math.floor(profile.heightValue / 12).toString());
@@ -333,22 +399,16 @@ export default function ProfileCard() {
     ? convertWeight(latestWeight.weight, latestWeight.unit, displayUnit)
     : null;
 
-  // Calorie target
-  const resolvedAge = profile?.dob ? ageFromDob(profile.dob) : (profile?.age ?? null);
-  const calorieTarget =
-    profile && latestWeight && resolvedAge !== null
-      ? calculateDailyCalories(
-          latestWeight.weight,
-          latestWeight.unit,
-          profile.heightValue,
-          profile.heightUnit,
-          resolvedAge,
-          profile.sex,
-          profile.activityLevel,
-          profile.weightGoal,
-          preferences.activityMode ?? 'auto',
-        )
-      : null;
+  // Height display
+  const displayHeight = (() => {
+    if (!profile?.heightValue) return null;
+    if (profile.heightUnit === 'in') {
+      const ft = Math.floor(profile.heightValue / 12);
+      const inches = profile.heightValue % 12;
+      return `${ft}'${inches}"`;
+    }
+    return `${profile.heightValue} cm`;
+  })();
 
   const initials = getInitials();
 
@@ -443,15 +503,15 @@ export default function ProfileCard() {
         >
           <Text style={styles.nameText}>{profile?.name || 'Your Profile'}</Text>
           <View style={styles.statRow}>
+            {displayHeight !== null && (
+              <Text style={styles.statItem}>{displayHeight}</Text>
+            )}
             {currentWeight !== null && (
               <Text style={styles.statItem}>
                 {currentWeight} {displayUnit}
               </Text>
             )}
-            {calorieTarget !== null && (
-              <Text style={styles.statItem}>{calorieTarget} cal</Text>
-            )}
-            {profile?.activityLevel && (
+            {(preferences.activityMode ?? 'auto') === 'auto' && profile?.activityLevel && (
               <Text style={styles.statItem}>
                 {ACTIVITY_LABELS[profile.activityLevel] ?? profile.activityLevel}
               </Text>
@@ -563,22 +623,52 @@ export default function ProfileCard() {
             </View>
           )}
 
-          {/* Activity Level */}
-          <Text style={styles.inputLabel}>Activity Level</Text>
-          <View style={styles.activityGrid}>
-            {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[styles.activityBtn, activityLevel === opt.value && styles.activityBtnActive]}
-                onPress={() => setActivityLevel(opt.value)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.activityBtnText, activityLevel === opt.value && styles.activityBtnTextActive]}>
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
+          {/* Activity Tracking Mode */}
+          <Text style={styles.inputLabel}>Activity Tracking Mode</Text>
+          <View style={styles.modeRow}>
+            {(['auto', 'manual', 'smartwatch'] as ActivityMode[]).map((mode) => (
+              <View key={mode} style={styles.modePillRow}>
+                <TouchableOpacity
+                  style={[styles.modePill, activityMode === mode && styles.modePillActive]}
+                  onPress={() => handleActivityModeChange(mode)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.modePillText, activityMode === mode && styles.modePillTextActive]}>
+                    {ACTIVITY_MODE_LABELS[mode]}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setModeInfoModal(ACTIVITY_MODE_INFO[mode])}
+                  style={styles.modeInfoIcon}
+                  hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
+
+          {/* Activity Level — only shown in Auto mode */}
+          {activityMode === 'auto' && (
+            <>
+              <Text style={styles.inputLabel}>Activity Level</Text>
+              <View style={styles.activityGrid}>
+                {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[styles.activityBtn, activityLevel === opt.value && styles.activityBtnActive]}
+                    onPress={() => setActivityLevel(opt.value)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.activityBtnText, activityLevel === opt.value && styles.activityBtnTextActive]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
           {/* Save / Cancel */}
           <View style={styles.saveRow}>
@@ -639,6 +729,13 @@ export default function ProfileCard() {
           <View style={{ height: Spacing.md }} />
         </ScrollView>
       )}
+
+      <InfoModal
+        visible={modeInfoModal !== null}
+        title={modeInfoModal?.title ?? ''}
+        description={modeInfoModal?.description ?? ''}
+        onClose={() => setModeInfoModal(null)}
+      />
     </View>
   );
 }
