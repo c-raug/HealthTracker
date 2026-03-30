@@ -8,8 +8,8 @@ import { formatShortDate, getToday } from '../utils/dateUtils';
 import { convertWeight } from '../utils/unitConversion';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-// 16px scrollview padding + 16px card margin, each side = 64px total
-const CHART_WIDTH = SCREEN_WIDTH - Spacing.md * 4;
+// 16px scrollview padding each side = 32px total
+const CHART_WIDTH = SCREEN_WIDTH - Spacing.md * 2;
 
 type TimeRange = '1W' | '1M' | '3M' | '1Y' | 'All';
 
@@ -28,8 +28,7 @@ function getDaysForRange(range: TimeRange): number | null {
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: {
     backgroundColor: colors.card,
-    margin: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginVertical: Spacing.sm,
     borderRadius: Radius.lg,
     paddingVertical: Spacing.md,
     overflow: 'hidden',
@@ -94,8 +93,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   },
   placeholder: {
     backgroundColor: colors.card,
-    margin: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginVertical: Spacing.sm,
     borderRadius: Radius.lg,
     padding: Spacing.xl,
     alignItems: 'center',

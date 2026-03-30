@@ -24,7 +24,6 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
       padding: Spacing.md,
-      marginHorizontal: Spacing.md,
       marginBottom: Spacing.sm,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
