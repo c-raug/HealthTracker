@@ -10,6 +10,7 @@ import ProfileCard from '../../components/profile/ProfileCard';
 import BadgesSection from '../../components/profile/BadgesSection';
 import GoalsSection from '../../components/settings/GoalsSection';
 import MacroSection from '../../components/settings/MacroSection';
+import FeedbackSection, { FeedbackSectionHandle } from '../../components/settings/FeedbackSection';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: {
@@ -125,7 +126,9 @@ export default function SettingsScreen() {
   const { focusActivityMode, focusFeedback } = useLocalSearchParams<{ focusActivityMode?: string; focusFeedback?: string }>();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  const feedbackRef = useRef<FeedbackSectionHandle>(null);
   const [nutritionGoalsSectionY, setNutritionGoalsSectionY] = useState(0);
+  const [feedbackSectionY, setFeedbackSectionY] = useState(0);
 
   const [nutritionGoalsExpanded, setNutritionGoalsExpanded] = useState(false);
   const [waterGoalSaved, setWaterGoalSaved] = useState(false);
@@ -161,11 +164,16 @@ export default function SettingsScreen() {
     };
   }, []);
 
-  // When deep-linked with focusFeedback, redirect to app-settings-modal
+  // When deep-linked with focusFeedback, scroll to and focus the feedback section inline
   useEffect(() => {
     if (focusFeedback) {
       router.setParams({ focusFeedback: undefined });
-      router.push({ pathname: '/app-settings-modal', params: { focusFeedback: '1' } });
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: feedbackSectionY, animated: true });
+      }, 150);
+      setTimeout(() => {
+        feedbackRef.current?.focus();
+      }, 350);
     }
   }, [focusFeedback]);
 
@@ -386,6 +394,20 @@ export default function SettingsScreen() {
           <Text style={styles.navRowText}>App Settings</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
+
+        {/* 6. Send Feedback */}
+        <View
+          style={styles.collapsibleCard}
+          onLayout={(e) => setFeedbackSectionY(e.nativeEvent.layout.y)}
+        >
+          <View style={{ padding: Spacing.md }}>
+            <FeedbackSection ref={feedbackRef} onFocusInput={() => {
+              setTimeout(() => {
+                scrollRef.current?.scrollTo({ y: feedbackSectionY, animated: true });
+              }, 150);
+            }} />
+          </View>
+        </View>
 
         {/* Footer */}
         <Text style={styles.footer}>HealthTracker v{(require('../../app.json') as { expo: { version: string } }).expo.version}</Text>

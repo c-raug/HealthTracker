@@ -16,7 +16,7 @@ function RootNavigator() {
     if (isLoading) return;
 
     const onboardingComplete = preferences.onboardingComplete === true;
-    const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal' || segments[0] === 'create-meal-modal' || segments[0] === 'app-settings-modal';
+    const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal' || segments[0] === 'create-meal-modal' || segments[0] === 'app-settings-modal' || segments[0] === 'appearance-modal';
 
     if (onboardingComplete && !inApp) {
       const tab = preferences.defaultTab ?? 'nutrition';

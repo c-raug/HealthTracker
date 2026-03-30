@@ -20,7 +20,7 @@ function FeedbackHeaderButton() {
   const colors = useColors();
   return (
     <TouchableOpacity
-      onPress={() => router.push({ pathname: '/app-settings-modal', params: { focusFeedback: '1' } })}
+      onPress={() => router.push({ pathname: '/(tabs)/settings', params: { focusFeedback: '1' } })}
       style={{ marginRight: 8, padding: 4 }}
       activeOpacity={0.7}
     >
