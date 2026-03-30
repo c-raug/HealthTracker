@@ -1,11 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
-import FeedbackSection, { FeedbackSectionHandle } from '../components/settings/FeedbackSection';
 import { saveBackup } from '../storage/backupStorage';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
@@ -88,20 +85,7 @@ export default function AppSettingsModal() {
   const { preferences, entries, nutritionLog, customFoods, savedMeals, activityLog, waterLog, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { focusFeedback } = useLocalSearchParams<{ focusFeedback?: string }>();
   const scrollRef = useRef<ScrollView>(null);
-  const feedbackRef = useRef<FeedbackSectionHandle>(null);
-
-  useEffect(() => {
-    if (focusFeedback) {
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 150);
-      setTimeout(() => {
-        feedbackRef.current?.focus();
-      }, 350);
-    }
-  }, [focusFeedback]);
 
   const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
 
@@ -206,14 +190,6 @@ export default function AppSettingsModal() {
             </TouchableOpacity>
           </View>
 
-          {/* Send Feedback */}
-          <View style={styles.card}>
-            <FeedbackSection ref={feedbackRef} onFocusInput={() => {
-              setTimeout(() => {
-                scrollRef.current?.scrollToEnd({ animated: true });
-              }, 150);
-            }} />
-          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
