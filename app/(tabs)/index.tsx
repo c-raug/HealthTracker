@@ -12,6 +12,7 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
+  useColorScheme,
 } from 'react-native';
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -172,6 +173,8 @@ export default function WeightScreen() {
   const { entries, preferences, dispatch, isLoading, selectedDate } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const systemScheme = useColorScheme();
+  const resolvedScheme: 'light' | 'dark' = preferences.appearanceMode === 'light' ? 'light' : preferences.appearanceMode === 'dark' ? 'dark' : (systemScheme ?? 'light');
 
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
@@ -392,6 +395,7 @@ export default function WeightScreen() {
                 maximumDate={maximumDate}
                 onChange={handleDatePickerChange}
                 style={styles.iosPicker}
+                themeVariant={resolvedScheme}
               />
             </View>
           </View>

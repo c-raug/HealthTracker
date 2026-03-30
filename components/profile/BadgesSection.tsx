@@ -138,7 +138,7 @@ export default function BadgesSection() {
       : null;
 
   const badges: BadgeInfo[] = [
-    { label: 'Calorie Goal', shortLabel: 'Calories', icon: 'flame-outline', emoji: '🎯', streak: calorieGoalStreak(nutritionLog, calorieTarget) },
+    { label: 'Calorie Goal', shortLabel: 'Calories', icon: 'trophy-outline', emoji: '🎯', streak: calorieGoalStreak(nutritionLog, calorieTarget) },
     { label: 'Weight', shortLabel: 'Weight', icon: 'scale-outline', emoji: '🔥', streak: weightStreak(entries) },
     { label: 'Food', shortLabel: 'Food', icon: 'restaurant-outline', emoji: '🔥', streak: foodStreak(nutritionLog) },
     { label: 'Activity', shortLabel: 'Activity', icon: 'walk-outline', emoji: '🔥', streak: activityStreak(activityLog) },
