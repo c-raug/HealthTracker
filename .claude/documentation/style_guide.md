@@ -17,7 +17,8 @@
 9. [Component Patterns](#9-component-patterns)
 10. [Icons](#10-icons)
 11. [Fixed Color Rules](#11-fixed-color-rules)
-12. [Drag-to-Reorder Pattern](#12-drag-to-reorder-pattern)
+12. [Modal Sub-Screen Header](#12-modal-sub-screen-header)
+13. [Drag-to-Reorder Pattern](#13-drag-to-reorder-pattern)
 
 ---
 
@@ -750,11 +751,59 @@ These rules are absolute and must never be violated:
 
 ---
 
-## 12. Drag-to-Reorder Pattern
+## 12. Modal Sub-Screen Header
+
+All modal sub-screens (Appearance, Nutrition Goals, App Settings) use an identical header bar with a back chevron and title. This pattern must be followed exactly for any new modal sub-screen.
+
+### Header Styles
+
+```typescript
+header: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: Spacing.md,
+  paddingVertical: Spacing.md,
+  backgroundColor: colors.card,
+  borderBottomWidth: StyleSheet.hairlineWidth,
+  borderBottomColor: colors.border,
+},
+headerTitle: {
+  ...Typography.h2,
+  color: colors.text,
+  marginLeft: Spacing.sm,
+},
+```
+
+### Header JSX
+
+```typescript
+<View style={styles.header}>
+  <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+    <Ionicons name="chevron-back" size={28} color={colors.text} />
+  </TouchableOpacity>
+  <Text style={styles.headerTitle}>Screen Title</Text>
+</View>
+```
+
+### Key Details
+
+| Property | Value | Rationale |
+|---|---|---|
+| Vertical padding | `Spacing.md` (16px) | Adequate tap target for back button |
+| Chevron size | 28 | Larger than default (24) for easier tapping |
+| Title typography | `Typography.h2` (22px, 600) | Distinct from card headers (`Typography.h3`) |
+| Title left margin | `Spacing.sm` (8px) | Consistent gap between chevron and title |
+| Back button hitSlop | 8px all sides | Extends tap target beyond visible icon |
+| Background | `colors.card` | Matches card surfaces |
+| Bottom border | `StyleSheet.hairlineWidth` + `colors.border` | Subtle separator |
+
+---
+
+## 13. Drag-to-Reorder Pattern
 
 > **Read this entire section before touching any drag-to-reorder code.** Two bugs were introduced by violating these rules.
 
-### 12.1 Library Compatibility Rules (Critical)
+### 13.1 Library Compatibility Rules (Critical)
 
 The app uses `react-native-draggable-flatlist@^4.0.3` with RN 0.81 / React 19. This combination has a known breaking incompatibility:
 
@@ -779,7 +828,7 @@ import DraggableFlatList, {
 
 If a scrollable container is needed around the list, use a standard `ScrollView` from `react-native` — not `NestableScrollContainer`.
 
-### 12.2 Drag Activation (Critical)
+### 13.2 Drag Activation (Critical)
 
 #### ❌ NEVER use `onPressIn={drag}` on a `TouchableOpacity` drag handle
 
@@ -800,7 +849,7 @@ If a scrollable container is needed around the list, use a standard `ScrollView`
 
 `delayLongPress={100}` (100ms) is short enough to feel responsive while giving the gesture system enough time to coordinate. Do not lower this value.
 
-### 12.3 Full Drag List Pattern
+### 13.3 Full Drag List Pattern
 
 ```typescript
 import DraggableFlatList, {
@@ -850,7 +899,7 @@ dragHandle: {
 },
 ```
 
-### 12.4 Edit Mode Pattern (for Pinned Lists)
+### 13.4 Edit Mode Pattern (for Pinned Lists)
 
 When drag-to-reorder is an opt-in mode (like pinned foods/meals), use a split rendering approach:
 
@@ -902,7 +951,7 @@ return (
 
 **Why an early return instead of conditional rendering?** Conditionally mounting `DraggableFlatList` inside a `ScrollView` can still trigger the `measureLayout` error on some RN versions. A separate render path avoids this entirely.
 
-### 12.5 Where Drag-to-Reorder Is Used
+### 13.5 Where Drag-to-Reorder Is Used
 
 | Location | Type | Action |
 |---|---|---|
@@ -912,7 +961,7 @@ return (
 
 Grouped foods (saved meal groups) in `MealCategory` are **not** draggable — only ungrouped foods are.
 
-### 12.6 Edit Mode Button Styles
+### 13.6 Edit Mode Button Styles
 
 ```typescript
 editModeBtn: {
