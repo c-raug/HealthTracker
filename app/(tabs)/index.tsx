@@ -12,6 +12,7 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
+  useColorScheme,
 } from 'react-native';
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -111,14 +112,17 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Save button
+  // Save button wrapper — holds top/bottom margins so spacing is preserved
+  // whether or not the savedMessage is visible below the button
+  saveButtonArea: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xl,
+  },
   saveButton: {
     backgroundColor: colors.primary,
     borderRadius: Radius.md,
     paddingVertical: Spacing.md,
     alignItems: 'center',
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xl,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
@@ -172,6 +176,8 @@ export default function WeightScreen() {
   const { entries, preferences, dispatch, isLoading, selectedDate } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const systemScheme = useColorScheme();
+  const resolvedScheme: 'light' | 'dark' = preferences.appearanceMode === 'light' ? 'light' : preferences.appearanceMode === 'dark' ? 'dark' : (systemScheme ?? 'light');
 
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
@@ -342,18 +348,20 @@ export default function WeightScreen() {
           onSubmitEditing={handleSave}
         />
 
-        {/* Save button */}
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.saveButtonText}>Save Entry</Text>
-        </TouchableOpacity>
+        {/* Save button + confirmation message — wrapped so Spacing.xl gap before chart is preserved regardless of message visibility */}
+        <View style={styles.saveButtonArea}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSave}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.saveButtonText}>Save Entry</Text>
+          </TouchableOpacity>
 
-        {savedMessage && (
-          <Text style={styles.savedMessage}>{savedMessage}</Text>
-        )}
+          {savedMessage && (
+            <Text style={styles.savedMessage}>{savedMessage}</Text>
+          )}
+        </View>
 
         {/* History & Insights — always visible below entry */}
         <WeightChart />
@@ -392,6 +400,7 @@ export default function WeightScreen() {
                 maximumDate={maximumDate}
                 onChange={handleDatePickerChange}
                 style={styles.iosPicker}
+                themeVariant={resolvedScheme}
               />
             </View>
           </View>

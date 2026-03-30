@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   ScrollView,
   useWindowDimensions,
+  useColorScheme,
 } from 'react-native';
 import { NestableScrollContainer } from 'react-native-draggable-flatlist';
 import { useFocusEffect } from 'expo-router';
@@ -152,6 +153,8 @@ export default function NutritionScreen() {
   const profile = preferences.profile;
   const { width: windowWidth } = useWindowDimensions();
   const pagerWidth = windowWidth - Spacing.md * 2;
+  const systemScheme = useColorScheme();
+  const resolvedScheme: 'light' | 'dark' = preferences.appearanceMode === 'light' ? 'light' : preferences.appearanceMode === 'dark' ? 'dark' : (systemScheme ?? 'light');
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
@@ -438,7 +441,7 @@ export default function NutritionScreen() {
                 </View>
 
                 {/* Page 1: Calorie ring + water bottle (default) */}
-                <View style={{ width: pagerWidth }}>
+                <View style={{ width: pagerWidth, justifyContent: 'center', paddingVertical: Spacing.lg }}>
                   <View style={styles.ringRow}>
                     <CalorieRing consumed={consumed} target={calorieTarget} />
                     <WaterBottleVisual date={selectedDate} onPress={() => setWaterExpandKey((k) => k + 1)} />
@@ -526,6 +529,7 @@ export default function NutritionScreen() {
                 maximumDate={maximumDate}
                 onChange={handleDatePickerChange}
                 style={styles.iosPicker}
+                themeVariant={resolvedScheme}
               />
             </View>
           </View>
