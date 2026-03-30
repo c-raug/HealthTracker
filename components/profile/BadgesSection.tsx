@@ -14,7 +14,9 @@ import {
 
 interface BadgeInfo {
   label: string;
+  shortLabel: string;
   icon: keyof typeof Ionicons.glyphMap;
+  emoji: string;
   streak: StreakResult;
 }
 
@@ -48,15 +50,28 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     collapsedRow: {
       flexDirection: 'row',
+      justifyContent: 'space-evenly',
       alignItems: 'center',
-      gap: Spacing.md,
-      paddingHorizontal: Spacing.md,
+      paddingHorizontal: Spacing.sm,
       paddingBottom: Spacing.sm,
     },
     streakPill: {
+      flex: 1,
+      alignItems: 'center',
+      backgroundColor: colors.background,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.xs,
+      marginHorizontal: 4,
+    },
+    pillIconRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
+    },
+    pillLabel: {
+      fontSize: 10,
+      color: colors.textSecondary,
+      marginTop: 2,
     },
     flameText: {
       fontSize: 14,
@@ -123,10 +138,10 @@ export default function BadgesSection() {
       : null;
 
   const badges: BadgeInfo[] = [
-    { label: 'Food', icon: 'restaurant-outline', streak: foodStreak(nutritionLog) },
-    { label: 'Calorie Goal', icon: 'flame-outline', streak: calorieGoalStreak(nutritionLog, calorieTarget) },
-    { label: 'Weight', icon: 'scale-outline', streak: weightStreak(entries) },
-    { label: 'Activity', icon: 'walk-outline', streak: activityStreak(activityLog) },
+    { label: 'Calorie Goal', shortLabel: 'Calories', icon: 'flame-outline', emoji: '🎯', streak: calorieGoalStreak(nutritionLog, calorieTarget) },
+    { label: 'Weight', shortLabel: 'Weight', icon: 'scale-outline', emoji: '🔥', streak: weightStreak(entries) },
+    { label: 'Food', shortLabel: 'Food', icon: 'restaurant-outline', emoji: '🔥', streak: foodStreak(nutritionLog) },
+    { label: 'Activity', shortLabel: 'Activity', icon: 'walk-outline', emoji: '🔥', streak: activityStreak(activityLog) },
   ];
 
   return (
@@ -150,9 +165,12 @@ export default function BadgesSection() {
         <View style={styles.collapsedRow}>
           {badges.map((b) => (
             <View key={b.label} style={styles.streakPill}>
-              <Ionicons name={b.icon} size={14} color={colors.textSecondary} />
-              <Text style={styles.flameText}>{'\uD83D\uDD25'}</Text>
-              <Text style={styles.streakCount}>{b.streak.current}</Text>
+              <Ionicons name={b.icon} size={18} color={colors.textSecondary} />
+              <Text style={styles.pillLabel}>{b.shortLabel}</Text>
+              <View style={styles.pillIconRow}>
+                <Text style={styles.flameText}>{b.emoji}</Text>
+                <Text style={styles.streakCount}>{b.streak.current}</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -162,7 +180,7 @@ export default function BadgesSection() {
         <View style={styles.expandedContent}>
           {badges.map((b) => (
             <View key={b.label} style={styles.badgeCard}>
-              <Text style={styles.badgeIcon}>{'\uD83D\uDD25'}</Text>
+              <Text style={styles.badgeIcon}>{b.emoji}</Text>
               <View style={styles.badgeInfo}>
                 <Text style={styles.badgeLabel}>{b.label}</Text>
                 <Text style={styles.badgeStats}>
