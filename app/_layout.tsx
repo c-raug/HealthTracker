@@ -67,10 +67,7 @@ function RootNavigator() {
         name="app-settings-modal"
         options={{
           presentation: 'modal',
-          title: 'App Settings',
-          headerStyle: { backgroundColor: colors.card },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
+          headerShown: false,
         }}
       />
       <Stack.Screen

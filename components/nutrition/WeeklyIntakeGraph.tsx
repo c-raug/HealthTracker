@@ -151,9 +151,9 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
     : null;
 
   const tickCount = 3;
-  const ticks = Array.from({ length: tickCount }, (_, i) =>
+  const ticks = [...new Set(Array.from({ length: tickCount }, (_, i) =>
     Math.round((maxValue / tickCount) * (i + 1)),
-  );
+  ))];
 
   const barPositions = data.map((_, i) => ({
     x: Y_AXIS_WIDTH + SIDE_PAD + slotWidth * i + (slotWidth - barWidth) / 2,
@@ -434,6 +434,81 @@ export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit, activ
               <Text style={styles.tooltipCalories}>{Math.round(selectedDay.consumed)} {waterUnit ?? 'oz'}</Text>
             ) : (
               <Text style={styles.tooltipNoData}>No data logged</Text>
+            )}
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// ---- WeeklyActivityGraph ----
+
+const TOOLTIP_WIDTH_ACTIVITY = 130;
+
+interface ActivityGraphProps {
+  width: number;
+  activityData: DayEntry[];
+  dailyBurnGoal?: number | null;
+  activePageIndex?: number;
+}
+
+export function WeeklyActivityGraph({ width, activityData, dailyBurnGoal, activePageIndex }: ActivityGraphProps) {
+  const colors = useColors();
+  const styles = makeStyles(colors);
+  const [selectedBar, setSelectedBar] = useState<number | null>(null);
+
+  useEffect(() => {
+    setSelectedBar(null);
+  }, [activePageIndex]);
+
+  if (width === 0) return null;
+
+  const innerWidth = width - Spacing.md * 2;
+  const chartWidth = innerWidth - Y_AXIS_WIDTH - SIDE_PAD;
+  const usableWidth = chartWidth - SIDE_PAD;
+  const slotWidth = usableWidth / 7;
+  const barWidth = slotWidth * 0.55;
+
+  const selectedDay = selectedBar !== null ? activityData[selectedBar] : null;
+
+  let tooltipLeft: number | null = null;
+  let tooltipTop: number | null = null;
+  if (selectedBar !== null && selectedDay) {
+    const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * selectedBar + (slotWidth - barWidth) / 2;
+    const dataMax = Math.max(...activityData.map((d) => Math.max(d.goal, d.consumed)), 1);
+    const resolvedGoal = dailyBurnGoal != null && dailyBurnGoal > 0 ? dailyBurnGoal : (activityData.find((d) => d.goal > 0)?.goal ?? 0);
+    const maxVal = Math.max(dataMax, resolvedGoal > 0 ? resolvedGoal * 1.15 : dataMax);
+    const consumedH = Math.min((selectedDay.consumed / maxVal) * CHART_HEIGHT, CHART_HEIGHT);
+    tooltipLeft = Math.min(Math.max(x - TOOLTIP_WIDTH_ACTIVITY / 2, 0), innerWidth - TOOLTIP_WIDTH_ACTIVITY - TOOLTIP_CLAMP_BUFFER);
+    tooltipTop = Math.max(TOP_PAD + CHART_HEIGHT - consumedH - 75, 4);
+  }
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Calories Burned — 7 Days</Text>
+      </View>
+      <View>
+        <BarChart
+          data={activityData}
+          width={innerWidth}
+          fixedBarColor={colors.primary}
+          goalLine={dailyBurnGoal}
+          selectedBar={selectedBar}
+          onBarPress={(i) => setSelectedBar(selectedBar === i ? null : i)}
+          onOutsidePress={() => setSelectedBar(null)}
+        />
+        {selectedBar !== null && selectedDay && tooltipLeft !== null && tooltipTop !== null && (
+          <View style={[styles.tooltip, { left: tooltipLeft, top: tooltipTop, width: TOOLTIP_WIDTH_ACTIVITY }]}>
+            <TouchableOpacity style={styles.tooltipClose} onPress={() => setSelectedBar(null)}>
+              <Text style={styles.tooltipCloseText}>×</Text>
+            </TouchableOpacity>
+            <Text style={styles.tooltipDate}>{formatTooltipDate(selectedDay.date)}</Text>
+            {selectedDay.consumed > 0 ? (
+              <Text style={styles.tooltipCalories}>{Math.round(selectedDay.consumed)} cal</Text>
+            ) : (
+              <Text style={styles.tooltipNoData}>No activity logged</Text>
             )}
           </View>
         )}

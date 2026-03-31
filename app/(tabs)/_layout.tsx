@@ -53,7 +53,7 @@ export default function TabLayout() {
         options={{
           title: 'Weight',
           tabBarIcon: ({ color }) => (
-            <TabIcon name="barbell-outline" color={color} />
+            <TabIcon name="scale-outline" color={color} />
           ),
         }}
       />
