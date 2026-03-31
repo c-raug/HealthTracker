@@ -349,6 +349,27 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.xs,
       marginLeft: Spacing.xs,
     },
+    // Pager
+    pagerContainer: {
+      overflow: 'hidden',
+      marginBottom: Spacing.xs,
+    },
+    pageDots: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: Spacing.xs,
+      marginBottom: Spacing.sm,
+    },
+    dot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.border,
+    },
+    dotActive: {
+      backgroundColor: colors.primary,
+    },
     // iOS date picker modal
     modalOverlay: {
       flex: 1,
@@ -388,19 +409,25 @@ export default function ActivitiesScreen() {
   const styles = makeStyles(colors);
   const { width: windowWidth } = useWindowDimensions();
 
+  const pagerScrollRef = useRef<ScrollView>(null);
+  const pagerWidth = windowWidth - Spacing.md * 2;
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [exerciseCollapsed, setExerciseCollapsed] = useState(!(preferences.sectionsExpanded ?? false));
   const [stepsCollapsed, setStepsCollapsed] = useState(!(preferences.sectionsExpanded ?? false));
+  const [activePagerPage, setActivePagerPage] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
+      pagerScrollRef.current?.scrollTo({ x: 0, animated: false });
+      setActivePagerPage(0);
       return () => {
         if (!preferences.sectionsExpanded) {
           setExerciseCollapsed(true);
           setStepsCollapsed(true);
         }
       };
-    }, [preferences.sectionsExpanded]),
+    }, [preferences.sectionsExpanded, pagerWidth]),
   );
 
   // Exercise form state
@@ -656,21 +683,47 @@ export default function ActivitiesScreen() {
           </View>
         )}
 
-        {/* Calories burned summary */}
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <Ionicons name="flame" size={32} color={colors.primary} />
-            <Text style={styles.summaryCalories}>{totalBurned.toLocaleString()}</Text>
-          </View>
-          <Text style={styles.summaryLabel}>calories burned</Text>
-        </View>
+        {/* Swipeable pager: Page 0 = summary, Page 1 = weekly graph */}
+        <View style={styles.pagerContainer}>
+          <ScrollView
+            ref={pagerScrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={32}
+            contentOffset={{ x: 0, y: 0 }}
+            onMomentumScrollEnd={(e) => {
+              const page = Math.round(e.nativeEvent.contentOffset.x / pagerWidth);
+              setActivePagerPage(page);
+            }}
+          >
+            {/* Page 0: Calories burned summary */}
+            <View style={{ width: pagerWidth }}>
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryRow}>
+                  <Ionicons name="flame" size={32} color={colors.primary} />
+                  <Text style={styles.summaryCalories}>{totalBurned.toLocaleString()}</Text>
+                </View>
+                <Text style={styles.summaryLabel}>calories burned</Text>
+              </View>
+            </View>
 
-        {/* Weekly activity chart */}
-        <View style={{ marginBottom: Spacing.md }}>
-          <WeeklyActivityGraph
-            width={windowWidth - Spacing.md * 2}
-            activityData={weeklyActivityData}
-          />
+            {/* Page 1: Weekly activity graph */}
+            <View style={{ width: pagerWidth }}>
+              <WeeklyActivityGraph
+                width={pagerWidth}
+                activityData={weeklyActivityData}
+                activePageIndex={activePagerPage}
+              />
+            </View>
+          </ScrollView>
+
+          {/* Page dot indicators */}
+          <View style={styles.pageDots}>
+            {[0, 1].map((i) => (
+              <View key={i} style={[styles.dot, activePagerPage === i && styles.dotActive]} />
+            ))}
+          </View>
         </View>
 
         {activityMode === 'smartwatch' ? (
@@ -852,69 +905,66 @@ export default function ActivitiesScreen() {
           </>
         )}
 
-        {/* Activity list */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {activityMode === 'auto' ? "Today's Activities (reference)" : "Today's Activities"}
-            </Text>
-          </View>
+        {/* Activity list — only shown in manual mode */}
+        {activityMode === 'manual' && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Today's Activities</Text>
+            </View>
 
-          {!dayActivity || dayActivity.activities.length === 0 ? (
-            <Text style={styles.emptyText}>No activities logged</Text>
-          ) : (
-            dayActivity.activities.map((activity, index) => {
-              const showWarning =
-                activity.loggedWithMode !== undefined &&
-                activity.loggedWithMode !== activityMode &&
-                !activity.warningDismissed;
-              const isLast = index === dayActivity.activities.length - 1;
-              return (
-                <View key={activity.id}>
-                  <View
-                    style={[
-                      styles.activityRow,
-                      !showWarning && isLast && { borderBottomWidth: 0 },
-                    ]}
-                  >
-                    <View style={styles.activityInfo}>
-                      <Text style={styles.activityName}>{getActivityLabel(activity)}</Text>
-                      <Text style={styles.activityDetail}>{getActivityDetail(activity)}</Text>
-                    </View>
-                    {activityMode === 'auto' && (
-                      <Text style={styles.refOnlyLabel}>ref</Text>
-                    )}
-                    <Text style={activityMode === 'auto' ? styles.activityCaloriesRef : styles.activityCalories}>
-                      {activity.caloriesBurned} cal
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.deleteBtn}
-                      onPress={() => handleDelete(activity.id)}
-                      activeOpacity={0.7}
+            {!dayActivity || dayActivity.activities.length === 0 ? (
+              <Text style={styles.emptyText}>No activities logged</Text>
+            ) : (
+              dayActivity.activities.map((activity, index) => {
+                const showWarning =
+                  activity.loggedWithMode !== undefined &&
+                  activity.loggedWithMode !== activityMode &&
+                  !activity.warningDismissed;
+                const isLast = index === dayActivity.activities.length - 1;
+                return (
+                  <View key={activity.id}>
+                    <View
+                      style={[
+                        styles.activityRow,
+                        !showWarning && isLast && { borderBottomWidth: 0 },
+                      ]}
                     >
-                      <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                    </TouchableOpacity>
-                  </View>
-                  {showWarning && (
-                    <View style={[styles.activityWarningRow, isLast && { borderBottomWidth: 0 }]}>
-                      <Text style={styles.activityWarningText}>
-                        ⚠ Logged under {MODE_LABELS[activity.loggedWithMode!]} mode — data may no longer be accurate
+                      <View style={styles.activityInfo}>
+                        <Text style={styles.activityName}>{getActivityLabel(activity)}</Text>
+                        <Text style={styles.activityDetail}>{getActivityDetail(activity)}</Text>
+                      </View>
+                      <Text style={styles.activityCalories}>
+                        {activity.caloriesBurned} cal
                       </Text>
                       <TouchableOpacity
-                        style={styles.activityWarningDismiss}
-                        onPress={() => dispatch({ type: 'DISMISS_ACTIVITY_WARNING', date: selectedDate, activityId: activity.id })}
+                        style={styles.deleteBtn}
+                        onPress={() => handleDelete(activity.id)}
                         activeOpacity={0.7}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
-                        <Ionicons name="close" size={14} color={colors.danger} />
+                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
                       </TouchableOpacity>
                     </View>
-                  )}
-                </View>
-              );
-            })
-          )}
-        </View>
+                    {showWarning && (
+                      <View style={[styles.activityWarningRow, isLast && { borderBottomWidth: 0 }]}>
+                        <Text style={styles.activityWarningText}>
+                          ⚠ Logged under {MODE_LABELS[activity.loggedWithMode!]} mode — data may no longer be accurate
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.activityWarningDismiss}
+                          onPress={() => dispatch({ type: 'DISMISS_ACTIVITY_WARNING', date: selectedDate, activityId: activity.id })}
+                          activeOpacity={0.7}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Ionicons name="close" size={14} color={colors.danger} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {/* Date picker — Android */}
