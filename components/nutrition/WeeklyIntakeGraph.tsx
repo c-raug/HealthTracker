@@ -151,9 +151,9 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
     : null;
 
   const tickCount = 3;
-  const ticks = Array.from({ length: tickCount }, (_, i) =>
+  const ticks = [...new Set(Array.from({ length: tickCount }, (_, i) =>
     Math.round((maxValue / tickCount) * (i + 1)),
-  );
+  ))];
 
   const barPositions = data.map((_, i) => ({
     x: Y_AXIS_WIDTH + SIDE_PAD + slotWidth * i + (slotWidth - barWidth) / 2,
