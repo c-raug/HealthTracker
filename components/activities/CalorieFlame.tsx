@@ -2,8 +2,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 
-const FLAME_WIDTH = 120;
-const FLAME_HEIGHT = 168;
+const FLAME_WIDTH = 160;
+const FLAME_HEIGHT = 224;
 
 // Flame SVG path — viewBox "0 0 120 168"
 // Wide body at bottom, tapers to a point at top
@@ -41,17 +41,14 @@ const makeStyles = (colors: typeof LightColors) =>
       bottom: 0,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingTop: 30,
+      paddingTop: 40,
     },
     calories: {
       ...Typography.h1,
-      color: '#FFFFFF',
       fontWeight: '700',
     },
     label: {
       ...Typography.small,
-      color: '#FFFFFF',
-      opacity: 0.9,
       marginTop: Spacing.xs,
     },
   });
@@ -68,11 +65,11 @@ export default function CalorieFlame({ totalBurned }: Props) {
     <View style={styles.card}>
       <View style={styles.flameWrapper}>
         <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 120 168">
-          <Path d={FLAME_PATH} fill={colors.primary} />
+          <Path d={FLAME_PATH} fill="none" stroke={colors.primary} strokeWidth={3} />
         </Svg>
         <View style={styles.overlay}>
-          <Text style={styles.calories}>{totalBurned.toLocaleString()}</Text>
-          <Text style={styles.label}>calories burned</Text>
+          <Text style={[styles.calories, { color: colors.primary }]}>{totalBurned.toLocaleString()}</Text>
+          <Text style={[styles.label, { color: colors.primary }]}>calories burned</Text>
         </View>
       </View>
     </View>

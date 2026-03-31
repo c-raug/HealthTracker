@@ -239,6 +239,23 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.primary,
       fontWeight: '600',
     },
+    smartwatchInstruction: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      marginBottom: Spacing.sm,
+    },
+    savedConfirmation: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      backgroundColor: colors.primaryLight,
+      borderRadius: Radius.sm,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+    },
+    savedConfirmationText: {
+      ...Typography.small,
+    },
     // Steps / smartwatch input
     stepsInput: {
       backgroundColor: colors.background,
@@ -453,6 +470,8 @@ export default function ActivitiesScreen() {
 
   // Smartwatch form state
   const [smartwatchInput, setSmartwatchInput] = useState('');
+  const [showSavedConfirmation, setShowSavedConfirmation] = useState(false);
+  const savedConfirmationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Drum refs
   const hoursScrollRef = useRef<ScrollView>(null);
@@ -595,7 +614,17 @@ export default function ActivitiesScreen() {
       };
       dispatch({ type: 'ADD_ACTIVITY', date: selectedDate, activity: entry });
     }
+
+    if (savedConfirmationTimeout.current) clearTimeout(savedConfirmationTimeout.current);
+    setShowSavedConfirmation(true);
+    savedConfirmationTimeout.current = setTimeout(() => setShowSavedConfirmation(false), 3000);
   };
+
+  useEffect(() => {
+    return () => {
+      if (savedConfirmationTimeout.current) clearTimeout(savedConfirmationTimeout.current);
+    };
+  }, []);
 
   const handleDelete = (activityId: string) => {
     dispatch({ type: 'DELETE_ACTIVITY', date: selectedDate, activityId });
@@ -741,6 +770,9 @@ export default function ActivitiesScreen() {
               <Text style={styles.sectionTitle}>Calories Burned</Text>
             </View>
             <View style={styles.sectionBody}>
+              <Text style={styles.smartwatchInstruction}>
+                Enter your total calories burned from your smart watch
+              </Text>
               <View style={styles.inputRow}>
                 <TextInput
                   style={[styles.stepsInput, { flex: 1 }]}
@@ -759,6 +791,12 @@ export default function ActivitiesScreen() {
                   <Text style={styles.addButtonText}>Save</Text>
                 </TouchableOpacity>
               </View>
+              {showSavedConfirmation && (
+                <View style={styles.savedConfirmation}>
+                  <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                  <Text style={[styles.savedConfirmationText, { color: colors.primary }]}>Entry saved</Text>
+                </View>
+              )}
             </View>
           </View>
         ) : (
