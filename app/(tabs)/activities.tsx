@@ -27,6 +27,7 @@ import { generateId } from '../../utils/generateId';
 import { ActivityEntry } from '../../types';
 import ProfilePrompt from '../../components/nutrition/ProfilePrompt';
 import { WeeklyActivityGraph } from '../../components/nutrition/WeeklyIntakeGraph';
+import CalorieFlame from '../../components/activities/CalorieFlame';
 
 // ─── Drum picker constants ────────────────────────────────────────────────────
 const ITEM_HEIGHT = 44;
@@ -249,6 +250,12 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.h3,
       color: colors.text,
       textAlign: 'center',
+    },
+    // Inline input + button row
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
       marginBottom: Spacing.sm,
     },
     // Add button
@@ -262,6 +269,13 @@ const makeStyles = (colors: typeof LightColors) =>
       ...Typography.body,
       color: colors.white,
       fontWeight: '600',
+    },
+    addButtonFixed: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+      width: 90,
     },
     // Activity list
     activityRow: {
@@ -698,14 +712,8 @@ export default function ActivitiesScreen() {
             }}
           >
             {/* Page 0: Calories burned summary */}
-            <View style={{ width: pagerWidth }}>
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryRow}>
-                  <Ionicons name="flame" size={32} color={colors.primary} />
-                  <Text style={styles.summaryCalories}>{totalBurned.toLocaleString()}</Text>
-                </View>
-                <Text style={styles.summaryLabel}>calories burned</Text>
-              </View>
+            <View style={{ width: pagerWidth, alignItems: 'center', justifyContent: 'center' }}>
+              <CalorieFlame totalBurned={totalBurned} />
             </View>
 
             {/* Page 1: Weekly activity graph */}
@@ -730,28 +738,27 @@ export default function ActivitiesScreen() {
           /* Smart Watch Mode: single calorie input */
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Smart Watch Calories</Text>
+              <Text style={styles.sectionTitle}>Calories Burned</Text>
             </View>
             <View style={styles.sectionBody}>
-              <Text style={styles.drumSectionLabel}>
-                Enter total calories burned from your smart watch today
-              </Text>
-              <TextInput
-                style={styles.stepsInput}
-                value={smartwatchInput}
-                onChangeText={setSmartwatchInput}
-                keyboardType="number-pad"
-                placeholder="e.g. 450"
-                placeholderTextColor={colors.textSecondary}
-              />
-              <TouchableOpacity
-                style={[styles.addButton, (!smartwatchInput || parseInt(smartwatchInput, 10) < 0) && { opacity: 0.5 }]}
-                onPress={handleSaveSmartwatch}
-                disabled={!smartwatchInput || isNaN(parseInt(smartwatchInput, 10))}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.addButtonText}>Save</Text>
-              </TouchableOpacity>
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={[styles.stepsInput, { flex: 1 }]}
+                  value={smartwatchInput}
+                  onChangeText={setSmartwatchInput}
+                  keyboardType="number-pad"
+                  placeholder="e.g. 450"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity
+                  style={[styles.addButtonFixed, (!smartwatchInput || parseInt(smartwatchInput, 10) < 0) && { opacity: 0.5 }]}
+                  onPress={handleSaveSmartwatch}
+                  disabled={!smartwatchInput || isNaN(parseInt(smartwatchInput, 10))}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         ) : (
@@ -875,14 +882,24 @@ export default function ActivitiesScreen() {
 
               {!stepsCollapsed && (
                 <View style={styles.sectionBody}>
-                  <TextInput
-                    style={styles.stepsInput}
-                    value={stepsInput}
-                    onChangeText={setStepsInput}
-                    keyboardType="number-pad"
-                    placeholder="Enter step count"
-                    placeholderTextColor={colors.textSecondary}
-                  />
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      style={[styles.stepsInput, { flex: 1 }]}
+                      value={stepsInput}
+                      onChangeText={setStepsInput}
+                      keyboardType="number-pad"
+                      placeholder="Enter step count"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                    <TouchableOpacity
+                      style={[styles.addButtonFixed, (isNaN(stepsCount) || stepsCount <= 0) && { opacity: 0.5 }]}
+                      onPress={handleAddSteps}
+                      disabled={isNaN(stepsCount) || stepsCount <= 0}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.addButtonText}>Add Steps</Text>
+                    </TouchableOpacity>
+                  </View>
 
                   {stepsPreviewCals > 0 && (
                     <View style={[styles.previewRow, { marginTop: 0 }]}>
@@ -890,23 +907,14 @@ export default function ActivitiesScreen() {
                       <Text style={styles.previewText}>~{stepsPreviewCals} cal burned</Text>
                     </View>
                   )}
-
-                  <TouchableOpacity
-                    style={[styles.addButton, (isNaN(stepsCount) || stepsCount <= 0) && { opacity: 0.5 }]}
-                    onPress={handleAddSteps}
-                    disabled={isNaN(stepsCount) || stepsCount <= 0}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.addButtonText}>Add Steps</Text>
-                  </TouchableOpacity>
                 </View>
               )}
             </View>
           </>
         )}
 
-        {/* Activity list — only shown in manual mode */}
-        {activityMode === 'manual' && (
+        {/* Activity list — shown in manual and auto modes */}
+        {activityMode !== 'smartwatch' && (
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Today's Activities</Text>
