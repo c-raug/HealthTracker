@@ -12,6 +12,7 @@ import {
   Modal,
   ActivityIndicator,
   Keyboard,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
@@ -25,6 +26,7 @@ import { calculateExerciseCalories, calculateStepCalories } from '../../utils/ac
 import { generateId } from '../../utils/generateId';
 import { ActivityEntry } from '../../types';
 import ProfilePrompt from '../../components/nutrition/ProfilePrompt';
+import { WeeklyActivityGraph } from '../../components/nutrition/WeeklyIntakeGraph';
 
 // ─── Drum picker constants ────────────────────────────────────────────────────
 const ITEM_HEIGHT = 44;
@@ -384,6 +386,7 @@ export default function ActivitiesScreen() {
   const { entries, preferences, activityLog, dispatch, isLoading, selectedDate } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const { width: windowWidth } = useWindowDimensions();
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [exerciseCollapsed, setExerciseCollapsed] = useState(!(preferences.sectionsExpanded ?? false));
@@ -476,6 +479,14 @@ export default function ActivitiesScreen() {
   // Activity data for selected date
   const dayActivity = activityLog.find((d) => d.date === selectedDate);
   const totalBurned = dayActivity?.activities.reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+
+  // Weekly activity chart data (7 days ending on selectedDate)
+  const weeklyActivityData = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(selectedDate, i - 6);
+    const dayAct = activityLog.find((d) => d.date === date);
+    const burned = dayAct?.activities.reduce((s, a) => s + a.caloriesBurned, 0) ?? 0;
+    return { date, consumed: burned, goal: 0 };
+  });
 
   // Exercise calorie preview
   const totalDurationMinutes = selectedHours * 60 + selectedMinutes;
@@ -652,6 +663,14 @@ export default function ActivitiesScreen() {
             <Text style={styles.summaryCalories}>{totalBurned.toLocaleString()}</Text>
           </View>
           <Text style={styles.summaryLabel}>calories burned</Text>
+        </View>
+
+        {/* Weekly activity chart */}
+        <View style={{ marginBottom: Spacing.md }}>
+          <WeeklyActivityGraph
+            width={windowWidth - Spacing.md * 2}
+            activityData={weeklyActivityData}
+          />
         </View>
 
         {activityMode === 'smartwatch' ? (
