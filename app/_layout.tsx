@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AppProvider, useApp } from '../context/AppContext';
 import { Colors, ThemeContext, useColors } from '../constants/theme';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 function RootNavigator() {
   const { isLoading, preferences } = useApp();
@@ -103,7 +104,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AppProvider>
           <ThemeColorSync>
-            <RootNavigator />
+            <ErrorBoundary>
+              <RootNavigator />
+            </ErrorBoundary>
           </ThemeColorSync>
         </AppProvider>
       </SafeAreaProvider>

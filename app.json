@@ -30,7 +30,8 @@
     "plugins": [
       "expo-router",
       "@react-native-community/datetimepicker",
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-file-system"
     ],
     "experiments": {
       "typedRoutes": false
