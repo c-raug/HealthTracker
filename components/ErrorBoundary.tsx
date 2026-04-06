@@ -1,101 +1,143 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LightColors, Typography, Spacing, Radius } from '@/constants/theme';
+import { captureCrash, CRASH_LOG_KEY } from '@/utils/crashReporting';
 
-const LAST_ERROR_KEY = '@healthtracker_last_error';
-
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
+// Functional fallback component — lives outside the class so it can use hooks
+// if needed in the future. Uses LightColors directly because the error boundary
+// is a last-resort UI that renders before ThemeContext is available.
+function ErrorFallback({
+  error,
+  onRetry,
+}: {
   error: Error | null;
-}
-
-export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    const errorDetails = {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString(),
-    };
-    AsyncStorage.setItem(LAST_ERROR_KEY, JSON.stringify(errorDetails)).catch(() => {});
-  }
-
-  handleRestart = () => {
-    this.setState({ hasError: false, error: null });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.message}>
-            The app encountered an unexpected error. Please try restarting.
-          </Text>
-          {__DEV__ && this.state.error && (
-            <Text style={styles.errorText}>{this.state.error.message}</Text>
-          )}
-          <TouchableOpacity style={styles.button} onPress={this.handleRestart} activeOpacity={0.8}>
-            <Text style={styles.buttonText}>Restart</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    return this.props.children;
-  }
+  onRetry: () => void;
+}) {
+  return (
+    <View style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Something went wrong</Text>
+        <Text style={styles.subtitle}>
+          The app hit an unexpected error. Your data is safe.
+        </Text>
+        {error?.message ? (
+          <ScrollView style={styles.errorBox} showsVerticalScrollIndicator={false}>
+            <Text style={styles.errorText}>{error.message}</Text>
+          </ScrollView>
+        ) : null}
+        <TouchableOpacity style={styles.button} onPress={onRetry} activeOpacity={0.8}>
+          <Text style={styles.buttonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: LightColors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#F5F5F5',
+    padding: Spacing.xl,
+  },
+  card: {
+    backgroundColor: LightColors.card,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+    alignItems: 'center',
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 12,
-  },
-  message: {
-    fontSize: 16,
-    color: '#666',
+    ...Typography.h2,
+    color: LightColors.text,
+    marginBottom: Spacing.sm,
     textAlign: 'center',
+  },
+  subtitle: {
+    ...Typography.body,
+    color: LightColors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
     lineHeight: 22,
-    marginBottom: 24,
+  },
+  errorBox: {
+    backgroundColor: LightColors.dangerLight,
+    borderRadius: Radius.sm,
+    padding: Spacing.sm,
+    maxHeight: 120,
+    width: '100%',
+    marginBottom: Spacing.md,
   },
   errorText: {
-    fontSize: 12,
-    color: '#F44336',
-    textAlign: 'center',
-    marginBottom: 24,
-    fontFamily: 'monospace',
+    ...Typography.small,
+    color: LightColors.danger,
+    fontFamily: 'monospace' as const,
   },
   button: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: LightColors.primary,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xl,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    ...Typography.body,
+    color: LightColors.white,
+    fontWeight: '600' as const,
   },
 });
+
+interface Props {
+  children: React.ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends React.Component<Props, State> {
+  state: State = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    const log = {
+      message: error.message,
+      stack: error.stack ?? '',
+      componentStack: errorInfo.componentStack ?? '',
+      timestamp: new Date().toISOString(),
+    };
+    try {
+      await AsyncStorage.setItem(CRASH_LOG_KEY, JSON.stringify(log));
+    } catch {
+      // AsyncStorage write failed — continue silently.
+    }
+    captureCrash(error, { componentStack: errorInfo.componentStack ?? '' });
+  }
+
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback error={this.state.error} onRetry={this.handleRetry} />;
+    }
+    return this.props.children;
+  }
+}
