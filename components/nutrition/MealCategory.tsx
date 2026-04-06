@@ -7,6 +7,10 @@ import {
   Alert,
 } from 'react-native';
 import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
+import DraggableFlatList, {
+  ScaleDecorator,
+  RenderItemParams,
+} from 'react-native-draggable-flatlist';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -23,6 +27,16 @@ const CATEGORY_LABELS: Record<MealCategoryType, string> = {
   dinner: 'Dinner',
   snacks: 'Snacks',
 };
+
+type MealGroup = {
+  mealGroupId: string;
+  mealGroupName: string;
+  foods: NutritionFoodItem[];
+};
+
+type TopLevelItem =
+  | { kind: 'food'; food: NutritionFoodItem }
+  | { kind: 'group'; group: MealGroup };
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -80,11 +94,6 @@ const makeStyles = (colors: typeof LightColors) =>
       borderTopRightRadius: Radius.lg,
       borderBottomRightRadius: Radius.lg,
     },
-    saveAsActionText: {
-      ...Typography.small,
-      color: colors.white,
-      fontWeight: '600',
-    },
     emptyText: {
       ...Typography.small,
       color: colors.textSecondary,
@@ -106,6 +115,11 @@ const makeStyles = (colors: typeof LightColors) =>
       alignItems: 'center',
       gap: Spacing.xs,
       flex: 1,
+    },
+    groupDragHandle: {
+      paddingRight: Spacing.xs,
+      paddingVertical: Spacing.xs,
+      justifyContent: 'center',
     },
     groupName: {
       ...Typography.body,
@@ -130,12 +144,6 @@ interface Props {
   date: string;
 }
 
-type MealGroup = {
-  mealGroupId: string;
-  mealGroupName: string;
-  foods: NutritionFoodItem[];
-};
-
 export default function MealCategoryComponent({ category, foods, date }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
@@ -154,17 +162,27 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   );
   const groupSwipeableRefs = useRef<Record<string, Swipeable | null>>({});
 
-  // Split foods into ungrouped and grouped
-  const ungroupedFoods = foods.filter((f) => !f.mealGroupId);
+  // Split foods into ungrouped and grouped, preserving original order
   const mealGroupsMap = new Map<string, MealGroup>();
-  foods.filter((f) => f.mealGroupId).forEach((f) => {
-    const gid = f.mealGroupId!;
-    if (!mealGroupsMap.has(gid)) {
-      mealGroupsMap.set(gid, { mealGroupId: gid, mealGroupName: f.mealGroupName ?? 'Saved Meal', foods: [] });
+  const seenGroupIds = new Set<string>();
+  const topLevelItems: TopLevelItem[] = [];
+
+  foods.forEach((f) => {
+    if (!f.mealGroupId) {
+      topLevelItems.push({ kind: 'food', food: f });
+    } else {
+      const gid = f.mealGroupId;
+      if (!mealGroupsMap.has(gid)) {
+        mealGroupsMap.set(gid, { mealGroupId: gid, mealGroupName: f.mealGroupName ?? 'Saved Meal', foods: [] });
+      }
+      mealGroupsMap.get(gid)!.foods.push(f);
+      // Insert group item at first occurrence position
+      if (!seenGroupIds.has(gid)) {
+        seenGroupIds.add(gid);
+        topLevelItems.push({ kind: 'group', group: mealGroupsMap.get(gid)! });
+      }
     }
-    mealGroupsMap.get(gid)!.foods.push(f);
   });
-  const mealGroups = [...mealGroupsMap.values()];
 
   const totalCal = foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 
@@ -212,7 +230,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   );
 
   const handleCopy = () => {
-    // Compute yesterday relative to the current date
     const [y, mo, d] = date.split('-').map(Number);
     const prev = new Date(y, mo - 1, d - 1);
     const yesterdayStr = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${String(prev.getDate()).padStart(2, '0')}`;
@@ -270,6 +287,97 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
     );
   };
 
+  const handleDragEnd = ({ data }: { data: TopLevelItem[] }) => {
+    const newFoods: NutritionFoodItem[] = [];
+    data.forEach((item) => {
+      if (item.kind === 'food') {
+        newFoods.push(item.food);
+      } else {
+        item.group.foods.forEach((f) => newFoods.push(f));
+      }
+    });
+    dispatch({ type: 'REORDER_MEAL_FOODS', date, category, foods: newFoods });
+  };
+
+  const renderTopLevelItem = ({ item, drag, isActive }: RenderItemParams<TopLevelItem>) => {
+    if (item.kind === 'food') {
+      return (
+        <ScaleDecorator>
+          <FoodItem
+            item={item.food}
+            onDelete={() => handleDelete(item.food.id)}
+            drag={drag}
+            isActive={isActive}
+            date={date}
+            category={category}
+          />
+        </ScaleDecorator>
+      );
+    }
+
+    // Group item
+    const { group } = item;
+    const isGroupCollapsed = collapsedGroups[group.mealGroupId] ?? true;
+    const groupCal = group.foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
+
+    return (
+      <ScaleDecorator>
+        <View style={isActive ? { opacity: 0.8 } : undefined}>
+          <Swipeable
+            ref={(ref) => { groupSwipeableRefs.current[group.mealGroupId] = ref; }}
+            renderRightActions={() => (
+              <TouchableOpacity
+                style={styles.removeMealAction}
+                onPress={() => handleRemoveGroup(group)}
+              >
+                <Ionicons name="trash-outline" size={20} color={colors.white} />
+              </TouchableOpacity>
+            )}
+            overshootRight={false}
+          >
+            <View style={styles.groupHeader}>
+              <TouchableOpacity
+                style={styles.groupDragHandle}
+                onLongPress={drag}
+                delayLongPress={100}
+                activeOpacity={0.4}
+              >
+                <Ionicons name="reorder-three" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+              <GHTouchableOpacity
+                style={styles.groupHeaderLeft}
+                onPress={() =>
+                  setCollapsedGroups((prev) => ({
+                    ...prev,
+                    [group.mealGroupId]: !isGroupCollapsed,
+                  }))
+                }
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={isGroupCollapsed ? 'chevron-forward' : 'chevron-down'}
+                  size={16}
+                  color={colors.textSecondary}
+                />
+                <Text style={styles.groupName} numberOfLines={1}>{group.mealGroupName}</Text>
+                <Text style={styles.groupInfo}>· {groupCal} cal</Text>
+              </GHTouchableOpacity>
+            </View>
+          </Swipeable>
+          {!isGroupCollapsed && group.foods.map((food) => (
+            <FoodItem
+              key={food.id}
+              item={food}
+              onDelete={() => handleDelete(food.id)}
+              date={date}
+              category={category}
+            />
+          ))}
+        </View>
+      </ScaleDecorator>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Swipeable
@@ -318,71 +426,19 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
             <Text style={styles.emptyText}>No foods logged</Text>
           )}
 
-          {/* Ungrouped foods */}
-          {ungroupedFoods.map((item) => (
-            <FoodItem
-              key={item.id}
-              item={item}
-              onDelete={() => handleDelete(item.id)}
-              date={date}
-              category={category}
+          {topLevelItems.length > 0 && (
+            <DraggableFlatList
+              data={topLevelItems}
+              keyExtractor={(item) =>
+                item.kind === 'food' ? item.food.id : item.group.mealGroupId
+              }
+              scrollEnabled={false}
+              onDragEnd={handleDragEnd}
+              renderItem={renderTopLevelItem}
             />
-          ))}
-
-          {/* Grouped meal sections */}
-          {mealGroups.map((group) => {
-            const isGroupCollapsed = collapsedGroups[group.mealGroupId] ?? true;
-            const groupCal = group.foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
-            return (
-              <View key={group.mealGroupId}>
-                <Swipeable
-                  ref={(ref) => { groupSwipeableRefs.current[group.mealGroupId] = ref; }}
-                  renderRightActions={() => (
-                    <TouchableOpacity
-                      style={styles.removeMealAction}
-                      onPress={() => handleRemoveGroup(group)}
-                    >
-                      <Ionicons name="trash-outline" size={20} color={colors.white} />
-                    </TouchableOpacity>
-                  )}
-                  overshootRight={false}
-                >
-                  <GHTouchableOpacity
-                    style={styles.groupHeader}
-                    onPress={() =>
-                      setCollapsedGroups((prev) => ({
-                        ...prev,
-                        [group.mealGroupId]: !prev[group.mealGroupId],
-                      }))
-                    }
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.groupHeaderLeft}>
-                      <Ionicons
-                        name={isGroupCollapsed ? 'chevron-forward' : 'chevron-down'}
-                        size={16}
-                        color={colors.textSecondary}
-                      />
-                      <Text style={styles.groupName} numberOfLines={1}>{group.mealGroupName}</Text>
-                      <Text style={styles.groupInfo}>· {groupCal} cal</Text>
-                    </View>
-                  </GHTouchableOpacity>
-                </Swipeable>
-                {!isGroupCollapsed && group.foods.map((food) => (
-                  <FoodItem
-                    key={food.id}
-                    item={food}
-                    onDelete={() => handleDelete(food.id)}
-                    date={date}
-                    category={category}
-                  />
-                ))}
-              </View>
-            );
-          })}
+          )}
         </View>
       )}
-
     </View>
   );
 }

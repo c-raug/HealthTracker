@@ -166,12 +166,16 @@ export default function FoodItem({ item, onDelete, drag, isActive, date, categor
             isActive && { backgroundColor: colors.primaryLight, elevation: 5 },
           ]}
         >
-          <TouchableOpacity
-            onPressIn={drag}
-            style={styles.dragHandle}
-          >
-            <Ionicons name="reorder-three" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+          {drag && (
+            <TouchableOpacity
+              onLongPress={drag}
+              delayLongPress={100}
+              style={styles.dragHandle}
+              activeOpacity={0.4}
+            >
+              <Ionicons name="reorder-three" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.info} onPress={handleOpenEdit} activeOpacity={0.7}>
             <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
             {hasNutrition && item.servingSize && (
