@@ -7,14 +7,10 @@ import {
   Alert,
 } from 'react-native';
 import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
-import DraggableFlatList, {
-  ScaleDecorator,
-  RenderItemParams,
-} from 'react-native-draggable-flatlist';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { NutritionFoodItem, MealCategory as MealCategoryType } from '../../types';
+import type { NutritionFoodItem, MealCategory as MealCategoryType } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import FoodItem from './FoodItem';
@@ -125,15 +121,6 @@ const makeStyles = (colors: typeof LightColors) =>
       justifyContent: 'center',
       alignItems: 'center',
       paddingHorizontal: Spacing.md,
-    },
-    dragHandle: {
-      paddingRight: Spacing.xs,
-      paddingVertical: Spacing.xs,
-      justifyContent: 'center',
-    },
-    foodDragRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
     },
   });
 
@@ -331,45 +318,16 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
             <Text style={styles.emptyText}>No foods logged</Text>
           )}
 
-          {/* Ungrouped foods — draggable */}
-          {ungroupedFoods.length > 0 && (
-            <DraggableFlatList
-              data={ungroupedFoods}
-              keyExtractor={(item) => item.id}
-              onDragEnd={({ data: reordered }) => {
-                // Rebuild full foods array: reordered ungrouped + original grouped
-                const grouped = foods.filter((f) => f.mealGroupId);
-                dispatch({
-                  type: 'REORDER_MEAL_FOODS',
-                  date,
-                  category,
-                  foods: [...reordered, ...grouped],
-                });
-              }}
-              renderItem={({ item, drag, isActive }: RenderItemParams<NutritionFoodItem>) => (
-                <ScaleDecorator>
-                  <View style={[styles.foodDragRow, isActive && { opacity: 0.8 }]}>
-                    <TouchableOpacity
-                      style={styles.dragHandle}
-                      onLongPress={drag}
-                      delayLongPress={100}
-                      activeOpacity={0.4}
-                    >
-                      <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
-                    </TouchableOpacity>
-                    <View style={{ flex: 1 }}>
-                      <FoodItem
-                        item={item}
-                        onDelete={() => handleDelete(item.id)}
-                        date={date}
-                        category={category}
-                      />
-                    </View>
-                  </View>
-                </ScaleDecorator>
-              )}
+          {/* Ungrouped foods */}
+          {ungroupedFoods.map((item) => (
+            <FoodItem
+              key={item.id}
+              item={item}
+              onDelete={() => handleDelete(item.id)}
+              date={date}
+              category={category}
             />
-          )}
+          ))}
 
           {/* Grouped meal sections */}
           {mealGroups.map((group) => {

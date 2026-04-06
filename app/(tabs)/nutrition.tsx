@@ -11,7 +11,6 @@ import {
   useWindowDimensions,
   useColorScheme,
 } from 'react-native';
-import { NestableScrollContainer } from 'react-native-draggable-flatlist';
 import { useFocusEffect } from 'expo-router';
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -358,8 +357,8 @@ export default function NutritionScreen() {
 
   return (
     <View style={styles.flex}>
-      <NestableScrollContainer
-        ref={scrollRef as any}
+      <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
@@ -495,7 +494,7 @@ export default function NutritionScreen() {
             ))}
           </>
         )}
-      </NestableScrollContainer>
+      </ScrollView>
 
       {/* Date picker */}
       {Platform.OS === 'android' && showDatePicker && (
