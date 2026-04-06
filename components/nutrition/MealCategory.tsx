@@ -7,14 +7,10 @@ import {
   Alert,
 } from 'react-native';
 import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
-import DraggableFlatList, {
-  ScaleDecorator,
-  RenderItemParams,
-} from 'react-native-draggable-flatlist';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { NutritionFoodItem, MealCategory as MealCategoryType } from '../../types';
+import type { NutritionFoodItem, MealCategory as MealCategoryType } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import FoodItem from './FoodItem';
@@ -26,6 +22,12 @@ const CATEGORY_LABELS: Record<MealCategoryType, string> = {
   lunch: 'Lunch',
   dinner: 'Dinner',
   snacks: 'Snacks',
+};
+
+type MealGroup = {
+  mealGroupId: string;
+  mealGroupName: string;
+  foods: NutritionFoodItem[];
 };
 
 const makeStyles = (colors: typeof LightColors) =>
@@ -84,11 +86,6 @@ const makeStyles = (colors: typeof LightColors) =>
       borderTopRightRadius: Radius.lg,
       borderBottomRightRadius: Radius.lg,
     },
-    saveAsActionText: {
-      ...Typography.small,
-      color: colors.white,
-      fontWeight: '600',
-    },
     emptyText: {
       ...Typography.small,
       color: colors.textSecondary,
@@ -126,15 +123,6 @@ const makeStyles = (colors: typeof LightColors) =>
       alignItems: 'center',
       paddingHorizontal: Spacing.md,
     },
-    dragHandle: {
-      paddingRight: Spacing.xs,
-      paddingVertical: Spacing.xs,
-      justifyContent: 'center',
-    },
-    foodDragRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
   });
 
 interface Props {
@@ -142,12 +130,6 @@ interface Props {
   foods: NutritionFoodItem[];
   date: string;
 }
-
-type MealGroup = {
-  mealGroupId: string;
-  mealGroupName: string;
-  foods: NutritionFoodItem[];
-};
 
 export default function MealCategoryComponent({ category, foods, date }: Props) {
   const colors = useColors();
@@ -225,7 +207,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
   );
 
   const handleCopy = () => {
-    // Compute yesterday relative to the current date
     const [y, mo, d] = date.split('-').map(Number);
     const prev = new Date(y, mo - 1, d - 1);
     const yesterdayStr = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}-${String(prev.getDate()).padStart(2, '0')}`;
@@ -331,45 +312,16 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
             <Text style={styles.emptyText}>No foods logged</Text>
           )}
 
-          {/* Ungrouped foods — draggable */}
-          {ungroupedFoods.length > 0 && (
-            <DraggableFlatList
-              data={ungroupedFoods}
-              keyExtractor={(item) => item.id}
-              onDragEnd={({ data: reordered }) => {
-                // Rebuild full foods array: reordered ungrouped + original grouped
-                const grouped = foods.filter((f) => f.mealGroupId);
-                dispatch({
-                  type: 'REORDER_MEAL_FOODS',
-                  date,
-                  category,
-                  foods: [...reordered, ...grouped],
-                });
-              }}
-              renderItem={({ item, drag, isActive }: RenderItemParams<NutritionFoodItem>) => (
-                <ScaleDecorator>
-                  <View style={[styles.foodDragRow, isActive && { opacity: 0.8 }]}>
-                    <TouchableOpacity
-                      style={styles.dragHandle}
-                      onLongPress={drag}
-                      delayLongPress={100}
-                      activeOpacity={0.4}
-                    >
-                      <Ionicons name="reorder-three-outline" size={20} color={colors.textSecondary} />
-                    </TouchableOpacity>
-                    <View style={{ flex: 1 }}>
-                      <FoodItem
-                        item={item}
-                        onDelete={() => handleDelete(item.id)}
-                        date={date}
-                        category={category}
-                      />
-                    </View>
-                  </View>
-                </ScaleDecorator>
-              )}
+          {/* Ungrouped foods */}
+          {ungroupedFoods.map((item) => (
+            <FoodItem
+              key={item.id}
+              item={item}
+              onDelete={() => handleDelete(item.id)}
+              date={date}
+              category={category}
             />
-          )}
+          ))}
 
           {/* Grouped meal sections */}
           {mealGroups.map((group) => {
@@ -394,7 +346,7 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
                     onPress={() =>
                       setCollapsedGroups((prev) => ({
                         ...prev,
-                        [group.mealGroupId]: !prev[group.mealGroupId],
+                        [group.mealGroupId]: !isGroupCollapsed,
                       }))
                     }
                     activeOpacity={0.7}
@@ -424,7 +376,6 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
           })}
         </View>
       )}
-
     </View>
   );
 }

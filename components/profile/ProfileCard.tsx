@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Alert, Platform, TextInput, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -11,7 +9,6 @@ import { UserProfile, Sex, ActivityMode } from '../../types';
 import InfoModal from '../InfoModal';
 
 const AVATAR_SIZE = 72;
-const AVATAR_PATH = (FileSystem.documentDirectory ?? '') + 'avatar.jpg';
 
 const ACTIVITY_LABELS: Record<string, string> = {
   sedentary: 'Sedentary',
@@ -354,6 +351,7 @@ export default function ProfileCard() {
   }, [expanded]);
 
   const handlePickAvatar = async () => {
+    const ImagePicker = await import('expo-image-picker');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission Required', 'Please allow photo library access to set an avatar.');
@@ -370,9 +368,11 @@ export default function ProfileCard() {
       const sourceUri = result.assets[0].uri;
       try {
         if (Platform.OS !== 'web') {
-          await FileSystem.copyAsync({ from: sourceUri, to: AVATAR_PATH });
-          setAvatarUri(AVATAR_PATH);
-          dispatch({ type: 'SET_AVATAR', uri: AVATAR_PATH });
+          const FileSystem = await import('expo-file-system');
+          const avatarPath = (FileSystem.documentDirectory ?? '') + 'avatar.jpg';
+          await FileSystem.copyAsync({ from: sourceUri, to: avatarPath });
+          setAvatarUri(avatarPath);
+          dispatch({ type: 'SET_AVATAR', uri: avatarPath });
         } else {
           setAvatarUri(sourceUri);
           dispatch({ type: 'SET_AVATAR', uri: sourceUri });

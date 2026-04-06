@@ -26,8 +26,14 @@ const makeStyles = (colors: typeof LightColors) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    dragHandle: {
+    bullet: {
       paddingRight: Spacing.sm,
+      justifyContent: 'center',
+    },
+    bulletText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+      lineHeight: Typography.body.fontSize,
     },
     info: {
       flex: 1,
@@ -104,13 +110,11 @@ const makeStyles = (colors: typeof LightColors) =>
 interface Props {
   item: NutritionFoodItem;
   onDelete: () => void;
-  drag?: () => void;
-  isActive?: boolean;
   date: string;
   category: MealCategory;
 }
 
-export default function FoodItem({ item, onDelete, drag, isActive, date, category }: Props) {
+export default function FoodItem({ item, onDelete, date, category }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const { dispatch } = useApp();
@@ -160,18 +164,10 @@ export default function FoodItem({ item, onDelete, drag, isActive, date, categor
   return (
     <>
       <Swipeable renderRightActions={renderRightActions}>
-        <View
-          style={[
-            styles.container,
-            isActive && { backgroundColor: colors.primaryLight, elevation: 5 },
-          ]}
-        >
-          <TouchableOpacity
-            onPressIn={drag}
-            style={styles.dragHandle}
-          >
-            <Ionicons name="reorder-three" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+        <View style={styles.container}>
+          <View style={styles.bullet}>
+            <Text style={styles.bulletText}>{'\u2022'}</Text>
+          </View>
           <TouchableOpacity style={styles.info} onPress={handleOpenEdit} activeOpacity={0.7}>
             <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
             {hasNutrition && item.servingSize && (
