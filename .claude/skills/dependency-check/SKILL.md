@@ -125,6 +125,19 @@ adjuster. Installed at `4.5.5` which is compatible with React Native 0.81.x.
 
 ---
 
+### `@sentry/react-native` — install with `--legacy-peer-deps`
+
+**Why:** Crash reporting SDK for capturing JS exceptions and native crashes in APK builds.
+Installed at `8.7.0`. Uses a dynamic `require()` in `utils/crashReporting.ts` so the app
+compiles and runs without a DSN configured. The Expo plugin `@sentry/react-native/expo`
+is registered in `app.json` for native crash handler setup in EAS builds. No Metro config
+changes are needed for SDK 54.
+
+**Constraint:** `8.7.0` (installed version — use `--legacy-peer-deps`)
+**Install if re-adding:** `npm install --save @sentry/react-native --legacy-peer-deps`
+
+---
+
 ## Full Dependency Table (SDK 54 working state)
 
 | Package | Version | Type |
@@ -142,6 +155,7 @@ adjuster. Installed at `4.5.5` which is compatible with React Native 0.81.x.
 | `@react-native-async-storage/async-storage` | `2.2.0` | dep |
 | `@react-native-community/datetimepicker` | `8.4.4` | dep |
 | `@react-native-community/slider` | `4.5.5` | dep |
+| `@sentry/react-native` | `8.7.0` | dep |
 | `react-native-chart-kit` | `^6.12.0` | dep |
 | `react-native-gesture-handler` | `~2.28.0` | dep |
 | `react-native-reanimated` | `~4.1.1` | dep |
@@ -211,3 +225,4 @@ of the following fixes applied during the SDK 52 → 54 migration:
 | `@react-native-community/datetimepicker 8.4.4` added | Native date picker for consolidated Weight screen |
 | `react-native-draggable-flatlist ^4.0.3` added | Drag-to-reorder for Nutrition meal categories |
 | `@react-native-community/slider 4.5.5` added | Native slider control for PortionSelector component |
+| `@sentry/react-native 8.7.0` added | Crash reporting SDK; dynamic require pattern means no compile-time dependency |

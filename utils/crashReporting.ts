@@ -6,7 +6,7 @@
 // Until SENTRY_DSN is set, the app captures errors locally (AsyncStorage only)
 // and Sentry calls are silently no-ops — no package needed at compile time.
 
-export const SENTRY_DSN = ''; // TODO: paste your DSN here (e.g. "https://abc123@o0.ingest.sentry.io/0")
+export const SENTRY_DSN = 'https://94fe48e74add1c8ad27e2d9e440552e3@o4511175437647872.ingest.us.sentry.io/4511175443480576';
 
 export const CRASH_LOG_KEY = '@crash_log';
 
