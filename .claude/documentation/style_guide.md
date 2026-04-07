@@ -79,7 +79,7 @@ import { Colors, Typography, Spacing, Radius, useColors, LightColors } from '@/c
 | Water Blue      | `#2196F3` | All water UI elements (tracker, bottle, bars, presets) |
 | Water Blue Light | `#E3F2FD` | Water entry badges, water light backgrounds    |
 | Water Glow      | `#64B5F6` | Bottle glow shadow when goal is met            |
-| Water Border    | `#1565C0` | Default preset button border, goal-met bottle border |
+| Water Preset Default Border | `#FFFFFF` | White border on middle (quick-add) preset button |
 | Save-as-Meal    | `#2196F3` | Swipe action button for "Save as Meal"         |
 | Protein         | `#3B82F6` | Macro progress bar and label                   |
 | Carbs           | `#F59E0B` | Macro progress bar and label                   |
@@ -250,12 +250,9 @@ shadowOffset: { width: 0, height: 0 },
 shadowOpacity: 0.85,
 shadowRadius: 10,
 elevation: 10,
-
-// On the bottleBody View only
-borderColor: '#64B5F6',
 ```
 
-Do not use this glow pattern anywhere else.
+No border color is applied to `bottleBody` on goal completion — only the shadow/glow effect. Do not use this glow pattern anywhere else.
 
 ---
 
@@ -450,8 +447,8 @@ buttonText: {
 button: {
   backgroundColor: '#2196F3',  // fixed water blue
   borderRadius: Radius.md,
-  paddingVertical: Spacing.sm,
-  paddingHorizontal: Spacing.sm,
+  height: 56,                  // fixed height, no paddingVertical
+  justifyContent: 'center',
   alignItems: 'center',
 },
 buttonText: {
@@ -461,8 +458,9 @@ buttonText: {
 // Middle preset (index 1) adds:
 defaultPreset: {
   borderWidth: 2,
-  borderColor: '#1565C0',
+  borderColor: '#FFFFFF',      // white border for the quick-add default
 },
+// Middle preset also shows a small "Quick Add" label (9px, white, semi-transparent)
 ```
 
 #### Icon-Only Touch Area
@@ -995,3 +993,10 @@ sectionHeaderRow: {
 | `components/nutrition/CalorieRing.tsx`  | SVG ring + proximity colors         |
 | `components/nutrition/MacroProgressBars.tsx` | Progress bar pattern            |
 | `components/settings/ThemeColorPicker.tsx` | Accent color swatch pattern      |
+| `components/settings/AppearanceModePicker.tsx` | Light/Dark/System card picker |
+| `components/profile/ProfileCard.tsx`       | Avatar + inline edit form pattern |
+| `components/profile/BadgesSection.tsx`     | Streak badge pills + expanded cards |
+| `components/activities/CalorieFlame.tsx`   | SVG outline flame visual          |
+| `components/ErrorBoundary.tsx`             | Error fallback using static LightColors |
+| `utils/streakCalculation.ts`              | Streak computation logic           |
+| `utils/crashReporting.ts`                 | Crash logging + optional Sentry    |

@@ -5,7 +5,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { AppProvider, useApp } from '../context/AppContext';
 import { Colors, ThemeContext, useColors } from '../constants/theme';
-import ErrorBoundary from '../components/ErrorBoundary';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { initCrashReporting } from '../utils/crashReporting';
+
+initCrashReporting();
 
 function RootNavigator() {
   const { isLoading, preferences } = useApp();
@@ -102,13 +105,13 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AppProvider>
-          <ThemeColorSync>
-            <ErrorBoundary>
+        <ErrorBoundary>
+          <AppProvider>
+            <ThemeColorSync>
               <RootNavigator />
-            </ErrorBoundary>
-          </ThemeColorSync>
-        </AppProvider>
+            </ThemeColorSync>
+          </AppProvider>
+        </ErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

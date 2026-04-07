@@ -125,6 +125,20 @@ adjuster. Installed at `4.5.5` which is compatible with React Native 0.81.x.
 
 ---
 
+### `@sentry/react-native` — install with `--legacy-peer-deps`
+
+**Why:** Crash reporting SDK for capturing JS exceptions and native crashes in APK builds.
+Installed at `~7.2.0` (downgraded from 8.7.0 — Expo SDK 54 installs a compatible version via
+`npx expo install`). Uses a dynamic `require()` in `utils/crashReporting.ts` so the app
+compiles and runs without a DSN configured. The Expo plugin `@sentry/react-native/expo`
+is registered in `app.json` for native crash handler setup in EAS builds. No Metro config
+changes are needed for SDK 54.
+
+**Constraint:** `~7.2.0` (SDK 54 compatible — use `npx expo install @sentry/react-native -- --legacy-peer-deps`)
+**Install if re-adding:** `npm install --save @sentry/react-native --legacy-peer-deps`
+
+---
+
 ## Full Dependency Table (SDK 54 working state)
 
 | Package | Version | Type |
@@ -134,6 +148,8 @@ adjuster. Installed at `4.5.5` which is compatible with React Native 0.81.x.
 | `expo-asset` | `~12.0.12` | dep |
 | `expo-linking` | `~8.0.11` | dep |
 | `expo-status-bar` | `~3.0.9` | dep |
+| `expo-file-system` | `~19.0.21` | dep |
+| `expo-image-picker` | `~17.0.10` | dep |
 | `expo-sharing` | `~14.0.8` | dep |
 | `expo-document-picker` | `~14.0.8` | dep |
 | `react` | `19.1.0` | dep |
@@ -142,6 +158,7 @@ adjuster. Installed at `4.5.5` which is compatible with React Native 0.81.x.
 | `@react-native-async-storage/async-storage` | `2.2.0` | dep |
 | `@react-native-community/datetimepicker` | `8.4.4` | dep |
 | `@react-native-community/slider` | `4.5.5` | dep |
+| `@sentry/react-native` | `~7.2.0` | dep |
 | `react-native-chart-kit` | `^6.12.0` | dep |
 | `react-native-gesture-handler` | `~2.28.0` | dep |
 | `react-native-reanimated` | `~4.1.1` | dep |
@@ -211,3 +228,7 @@ of the following fixes applied during the SDK 52 → 54 migration:
 | `@react-native-community/datetimepicker 8.4.4` added | Native date picker for consolidated Weight screen |
 | `react-native-draggable-flatlist ^4.0.3` added | Drag-to-reorder for Nutrition meal categories |
 | `@react-native-community/slider 4.5.5` added | Native slider control for PortionSelector component |
+| `@sentry/react-native 8.7.0` added | Crash reporting SDK; dynamic require pattern means no compile-time dependency |
+| `@sentry/react-native` downgraded to `~7.2.0` | `npx expo install` selects SDK 54 compatible version; 8.7.0 had peer conflicts |
+| `expo-file-system ~19.0.21` added as explicit dep | Required for avatar storage in ProfileCard (lazy-loaded); SDK 54 compatible |
+| `expo-image-picker ~17.0.10` added as explicit dep | Required for avatar photo picker in ProfileCard (lazy-loaded); SDK 54 compatible |

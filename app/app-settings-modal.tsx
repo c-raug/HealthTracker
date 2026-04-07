@@ -1,11 +1,13 @@
-import { useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useRef, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Clipboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
 import { saveBackup } from '../storage/backupStorage';
+import { CRASH_LOG_KEY } from '../utils/crashReporting';
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   container: {
@@ -89,6 +91,11 @@ export default function AppSettingsModal() {
   const styles = makeStyles(colors);
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  const [crashLog, setCrashLog] = useState<string | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(CRASH_LOG_KEY).then((val) => setCrashLog(val));
+  }, []);
 
   const setUnit = (unit: 'lbs' | 'kg') => dispatch({ type: 'SET_UNIT', unit });
 
@@ -197,6 +204,65 @@ export default function AppSettingsModal() {
             >
               <Text style={[styles.toggleText, styles.toggleTextActive]}>Save Data</Text>
             </TouchableOpacity>
+          </View>
+
+          {/* Debug Info */}
+          <View style={styles.card}>
+            <Text style={styles.settingLabel}>Debug Info</Text>
+            <Text style={styles.settingDescription}>
+              Last recorded crash log. Share this when reporting a bug.
+            </Text>
+            {crashLog ? (
+              <>
+                <ScrollView
+                  style={{
+                    backgroundColor: colors.background,
+                    borderRadius: Radius.sm,
+                    padding: Spacing.sm,
+                    maxHeight: 140,
+                    marginBottom: Spacing.sm,
+                  }}
+                  showsVerticalScrollIndicator
+                >
+                  <Text style={{ ...Typography.small, color: colors.textSecondary, fontFamily: 'monospace' }}>
+                    {crashLog}
+                  </Text>
+                </ScrollView>
+                <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                  <TouchableOpacity
+                    style={[styles.toggleOption, styles.toggleOptionActive, { flex: 1, paddingVertical: Spacing.sm }]}
+                    onPress={() => {
+                      Clipboard.setString(crashLog);
+                      Alert.alert('Copied', 'Crash log copied to clipboard.');
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.toggleText, styles.toggleTextActive]}>Copy</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.toggleOption, { flex: 1, paddingVertical: Spacing.sm, backgroundColor: colors.dangerLight }]}
+                    onPress={() => {
+                      Alert.alert('Clear Log', 'Delete the stored crash log?', [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Clear',
+                          style: 'destructive',
+                          onPress: async () => {
+                            await AsyncStorage.removeItem(CRASH_LOG_KEY);
+                            setCrashLog(null);
+                          },
+                        },
+                      ]);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.toggleText, { color: colors.danger }]}>Clear</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <Text style={{ ...Typography.small, color: colors.textSecondary }}>No crash log on record.</Text>
+            )}
           </View>
 
         </ScrollView>

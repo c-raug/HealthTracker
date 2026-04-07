@@ -8,46 +8,52 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - Log your weight for any date with date navigation arrows
 - Inline save confirmation (no popup) with timestamp
 - Single scrollable screen — entry at top, chart and insights always visible below
-- **Line chart** (last 30 entries, linear interpolation) with history list and delete support
+- **Line chart** with **dropdown range selector** (1W / 1M / 3M / 1Y / All) — tapping the pill opens an action sheet; summary row shows Start weight, Change (color-coded), and Current weight
 - **Progress insights card** — 7-day change, estimated weekly rate, and on-track/behind/ahead status badge vs. your weight goal
 - **"Go to Today" pill** — appears when you're viewing a past date; taps back to today
 - Switch between **lbs** and **kg** — preference saved locally
 
 ### Nutrition Tab
 - **TDEE-based calorie target** using the Mifflin-St Jeor equation; exercise calories from the Activities tab are added when applicable
-- **Calorie ring** (SVG donut) — consumed vs target; always uses your chosen accent colour regardless of fill level; shows "+N cal from exercise" when activity is logged
-- **Water bottle visual** — animated fill graphic beside the calorie ring; shows consumed/goal and fill percentage; turns green at 100%; tap to expand the Water tracker below
-- **Weekly intake graph** (swipe left on the ring/bottle area) — 7-day bar chart for calories and water; window ends on the currently selected date so browsing past dates shifts the chart accordingly; dashed goal lines reflect activity-adjusted TDEE (averaged over non-zero activity days in the window) and the full water goal including any creatine adjustment
+- **3-page swipeable pager** — Page 0: Weekly Calorie Graph, Page 1 (center, default): Calorie Ring + Water Bottle, Page 2: Weekly Water Graph; page dot indicators below; resets to center on tab focus
+- **Calorie ring** (SVG donut) — consumed vs target with **proximity-based colors** (dark green when on target, transitioning through green/yellow/orange/red as delta grows); shows "+N cal from exercise" when activity is logged
+- **Water bottle visual** — animated fill graphic beside the calorie ring; shows consumed/goal and fill percentage; glows blue at 100%; tap to expand the Water tracker below
+- **Weekly graphs with tap-to-tooltip** — tapping a bar shows a floating tooltip with date + value (calorie graph includes colored P/C/F macro breakdown); tapping again or pressing × dismisses
 - **Macro progress bars** for protein, carbs, and fat with configurable splits (Balanced, High Protein, Keto, or Custom)
 - **Four meal categories**: Breakfast, Lunch, Dinner, Snacks — each collapsible with calorie totals
-- **Custom food library** — create, edit, pin, and delete personal foods; calories auto-computed from macros; pinned foods surface first in search results
-- **Saved meal templates** — group foods into reusable meals; pin meals to specific categories so they appear first
+- **Copy meal from previous day** — copy icon in meal category header copies foods from yesterday with confirmation
+- **Swipe-left to save meal** — swipe a meal category header left to save its foods as a reusable meal template
+- **Saved meal groups** — foods added via a saved meal are grouped under a collapsible header showing meal name + total calories; swipe left on a group header to remove the entire meal
+- **Custom food library** — create, edit, pin, and delete personal foods; calories auto-computed from macros; pinned foods surface first with drag-to-reorder in Edit mode
+- **Saved meal templates** — group foods into reusable meals; pin meals to specific categories so they appear first; drag-to-reorder pinned meals in Edit mode
 - **Portion selector** — dual drum scroll wheels (whole 0–250 + fraction in ⅛ increments) with live calorie/macro preview; available when adding a food and when editing an already-logged item
 - **Drag-to-reorder** food items within meal categories
 - **Swipe-to-delete** food items
-- **Water tracker** (collapsible card) — three customisable quick-add preset buttons (long-press to edit; defaults 8 / 16 / 32 oz or 250 / 500 / 750 mL), custom amount input, and a per-entry delete list; auto-expands when the water bottle visual is tapped
+- **Water tracker** (collapsible card) — three customisable quick-add preset buttons (long-press to edit; defaults 8 / 16 / 32 oz or 250 / 500 / 750 mL), collapsed header shows quick-add pill, custom amount input, and a grouped per-entry delete list; auto-expands when the water bottle visual is tapped
 - **"Go to Today" pill** — same pattern as Weight tab
 - Date navigation matching the Weight screen pattern
 
 ### Activities Tab
 - Log exercise and steps for any date with date navigation
+- **2-page swipeable pager** — Page 0: CalorieFlame visual (SVG flame outline with total burned overlay), Page 1: Weekly Activity Graph (7-day bar chart with tap-to-tooltip); resets to page 0 on tab focus
 - **Three tracking modes** — Auto (exercise is reference-only; TDEE activity level handles the burn), Manual (all logged calories add to your nutrition target), Smartwatch (only smartwatch entries add to target)
-- **Exercise logging** — category/type selection with hour + minute drum pickers; live calorie burn preview
-- **Step logging** — numeric input with calorie preview
-- **Calories burned summary card** — total for the selected day
+- **Activity Tracking Mode** — configured in ProfileCard on the Profile tab (Auto/Manual/Smart Watch pills with info icons)
+- **Exercise logging** — collapsible section with exercise type pill + hour/minute drum pickers + calorie burn preview
+- **Step logging** — collapsible section with numeric input + calorie preview (input and button side-by-side)
+- **Smartwatch input** — dedicated calorie entry field (visible only in Smartwatch mode) with "Entry saved" confirmation toast
+- **Activity log** — list of logged activities with delete support; visible in Auto and Manual modes, hidden in Smartwatch mode
 - **Dismissible mode-change warnings** — amber strip on entries logged under a different mode
-- **"Go to Today" pill** and **"Change tracking mode →"** deep-link to Settings
+- **"Go to Today" pill** and **"Change tracking mode →"** deep-link to Profile
 - Requires a profile + weight entry (shows a prompt otherwise)
 
-### Settings Tab
-- **Profile** (collapsible) — name, date of birth, sex, height
-- **Goals & Calorie Target** (collapsible) — weight goal drum wheel, activity level (auto mode only), activity tracking mode with info buttons; deep-linkable from Activities tab
-- **Macros** (collapsible) — preset buttons + custom % inputs; gram equivalents shown for each preset; ⓘ icon explains how grams factor in activity average
-- **Daily Water Goal** (collapsible) — Auto / Manual toggle; Auto mode calculates goal from body weight and activity level with an optional creatine adjustment (+16 oz / +500 mL); Manual mode lets you enter a fixed daily target
-- **App Configuration** (collapsible) — default tab picker, accent colour picker (6 presets)
-- **Units** — lbs / kg toggle
-- **Data Backup** — save / load via OS share sheet or file picker
-- **Send Feedback** — in-app feedback form
+### Profile Tab
+- **ProfileCard** (always visible) — circular avatar (tap to pick from camera roll, falls back to initials or default icon), user name, height, current weight, and activity level; tap to expand inline edit form with Name, DOB, Sex, Height, Activity Tracking Mode (Auto/Manual/Smart Watch), and Activity Level
+- **Badges** (collapsible) — four streak badges: Calorie Goal, Weight, Food, and Activity; collapsed view shows pill row with icons, labels, and streak counts; expanded view shows current and longest-ever streaks for each
+- **Nutrition Goals →** — navigates to Nutrition Goals modal (Goals & Calorie Target, Macros with gram equivalents, Daily Water Goal with auto/manual + creatine adjustment)
+- **Appearance →** — navigates to Appearance modal (Light/Dark/System mode picker + 6-swatch accent color picker)
+- **App Settings →** — navigates to App Settings modal (Default Tab, Weight Unit, Expand sections toggle, Data Backup, Debug Info with crash log viewer)
+- **Send Feedback** — in-app feedback form; also reachable via the feedback button in the header of all other tabs
+- **Footer** — app version string
 
 ### Onboarding
 - **5-step wizard** on first launch: (1) unit + name, (2) DOB + sex + height, (3) activity level + weight goal, (4) macro preset (skippable), (5) starting weight
@@ -60,7 +66,12 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### General
 - All data stored on-device (no accounts or internet connection required)
-- Full **dark mode** support throughout via `useColors()` and `constants/theme.ts`
+- Full **dark mode** support with Light / Dark / System appearance modes
+- **6 accent color themes** — Green (default), Blue, Orange, Purple, Red, Teal
+- **Global feedback button** — chatbubble icon in the header of Weight, Nutrition, and Activities tabs; taps navigate to the feedback form on the Profile tab
+- **Error boundary** — catches unhandled JS exceptions, logs crash details to AsyncStorage, renders a "Something went wrong" fallback with Restart button; optional Sentry integration via `SENTRY_DSN`
+- **Shared date state** — changing the date on any tab instantly reflects on all others; resets to today on app restart
+- **Collapsible sections** — all sections default to collapsed; "Expand sections by default" toggle available in App Settings
 
 ---
 
@@ -72,13 +83,15 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 | Language | TypeScript |
 | Routing | Expo Router v6 (file-based tabs + modal routes) |
 | Storage | AsyncStorage (`@react-native-async-storage/async-storage`) |
-| Charts | react-native-chart-kit + react-native-svg (weight) / custom SVG (calorie ring) |
+| Charts | react-native-chart-kit + react-native-svg (weight chart) / custom SVG (calorie ring, bar graphs, flame) |
 | State | React Context + useReducer |
 | Gestures | react-native-gesture-handler + react-native-reanimated |
 | Food Data | Local custom food library (no external API) |
 | Drag & Drop | react-native-draggable-flatlist |
 | Date Picker | @react-native-community/datetimepicker |
 | Icons | @expo/vector-icons (Ionicons) |
+| Image Picker | expo-image-picker (avatar photos) |
+| Crash Reporting | Optional Sentry integration (`@sentry/react-native`) |
 | Backup | expo-sharing + expo-document-picker |
 
 ---
@@ -87,59 +100,72 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ```
 app/
-├── _layout.tsx              # Root Stack layout (GestureHandlerRootView, AppProvider, nav gating)
+├── _layout.tsx              # Root Stack layout (GestureHandlerRootView, SafeAreaProvider, AppProvider, ThemeColorSync, ErrorBoundary)
 ├── welcome.tsx              # Welcome screen — Start New Profile / Load Saved Data
 ├── onboarding.tsx           # 5-step onboarding wizard
 ├── add-food-modal.tsx       # Full-screen modal: Add Food / Add Meal tabs
+├── create-meal-modal.tsx    # Pre-populated CreateMealFlow for saving a meal category
+├── app-settings-modal.tsx   # App Settings sub-screen (Default Tab, Units, Expand toggle, Backup, Debug Info)
+├── appearance-modal.tsx     # Appearance sub-screen (Color Mode + Accent Color)
+├── nutrition-goals-modal.tsx # Nutrition Goals sub-screen (Goals, Macros, Water Goal)
 └── (tabs)/
-    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Settings) + Ionicons
-    ├── index.tsx            # Weight screen — entry, chart, insights (single scroll)
-    ├── nutrition.tsx        # Nutrition screen — calorie ring, macro bars, meal categories
-    ├── activities.tsx       # Activities screen — exercise/steps logging, calorie burn summary
-    └── settings.tsx         # Settings screen (Profile, Goals, Units, Macros)
+    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Profile) + global feedback button
+    ├── index.tsx            # Weight screen — entry, chart (with range selector), insights
+    ├── nutrition.tsx        # Nutrition screen — 3-page pager (calorie graph / ring+bottle / water graph), macros, meals
+    ├── activities.tsx       # Activities screen — 2-page pager (CalorieFlame / WeeklyActivityGraph), exercise/steps/smartwatch logging
+    └── settings.tsx         # Profile screen (ProfileCard, Badges, navigation rows to modals, Feedback)
 
 components/
-├── WeightChart.tsx          # Line chart (react-native-chart-kit, linear)
+├── ErrorBoundary.tsx        # React error boundary with crash logging and Sentry integration
+├── WeightChart.tsx          # Line chart with dropdown range selector (1W/1M/3M/1Y/All) + summary row
 ├── WeightInsights.tsx       # 7-day progress insights card (rate, on-track badge)
 ├── WeightEntryList.tsx      # FlatList of all entries, newest first
 ├── WeightEntryItem.tsx      # Single entry row with delete + confirmation
 ├── InfoModal.tsx            # Reusable info/help overlay modal
 ├── activities/
-│   └── (activity-specific components)
+│   └── CalorieFlame.tsx     # SVG flame outline visual with total burned overlay
+├── profile/
+│   ├── ProfileCard.tsx      # Avatar + summary + inline edit form (name, DOB, sex, height, activity mode)
+│   └── BadgesSection.tsx    # Collapsible streak badges (Calorie Goal, Weight, Food, Activity)
 ├── settings/
+│   ├── AppearanceModePicker.tsx # Light / Dark / System 3-card picker
 │   ├── ProfileSection.tsx   # Name, DOB picker, sex toggle, height input
 │   ├── GoalsSection.tsx     # Weight goal drum, activity level, tracking mode
 │   ├── MacroSection.tsx     # Macro preset buttons + custom % + gram equivalents + ⓘ tooltip
-│   ├── WaterGoalSection.tsx # Auto/Manual toggle + creatine flag + manual override input
 │   ├── ThemeColorPicker.tsx # 6-swatch accent colour picker
-│   └── FeedbackSection.tsx  # In-app feedback text input + submit
+│   └── FeedbackSection.tsx  # In-app feedback text input + submit (with forwardRef for deep-link focus)
 └── nutrition/
-    ├── CalorieRing.tsx      # SVG donut chart (consumed vs target)
+    ├── CalorieRing.tsx      # SVG donut chart with proximity-based colors
     ├── MacroProgressBars.tsx # Protein/Carbs/Fat horizontal progress bars
-    ├── MealCategory.tsx     # Collapsible meal section with header + food list
+    ├── MealCategory.tsx     # Collapsible meal section with copy-from-yesterday, swipe-to-save-meal, meal groups
     ├── FoodItem.tsx         # Food row with drag handle, swipe-to-delete, tap-to-edit bottom sheet
     ├── PortionSelector.tsx  # Dual drum wheels (whole + fraction) + live macro preview
-    ├── AddFoodTab.tsx       # Custom food search + create/edit/pin/delete + SectionList (Pinned/MyFoods)
-    ├── AddMealTab.tsx       # Saved meals list + pin to categories / edit / delete
+    ├── AddFoodTab.tsx       # Custom food search + create/edit/pin/delete + Edit mode for pinned reordering
+    ├── AddMealTab.tsx       # Saved meals list + pin to categories / edit / delete + Edit mode for pinned reordering
     ├── CustomFoodForm.tsx   # Create or edit a custom food (qty/unit picker + auto-calories)
     ├── CreateMealFlow.tsx   # Name meal + search/add custom foods (SectionList)
     ├── EditMealFlow.tsx     # Edit an existing saved meal template
-    ├── WaterTracker.tsx     # Collapsible water log card (presets, custom input, entry list)
-    ├── WaterBottleVisual.tsx # Animated bottle fill graphic (spring animation, green at 100%)
+    ├── WaterTracker.tsx     # Collapsible water log card (presets, quick-add pill, grouped entries)
+    ├── WaterBottleVisual.tsx # Animated bottle fill with blue glow at 100%
+    ├── WeeklyIntakeGraph.tsx # WeeklyCalorieGraph, WeeklyWaterGraph, WeeklyActivityGraph (tap-to-tooltip)
     └── ProfilePrompt.tsx    # CTA card when profile or weight entry is missing
 
-context/AppContext.tsx       # Global state (weight entries, nutrition log, activity log, custom foods, saved meals, preferences)
+context/AppContext.tsx       # Global state (35 action types) with auto-save + auto-backup
 storage/
 ├── storage.ts               # AsyncStorage read/write helpers
-└── backupStorage.ts         # Cross-platform backup: share sheet / file picker
+└── backupStorage.ts         # Cross-platform backup: share sheet / file picker + silent auto-backup
 types/index.ts               # All TypeScript interfaces and type unions
-constants/theme.ts           # Colors, Typography, Spacing, Radius design tokens
+constants/theme.ts           # Colors, Typography, Spacing, Radius design tokens + ThemeContext + ACCENT_PRESETS
 utils/
-├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays
-├── unitConversion.ts        # lbsToKg, kgToLbs, convertWeight, weightToKg
-├── generateId.ts            # Shared UUID v4 generator
-├── tdeeCalculation.ts       # Mifflin-St Jeor BMR/TDEE, goal calorie offset, ageFromDob
 ├── activityCalculation.ts   # calculateExerciseCalories (MET-based), calculateStepCalories
+├── calorieColor.ts          # ringColorForProximity() — proximity-based calorie indicator colors
+├── crashReporting.ts        # CRASH_LOG_KEY, initCrashReporting(), captureCrash() — optional Sentry integration
+├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays
+├── featureFlags.ts          # Feature flag utilities
+├── generateId.ts            # Shared UUID v4 generator
+├── streakCalculation.ts     # foodStreak, calorieGoalStreak, weightStreak, activityStreak
+├── tdeeCalculation.ts       # Mifflin-St Jeor BMR/TDEE, goal calorie offset, ageFromDob
+├── unitConversion.ts        # lbsToKg, kgToLbs, convertWeight, weightToKg
 └── waterCalculation.ts      # calculateWaterGoal (weight-based, ×1.2 active multiplier, creatine flag)
 ```
 
@@ -161,7 +187,8 @@ interface UserProfile {
   dob?: string;            // "YYYY-MM-DD"
   age?: number;            // legacy fallback
   sex?: 'male' | 'female';
-  height?: number;         // cm
+  heightValue?: number;    // numeric height
+  heightUnit?: string;     // height unit
   activityLevel?: ActivityLevel;
   weightGoal?: WeightGoal;
   fitnessGoal?: string;
@@ -174,17 +201,24 @@ interface UserPreferences {
   macroSplit?: MacroSplit;              // { protein, carbs, fat } percentages
   activityMode?: ActivityMode;         // 'auto' | 'manual' | 'smartwatch'
   onboardingComplete?: boolean;
+  themeColor?: string;                 // hex accent color
+  defaultTab?: string;                 // 'weight' | 'nutrition' | 'activity'
   waterGoalMode?: 'auto' | 'manual';
   waterGoalOverride?: number;          // manual daily target (oz or mL)
   waterCreatineAdjustment?: boolean;   // adds +16 oz / +500 mL to auto goal
   waterPresets?: [number, number, number]; // quick-add button values
+  sectionsExpanded?: boolean;          // "Expand sections by default" toggle
+  appearanceMode?: 'light' | 'dark' | 'system';
+  avatarUri?: string;                  // path to avatar image
 }
 
 type ActivityMode = 'auto' | 'manual' | 'smartwatch';
+type ExerciseType = 'weight_lifting';
 
 interface ActivityEntry {
   id: string;
   type: 'exercise' | 'steps' | 'smartwatch';
+  exerciseType?: ExerciseType;
   date: string;
   durationMinutes?: number;
   steps?: number;
@@ -205,6 +239,8 @@ interface NutritionFoodItem {
   protein?: number; carbs?: number; fat?: number;
   servingSize?: string;
   servings?: number;
+  mealGroupId?: string;     // links foods added via a saved meal
+  mealGroupName?: string;   // saved meal name for group header
 }
 
 interface DayNutrition {
@@ -217,6 +253,7 @@ interface CustomFood {
   calories: number; protein: number; carbs: number; fat: number;
   servingSize?: string;
   pinned?: boolean;
+  pinnedOrder?: number;     // drag-to-reorder position
   createdAt: string;
 }
 
@@ -224,12 +261,14 @@ interface SavedMeal {
   id: string; name: string;
   foods: NutritionFoodItem[];
   pinnedCategories?: MealCategory[];
+  pinnedOrder?: Record<string, number>; // per-category drag order
   createdAt: string;
 }
 
 interface WaterEntry {
   id: string;
-  amount: number; // oz (unit=lbs) or mL (unit=kg)
+  amount: number;       // oz (unit=lbs) or mL (unit=kg)
+  loggedAt?: string;    // ISO timestamp
 }
 
 interface DayWater {
@@ -238,7 +277,7 @@ interface DayWater {
 }
 ```
 
-AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custom_foods`, `saved_meals`, `activity_log`, `water_log`
+AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custom_foods`, `saved_meals`, `activity_log`, `water_log`, `@healthtracker_last_error` (crash logs)
 
 ---
 

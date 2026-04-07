@@ -91,15 +91,18 @@ Work through each Prioritized issue **one at a time**:
 
 If a ticket is too ambiguous or requires information not present in the issue, skip it and note it in the final report. Do not block on unclear tickets.
 
-## Step 4 — Invoke /push-changes
+## Step 4 — Invoke /update-docs
 
-After all tickets have been implemented (or attempted), invoke the `/push-changes` skill. It will:
-- Update `CLAUDE.md` if new components, patterns, or reducer actions were introduced
+After all tickets have been implemented (or attempted), invoke the `/update-docs` skill to audit and sync all documentation against the current codebase. This ensures CLAUDE.md, README.md, the style guide, and skill files all reflect the changes just made. Skip the audit summary confirmation — apply updates directly since the changes are known.
+
+## Step 5 — Invoke /push-changes
+
+After `/update-docs` completes, invoke the `/push-changes` skill. It will:
 - Create a new sub-branch (`claude/<description>-<id>`)
 - Commit all changes with a descriptive message
 - Push to GitHub
 
-## Step 5 — Move completed issues to In Review
+## Step 6 — Move completed issues to In Review
 
 After `/push-changes` completes, move each **successfully implemented** issue to the **"In Review"** column on the project board. Do NOT move skipped issues.
 
@@ -139,7 +142,7 @@ gh api graphql -f query='mutation {
 
 Read `GH_PROJECT_BOARD_ID`, `GH_PROJECT_FIELD_ID`, and `GH_PROJECT_IN_REVIEW_OPTION_ID` from environment variables.
 
-## Step 6 — Report
+## Step 7 — Report
 
 After all moves complete, summarize:
 
