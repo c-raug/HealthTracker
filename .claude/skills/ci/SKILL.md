@@ -61,48 +61,15 @@ Otherwise, ask what they want to create issues for using `AskUserQuestion`:
 
 > "What issues or ideas do you want to create? List them all — we'll structure each one."
 
-## Step 3 — Structure each issue one at a time
+## Step 3 — Interview & structure each issue one at a time
 
-For each idea, Claude structures it into the full issue format below. Claude uses its knowledge of the codebase (from CLAUDE.md and file reads as needed) to fill in the technical implementation section and suggest appropriate labels.
+For each idea, invoke the `/interview` skill to conduct a thorough interview with the user. The interview skill will:
+1. Use `AskUserQuestion` repeatedly to clarify all ambiguous details about the idea
+2. Return a fully structured issue (title, labels, description, technical implementation, acceptance criteria)
 
-### Issue Format
+**Do not skip the interview.** Even if the idea seems straightforward, the `/interview` skill should ask at least a confirmation question to ensure nothing is missed.
 
-```markdown
-## Title
-{Clear, descriptive title — action-oriented, e.g. "Add weekly weight trend summary to Weight tab"}
-
-## Labels
-- **Type:** {bug | improvement | feature}
-- **Page:** {weight | nutrition | activity | settings | global}
-- **Timeline:** {short-term | medium-term | long-term}
-
-## Description
-{2-4 sentences describing the problem, motivation, or what this adds. Explain WHY this matters to the user.}
-
-## Technical Implementation
-{What needs to change in the codebase. Reference specific files, components, reducer actions, state fields, and patterns from CLAUDE.md where relevant. Keep it focused — enough for an AI or developer to implement without guessing, but not overkill.}
-
-- `path/to/file.tsx` — what changes here
-- `path/to/other.tsx` — what changes here
-- New state/actions needed (if any)
-- Patterns to follow (reference CLAUDE.md patterns)
-
-## Acceptance Criteria
-{Bulleted checklist of what "done" looks like. Each item should be independently verifiable.}
-
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] Criterion 3
-```
-
-### Label Assignment Rules
-
-- **Type** and **Page**: Claude assigns based on the idea's nature and affected area.
-- **Timeline**: Claude suggests based on scope/complexity. The user can override during approval.
-
-### Presenting for Approval
-
-After structuring an issue, present the full formatted issue to the user using `AskUserQuestion`:
+After the `/interview` skill returns the structured issue for an idea, present it to the user for approval using `AskUserQuestion`:
 
 > Show the complete issue (title, labels, description, technical implementation, acceptance criteria) as context, then ask:
 
