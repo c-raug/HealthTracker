@@ -91,18 +91,14 @@ This is the core revision loop. Repeat until the user signals they are done:
 1. **Receive** the user's plain-English description of what to change (e.g. "make the acceptance criteria more specific", "add a technical notes section", "rewrite the goal sentence to be clearer").
 2. **Rewrite** the issue body incorporating the requested changes. Keep all existing sections and structure intact unless the user explicitly asks to remove or restructure them. Use the standard issue body format from the `/ci` skill where applicable:
    ```
-   ## Goal
-   {One sentence describing what this adds or fixes.}
+   ## Description
+   {2-4 sentences describing the problem, motivation, or what this adds.}
 
-   ## Details
-   {UX behavior bullets — what the user sees/taps/experiences, edge cases, empty states}
+   ## Technical Implementation
+   {What needs to change in the codebase. Reference specific files, components, reducer actions, state fields, and patterns from CLAUDE.md.}
 
-   ## Technical Notes
-   {Affected files or new components, new state fields or reducer actions if known}
-
-   ---
-
-   _Tier: {short-term | medium-term | long-term}_
+   ## Acceptance Criteria
+   {Bulleted checklist of what "done" looks like.}
    ```
 3. **Show** the full revised body to the user:
    ```

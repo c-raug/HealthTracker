@@ -33,7 +33,7 @@ Every issue gets exactly **3 labels**, one from each category:
 | `weight` | `#C5DEF5` | Weight tab or weight-related components |
 | `nutrition` | `#C5DEF5` | Nutrition tab, meals, foods, water, macros |
 | `activity` | `#C5DEF5` | Activity tab, exercise, steps |
-| `settings` | `#C5DEF5` | Settings tab, preferences, profile, configuration |
+| `settings` | `#C5DEF5` | Profile tab (route: settings), preferences, profile, configuration |
 | `global` | `#C5DEF5` | Cross-cutting: navigation, theme, backup, layout |
 
 ### Category 3 — Timeline
