@@ -5,7 +5,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { convertWeight } from '../../utils/unitConversion';
-import { UserProfile, Sex, ActivityMode } from '../../types';
+import { UserProfile, Sex, ActivityMode, ActivityLevel } from '../../types';
 import InfoModal from '../InfoModal';
 
 const AVATAR_SIZE = 72;
@@ -262,7 +262,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
   });
 
-const ACTIVITY_LEVEL_OPTIONS: { value: string; label: string }[] = [
+const ACTIVITY_LEVEL_OPTIONS: { value: ActivityLevel; label: string }[] = [
   { value: 'sedentary', label: 'Sedentary' },
   { value: 'lightly_active', label: 'Lightly Active' },
   { value: 'moderately_active', label: 'Moderately Active' },
@@ -368,7 +368,7 @@ export default function ProfileCard() {
       const sourceUri = result.assets[0].uri;
       try {
         if (Platform.OS !== 'web') {
-          const FileSystem = await import('expo-file-system');
+          const FileSystem = await import('expo-file-system/legacy');
           const avatarPath = (FileSystem.documentDirectory ?? '') + 'avatar.jpg';
           await FileSystem.copyAsync({ from: sourceUri, to: avatarPath });
           setAvatarUri(avatarPath);
