@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { AppProvider, useApp } from '../context/AppContext';
 import { Colors, ThemeContext, useColors } from '../constants/theme';
 import { ErrorBoundary } from '../components/ErrorBoundary';
@@ -94,8 +95,16 @@ function RootNavigator() {
 
 function ThemeColorSync({ children }: { children: React.ReactNode }) {
   const { preferences } = useApp();
+  const systemScheme = useColorScheme();
+  const appearanceMode = preferences.appearanceMode ?? 'system';
+  const resolvedScheme =
+    appearanceMode === 'light' ? 'light' :
+    appearanceMode === 'dark' ? 'dark' :
+    (systemScheme ?? 'light');
+  const statusBarStyle = resolvedScheme === 'dark' ? 'light' : 'dark';
   return (
-    <ThemeContext.Provider value={{ accentColor: preferences.themeColor ?? null, appearanceMode: preferences.appearanceMode ?? 'system' }}>
+    <ThemeContext.Provider value={{ accentColor: preferences.themeColor ?? null, appearanceMode }}>
+      <StatusBar style={statusBarStyle} />
       {children}
     </ThemeContext.Provider>
   );

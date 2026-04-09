@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,11 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.textSecondary,
       marginBottom: Spacing.xs,
       marginTop: Spacing.md,
+    },
+    labelFirst: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
     },
     input: {
       backgroundColor: colors.card,
@@ -65,6 +70,13 @@ export default function QuickAddTab({ date, category, onDone }: Props) {
   const [calories, setCalories] = useState('');
   const [name, setName] = useState('');
 
+  const caloriesRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => caloriesRef.current?.focus(), 100);
+    return () => clearTimeout(t);
+  }, []);
+
   const calValue = parseInt(calories, 10);
   const isValid = !isNaN(calValue) && calValue > 0;
 
@@ -86,24 +98,25 @@ export default function QuickAddTab({ date, category, onDone }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Calories *</Text>
-      <TextInput
-        style={styles.input}
-        value={calories}
-        onChangeText={setCalories}
-        placeholder="e.g. 500"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="numeric"
-        returnKeyType="next"
-        autoFocus
-      />
-      <Text style={styles.label}>Name (optional)</Text>
+      <Text style={styles.labelFirst}>Name (optional)</Text>
       <TextInput
         style={styles.input}
         value={name}
         onChangeText={setName}
         placeholder="e.g. Restaurant lunch"
         placeholderTextColor={colors.textSecondary}
+        returnKeyType="next"
+        onSubmitEditing={() => caloriesRef.current?.focus()}
+      />
+      <Text style={styles.label}>Calories *</Text>
+      <TextInput
+        ref={caloriesRef}
+        style={styles.input}
+        value={calories}
+        onChangeText={setCalories}
+        placeholder="e.g. 500"
+        placeholderTextColor={colors.textSecondary}
+        keyboardType="numeric"
         returnKeyType="done"
         onSubmitEditing={handleAdd}
       />

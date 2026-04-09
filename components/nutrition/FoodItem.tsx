@@ -8,6 +8,8 @@ import {
   Animated,
   Modal,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -247,7 +249,10 @@ export default function FoodItem({ item, onDelete, date, category }: Props) {
         animationType="slide"
         onRequestClose={() => setEditVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.editSheet}>
             <View style={styles.editHeader}>
               <Text style={styles.editTitle} numberOfLines={1}>{item.name}</Text>
@@ -310,7 +315,7 @@ export default function FoodItem({ item, onDelete, date, category }: Props) {
               </ScrollView>
             )}
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

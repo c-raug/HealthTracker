@@ -12,6 +12,7 @@ import {
   Modal,
   ActivityIndicator,
   Keyboard,
+  KeyboardAvoidingView,
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -675,7 +676,7 @@ export default function ActivitiesScreen() {
   }
 
   return (
-    <View style={styles.flex}>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Date navigation */}
         <View style={styles.dateNav}>
@@ -778,7 +779,9 @@ export default function ActivitiesScreen() {
                   style={[styles.stepsInput, { flex: 1 }]}
                   value={smartwatchInput}
                   onChangeText={setSmartwatchInput}
-                  keyboardType="number-pad"
+                  keyboardType="numeric"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveSmartwatch}
                   placeholder="e.g. 450"
                   placeholderTextColor={colors.textSecondary}
                 />
@@ -1051,6 +1054,6 @@ export default function ActivitiesScreen() {
           </View>
         </Modal>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
