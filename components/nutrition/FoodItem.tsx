@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   Animated,
@@ -105,6 +106,39 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.white,
       fontWeight: '600',
     },
+    quickBadge: {
+      backgroundColor: colors.textSecondary,
+      borderRadius: Radius.sm,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+      alignSelf: 'center',
+    },
+    quickBadgeText: {
+      ...Typography.small,
+      color: colors.white,
+      fontSize: 10,
+      lineHeight: 14,
+    },
+    quickEditContainer: {
+      padding: Spacing.md,
+      paddingBottom: Spacing.xl,
+    },
+    quickEditLabel: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      marginBottom: Spacing.xs,
+      marginTop: Spacing.md,
+    },
+    quickEditInput: {
+      backgroundColor: colors.background,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      ...Typography.body,
+      color: colors.text,
+    },
   });
 
 interface Props {
@@ -121,27 +155,44 @@ export default function FoodItem({ item, onDelete, date, category }: Props) {
 
   const [editVisible, setEditVisible] = useState(false);
   const [editServings, setEditServings] = useState<number>(item.servings ?? 1);
+  const [quickEditCalories, setQuickEditCalories] = useState('');
+  const [quickEditName, setQuickEditName] = useState('');
 
   const hasNutrition = item.calories != null;
 
   const baseServings = item.servings ?? 1;
 
   const handleOpenEdit = () => {
-    setEditServings(item.servings ?? 1);
+    if (item.quickAdd) {
+      setQuickEditCalories(String(item.calories ?? 0));
+      setQuickEditName(item.name);
+    } else {
+      setEditServings(item.servings ?? 1);
+    }
     setEditVisible(true);
   };
 
   const handleConfirmEdit = () => {
-    const ratio = editServings / baseServings;
-    const updated: NutritionFoodItem = {
-      ...item,
-      servings: editServings,
-      calories: Math.round((item.calories ?? 0) * ratio),
-      protein: Math.round(((item.protein ?? 0) * ratio) * 10) / 10,
-      carbs: Math.round(((item.carbs ?? 0) * ratio) * 10) / 10,
-      fat: Math.round(((item.fat ?? 0) * ratio) * 10) / 10,
-    };
-    dispatch({ type: 'UPDATE_FOOD_IN_MEAL', date, category, food: updated });
+    if (item.quickAdd) {
+      const cal = parseInt(quickEditCalories, 10) || 0;
+      const updated: NutritionFoodItem = {
+        ...item,
+        name: quickEditName.trim() || 'Quick Add',
+        calories: cal,
+      };
+      dispatch({ type: 'UPDATE_FOOD_IN_MEAL', date, category, food: updated });
+    } else {
+      const ratio = editServings / baseServings;
+      const updated: NutritionFoodItem = {
+        ...item,
+        servings: editServings,
+        calories: Math.round((item.calories ?? 0) * ratio),
+        protein: Math.round(((item.protein ?? 0) * ratio) * 10) / 10,
+        carbs: Math.round(((item.carbs ?? 0) * ratio) * 10) / 10,
+        fat: Math.round(((item.fat ?? 0) * ratio) * 10) / 10,
+      };
+      dispatch({ type: 'UPDATE_FOOD_IN_MEAL', date, category, food: updated });
+    }
     setEditVisible(false);
   };
 
@@ -169,7 +220,14 @@ export default function FoodItem({ item, onDelete, date, category }: Props) {
             <Text style={styles.bulletText}>{'\u2022'}</Text>
           </View>
           <TouchableOpacity style={styles.info} onPress={handleOpenEdit} activeOpacity={0.7}>
-            <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.xs }}>
+              <Text style={[styles.name, item.quickAdd && { fontStyle: 'italic' }]} numberOfLines={1}>{item.name}</Text>
+              {item.quickAdd && (
+                <View style={styles.quickBadge}>
+                  <Text style={styles.quickBadgeText}>Quick</Text>
+                </View>
+              )}
+            </View>
             {hasNutrition && item.servingSize && (
               <Text style={styles.details}>
                 {item.servingSize}
@@ -198,30 +256,59 @@ export default function FoodItem({ item, onDelete, date, category }: Props) {
               </TouchableOpacity>
             </View>
 
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: Spacing.xl }}
-            >
-              <PortionSelector
-                value={editServings}
-                onChange={setEditServings}
-                baseCalories={baseCalories}
-                baseProtein={baseProtein}
-                baseCarbs={baseCarbs}
-                baseFat={baseFat}
-                servingSize={item.servingSize ?? '1 serving'}
-                baseServings={1}
-                foodName={item.name}
-              />
-
-              <TouchableOpacity
-                style={styles.confirmEditBtn}
-                onPress={handleConfirmEdit}
-                activeOpacity={0.8}
+            {item.quickAdd ? (
+              <View style={styles.quickEditContainer}>
+                <Text style={styles.quickEditLabel}>Calories</Text>
+                <TextInput
+                  style={styles.quickEditInput}
+                  value={quickEditCalories}
+                  onChangeText={setQuickEditCalories}
+                  keyboardType="numeric"
+                  returnKeyType="next"
+                  autoFocus
+                />
+                <Text style={styles.quickEditLabel}>Name</Text>
+                <TextInput
+                  style={styles.quickEditInput}
+                  value={quickEditName}
+                  onChangeText={setQuickEditName}
+                  returnKeyType="done"
+                  onSubmitEditing={handleConfirmEdit}
+                />
+                <TouchableOpacity
+                  style={styles.confirmEditBtn}
+                  onPress={handleConfirmEdit}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmEditText}>Update</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ paddingBottom: Spacing.xl }}
               >
-                <Text style={styles.confirmEditText}>Update Portion</Text>
-              </TouchableOpacity>
-            </ScrollView>
+                <PortionSelector
+                  value={editServings}
+                  onChange={setEditServings}
+                  baseCalories={baseCalories}
+                  baseProtein={baseProtein}
+                  baseCarbs={baseCarbs}
+                  baseFat={baseFat}
+                  servingSize={item.servingSize ?? '1 serving'}
+                  baseServings={1}
+                  foodName={item.name}
+                />
+
+                <TouchableOpacity
+                  style={styles.confirmEditBtn}
+                  onPress={handleConfirmEdit}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.confirmEditText}>Update Portion</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>

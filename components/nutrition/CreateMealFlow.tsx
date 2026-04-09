@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -168,7 +168,7 @@ type SectionItem =
 export default function CreateMealFlow({ onDone, initialFoods, initialName }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { customFoods, dispatch } = useApp();
+  const { customFoods, nutritionLog, dispatch } = useApp();
 
   const [mealName, setMealName] = useState(initialName ?? '');
   const [foods, setFoods] = useState<NutritionFoodItem[]>(initialFoods ?? []);
@@ -181,19 +181,48 @@ export default function CreateMealFlow({ onDone, initialFoods, initialName }: Pr
     setSelectedItem(null);
   }, []);
 
-  // Build sections: "In Meal" only when not searching; Pinned/My Foods always
+  // Compute food frequency map from all logged entries (by name)
+  const foodFrequencyMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const day of nutritionLog) {
+      for (const dayFoods of Object.values(day.meals)) {
+        for (const food of dayFoods) {
+          const key = food.name.toLowerCase().trim();
+          map[key] = (map[key] ?? 0) + 1;
+        }
+      }
+    }
+    return map;
+  }, [nutritionLog]);
+
   const trimmed = query.trim().toLowerCase();
-  const filtered =
-    trimmed.length === 0
-      ? customFoods
-      : customFoods.filter((f) => f.name.toLowerCase().includes(trimmed));
+  const isSearching = trimmed.length > 0;
+
+  const filtered = isSearching
+    ? customFoods.filter((f) => f.name.toLowerCase().includes(trimmed))
+    : customFoods;
+
   const pinnedCustom = filtered
     .filter((f) => f.pinned)
     .sort((a, b) => (a.pinnedOrder ?? Infinity) - (b.pinnedOrder ?? Infinity));
-  const unpinnedCustom = filtered.filter((f) => !f.pinned);
 
+  // Recent: top 7 non-pinned custom foods by frequency (logged at least once)
+  const recentCustom = useMemo(() => {
+    if (isSearching) return [];
+    return customFoods
+      .filter((f) => !f.pinned && (foodFrequencyMap[f.name.toLowerCase().trim()] ?? 0) > 0)
+      .sort((a, b) =>
+        (foodFrequencyMap[b.name.toLowerCase().trim()] ?? 0) -
+        (foodFrequencyMap[a.name.toLowerCase().trim()] ?? 0)
+      )
+      .slice(0, 7);
+  }, [isSearching, customFoods, foodFrequencyMap]);
+
+  const unpinnedCustom = isSearching ? filtered.filter((f) => !f.pinned) : [];
+
+  // Build sections: "In Meal" only when not searching; Pinned + Recent/My Foods
   const sections: { title: string; data: SectionItem[] }[] = [];
-  if (trimmed.length === 0 && foods.length > 0) {
+  if (!isSearching && foods.length > 0) {
     sections.push({
       title: `In Meal (${foods.length})`,
       data: foods.map((f) => ({ kind: 'meal', food: f })),
@@ -202,7 +231,10 @@ export default function CreateMealFlow({ onDone, initialFoods, initialName }: Pr
   if (pinnedCustom.length > 0) {
     sections.push({ title: 'Pinned', data: pinnedCustom.map((f) => ({ kind: 'custom', food: f })) });
   }
-  if (unpinnedCustom.length > 0) {
+  if (!isSearching && recentCustom.length > 0) {
+    sections.push({ title: 'Recent', data: recentCustom.map((f) => ({ kind: 'custom', food: f })) });
+  }
+  if (isSearching && unpinnedCustom.length > 0) {
     sections.push({ title: 'My Foods', data: unpinnedCustom.map((f) => ({ kind: 'custom', food: f })) });
   }
 
