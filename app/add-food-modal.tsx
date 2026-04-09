@@ -12,6 +12,7 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../constant
 import { MealCategory } from '../types';
 import AddFoodTab from '../components/nutrition/AddFoodTab';
 import AddMealTab from '../components/nutrition/AddMealTab';
+import QuickAddTab from '../components/nutrition/QuickAddTab';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -62,7 +63,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
   });
 
-type Tab = 'food' | 'meal';
+type Tab = 'food' | 'meal' | 'quickadd';
 
 export default function AddFoodModal() {
   const colors = useColors();
@@ -105,12 +106,24 @@ export default function AddFoodModal() {
             Add Meal
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'quickadd' && styles.tabActive]}
+          onPress={() => setActiveTab('quickadd')}
+        >
+          <Text style={[styles.tabText, activeTab === 'quickadd' && styles.tabTextActive]}>
+            Quick Add
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {activeTab === 'food' ? (
+      {activeTab === 'food' && (
         <AddFoodTab date={date} category={category} onDone={handleDone} />
-      ) : (
+      )}
+      {activeTab === 'meal' && (
         <AddMealTab date={date} category={category} onDone={handleDone} />
+      )}
+      {activeTab === 'quickadd' && (
+        <QuickAddTab date={date} category={category} onDone={handleDone} />
       )}
     </SafeAreaView>
   );

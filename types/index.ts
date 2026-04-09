@@ -51,6 +51,7 @@ export interface NutritionFoodItem {
   servings?: number;
   mealGroupId?: string;
   mealGroupName?: string;
+  quickAdd?: boolean;
 }
 
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snacks';

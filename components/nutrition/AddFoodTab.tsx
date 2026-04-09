@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -180,7 +180,7 @@ interface Props {
 export default function AddFoodTab({ date, category, onDone }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { customFoods, dispatch } = useApp();
+  const { customFoods, nutritionLog, dispatch } = useApp();
 
   const [query, setQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
@@ -189,18 +189,50 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const [editingFood, setEditingFood] = useState<CustomFood | null>(null);
   const [editingPinned, setEditingPinned] = useState(false);
 
-  // Filter custom foods by query
+  // Compute food frequency map from all logged entries (by name)
+  const foodFrequencyMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const day of nutritionLog) {
+      for (const foods of Object.values(day.meals)) {
+        for (const food of foods) {
+          const key = food.name.toLowerCase().trim();
+          map[key] = (map[key] ?? 0) + 1;
+        }
+      }
+    }
+    return map;
+  }, [nutritionLog]);
+
   const trimmed = query.trim().toLowerCase();
-  const filtered = trimmed.length === 0
-    ? customFoods
-    : customFoods.filter((f) => f.name.toLowerCase().includes(trimmed));
+  const isSearching = trimmed.length > 0;
+
+  // When searching: filter all foods by query
+  const filtered = isSearching
+    ? customFoods.filter((f) => f.name.toLowerCase().includes(trimmed))
+    : customFoods;
 
   const sortedPinned = filtered
     .filter((f) => f.pinned)
     .sort((a, b) => (a.pinnedOrder ?? Infinity) - (b.pinnedOrder ?? Infinity));
-  const unpinned = filtered.filter((f) => !f.pinned);
 
-  const isEmpty = sortedPinned.length === 0 && unpinned.length === 0;
+  // When not searching: show Recent (top 7 non-pinned by frequency, logged at least once)
+  // When searching: show all matching unpinned (My Foods)
+  const recentFoods = useMemo(() => {
+    if (isSearching) return [];
+    return customFoods
+      .filter((f) => !f.pinned && (foodFrequencyMap[f.name.toLowerCase().trim()] ?? 0) > 0)
+      .sort((a, b) =>
+        (foodFrequencyMap[b.name.toLowerCase().trim()] ?? 0) -
+        (foodFrequencyMap[a.name.toLowerCase().trim()] ?? 0)
+      )
+      .slice(0, 7);
+  }, [isSearching, customFoods, foodFrequencyMap]);
+
+  const unpinned = isSearching ? filtered.filter((f) => !f.pinned) : [];
+
+  const isEmpty = isSearching
+    ? sortedPinned.length === 0 && unpinned.length === 0
+    : sortedPinned.length === 0 && recentFoods.length === 0;
 
   const toNutritionItem = useCallback((f: CustomFood): NutritionFoodItem => ({
     id: f.id,
@@ -465,7 +497,59 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {unpinned.length > 0 && (
+        {/* When not searching: show Recent section (top 7 by frequency) */}
+        {!isSearching && recentFoods.length > 0 && (
+          <>
+            <Text style={styles.sectionHeader}>Recent</Text>
+            {recentFoods.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.resultItem}
+                onPress={() => handleSelectFood(item)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.foodInfo}>
+                  <Text style={styles.resultName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.resultInfo}>
+                    {item.calories} cal
+                    {item.servingSize ? ` · ${item.servingSize}` : ''}
+                    {item.protein != null ? ` · P: ${item.protein}g` : ''}
+                  </Text>
+                </View>
+                <View style={styles.actionBtns}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleTogglePin(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                      size={18}
+                      color={item.pinned ? colors.primary : colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => { setSelectedItem(null); setEditingFood(item); }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="pencil-outline" size={18} color={colors.textSecondary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleDelete(item.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {/* When searching: show My Foods (all matching unpinned) */}
+        {isSearching && unpinned.length > 0 && (
           <>
             <Text style={styles.sectionHeader}>My Foods</Text>
             {unpinned.map((item) => (
@@ -517,7 +601,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
 
         {isEmpty && (
           <Text style={styles.empty}>
-            {trimmed.length > 0
+            {isSearching
               ? 'No matching foods found'
               : 'No custom foods yet. Tap "Create Custom Food" to add one.'}
           </Text>

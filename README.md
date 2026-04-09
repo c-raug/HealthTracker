@@ -24,6 +24,8 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **Copy meal from previous day** — copy icon in meal category header copies foods from yesterday with confirmation
 - **Swipe-left to save meal** — swipe a meal category header left to save its foods as a reusable meal template
 - **Saved meal groups** — foods added via a saved meal are grouped under a collapsible header showing meal name + total calories; swipe left on a group header to remove the entire meal
+- **Quick Add** — fast calorie-only entries via the "Quick Add" tab in the add-food modal; optional name label (defaults to "Quick Add"); quick-added items display with italic name and "Quick" badge in the meal log; tap to edit calories or name
+- **Recent foods** — when no search query is active, the food picker shows a "Recent" section with up to 7 most-frequently-logged foods (sorted by frequency), replacing the full "My Foods" list; typing a search query reveals all matching custom foods
 - **Custom food library** — create, edit, pin, and delete personal foods; calories auto-computed from macros; pinned foods surface first with drag-to-reorder in Edit mode
 - **Saved meal templates** — group foods into reusable meals; pin meals to specific categories so they appear first; drag-to-reorder pinned meals in Edit mode
 - **Portion selector** — dual drum scroll wheels (whole 0–250 + fraction in ⅛ increments) with live calorie/macro preview; available when adding a food and when editing an already-logged item
@@ -103,7 +105,7 @@ app/
 ├── _layout.tsx              # Root Stack layout (GestureHandlerRootView, SafeAreaProvider, AppProvider, ThemeColorSync, ErrorBoundary)
 ├── welcome.tsx              # Welcome screen — Start New Profile / Load Saved Data
 ├── onboarding.tsx           # 5-step onboarding wizard
-├── add-food-modal.tsx       # Full-screen modal: Add Food / Add Meal tabs
+├── add-food-modal.tsx       # Full-screen modal: Add Food / Add Meal / Quick Add tabs
 ├── create-meal-modal.tsx    # Pre-populated CreateMealFlow for saving a meal category
 ├── app-settings-modal.tsx   # App Settings sub-screen (Default Tab, Units, Expand toggle, Backup, Debug Info)
 ├── appearance-modal.tsx     # Appearance sub-screen (Color Mode + Accent Color)
@@ -145,6 +147,7 @@ components/
     ├── CustomFoodForm.tsx   # Create or edit a custom food (qty/unit picker + auto-calories)
     ├── CreateMealFlow.tsx   # Name meal + search/add custom foods (SectionList)
     ├── EditMealFlow.tsx     # Edit an existing saved meal template
+    ├── QuickAddTab.tsx      # Quick calorie-only entry (name + calories, no portion selector)
     ├── WaterTracker.tsx     # Collapsible water log card (presets, quick-add pill, grouped entries)
     ├── WaterBottleVisual.tsx # Animated bottle fill with blue glow at 100%
     ├── WeeklyIntakeGraph.tsx # WeeklyCalorieGraph, WeeklyWaterGraph, WeeklyActivityGraph (tap-to-tooltip)
@@ -241,6 +244,7 @@ interface NutritionFoodItem {
   servings?: number;
   mealGroupId?: string;     // links foods added via a saved meal
   mealGroupName?: string;   // saved meal name for group header
+  quickAdd?: boolean;       // true for calorie-only entries from QuickAddTab
 }
 
 interface DayNutrition {
