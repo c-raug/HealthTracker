@@ -8,6 +8,9 @@ import { AppProvider, useApp } from '../context/AppContext';
 import { Colors, ThemeContext, useColors } from '../constants/theme';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { initCrashReporting } from '../utils/crashReporting';
+import { ToastProvider } from '../context/ToastContext';
+import ToastNotification from '../components/ToastNotification';
+import GamificationWatcher from '../components/GamificationWatcher';
 
 initCrashReporting();
 
@@ -116,9 +119,13 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ErrorBoundary>
           <AppProvider>
-            <ThemeColorSync>
-              <RootNavigator />
-            </ThemeColorSync>
+            <ToastProvider>
+              <ThemeColorSync>
+                <GamificationWatcher />
+                <RootNavigator />
+                <ToastNotification />
+              </ThemeColorSync>
+            </ToastProvider>
           </AppProvider>
         </ErrorBoundary>
       </SafeAreaProvider>

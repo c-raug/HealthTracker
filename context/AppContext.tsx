@@ -40,6 +40,7 @@ import {
 } from '../storage/storage';
 import { writeAutoBackup } from '../storage/backupStorage';
 import { getToday } from '../utils/dateUtils';
+import { XP_FOOD_CAP } from '../utils/xpCalculation';
 
 // ─── State & Actions ─────────────────────────────────────────────────────────
 
@@ -90,7 +91,10 @@ type Action =
   | { type: 'REORDER_PINNED_MEALS'; category: MealCategory; ids: string[] }
   | { type: 'REORDER_MEAL_FOODS'; date: string; category: MealCategory; foods: NutritionFoodItem[] }
   | { type: 'SET_APPEARANCE_MODE'; mode: 'light' | 'dark' | 'system' }
-  | { type: 'SET_AVATAR'; uri: string | undefined };
+  | { type: 'SET_AVATAR'; uri: string | undefined }
+  | { type: 'UNLOCK_ACHIEVEMENT'; id: string }
+  | { type: 'ADD_XP'; amount: number; date: string; source: 'food' | 'calorieGoal' | 'waterGoal' | 'weight' | 'activity' | 'streak7' | 'streak30' }
+  | { type: 'PRESTIGE' };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -341,6 +345,63 @@ function reducer(state: State, action: Action): State {
         ...state,
         preferences: { ...state.preferences, avatarUri: action.uri },
       };
+    case 'UNLOCK_ACHIEVEMENT': {
+      const existing = state.preferences.unlockedAchievements ?? [];
+      if (existing.includes(action.id)) return state;
+      return {
+        ...state,
+        preferences: {
+          ...state.preferences,
+          unlockedAchievements: [...existing, action.id],
+        },
+      };
+    }
+    case 'ADD_XP': {
+      const currentXp = state.preferences.totalXp ?? 0;
+      const xpLog = { ...(state.preferences.xpLog ?? {}) };
+      const dayLog = xpLog[action.date] ?? { food: 0, calorieGoal: false, waterGoal: false, weight: false, activity: false };
+      // Guard duplicate daily grants
+      if (action.source === 'food') {
+        // Food XP is capped at 25/day; clamp the amount added
+        const alreadyEarned = dayLog.food;
+        const canEarn = Math.max(0, XP_FOOD_CAP - alreadyEarned);
+        const toAdd = Math.min(action.amount, canEarn);
+        if (toAdd <= 0) return state;
+        xpLog[action.date] = { ...dayLog, food: alreadyEarned + toAdd };
+        return {
+          ...state,
+          preferences: { ...state.preferences, totalXp: currentXp + toAdd, xpLog },
+        };
+      }
+      if (action.source === 'calorieGoal') {
+        if (dayLog.calorieGoal) return state;
+        xpLog[action.date] = { ...dayLog, calorieGoal: true };
+      } else if (action.source === 'waterGoal') {
+        if (dayLog.waterGoal) return state;
+        xpLog[action.date] = { ...dayLog, waterGoal: true };
+      } else if (action.source === 'weight') {
+        if (dayLog.weight) return state;
+        xpLog[action.date] = { ...dayLog, weight: true };
+      } else if (action.source === 'activity') {
+        if (dayLog.activity) return state;
+        xpLog[action.date] = { ...dayLog, activity: true };
+      }
+      // streak7 and streak30 are one-time bonuses — guard via unlockedAchievements in watcher
+      return {
+        ...state,
+        preferences: { ...state.preferences, totalXp: currentXp + action.amount, xpLog },
+      };
+    }
+    case 'PRESTIGE': {
+      return {
+        ...state,
+        preferences: {
+          ...state.preferences,
+          totalXp: 0,
+          prestige: (state.preferences.prestige ?? 0) + 1,
+        },
+      };
+    }
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.date };
     case 'REORDER_PINNED_FOODS':

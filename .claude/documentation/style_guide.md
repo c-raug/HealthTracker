@@ -995,8 +995,13 @@ sectionHeaderRow: {
 | `components/settings/ThemeColorPicker.tsx` | Accent color swatch pattern      |
 | `components/settings/AppearanceModePicker.tsx` | Light/Dark/System card picker |
 | `components/profile/ProfileCard.tsx`       | Avatar + inline edit form pattern |
-| `components/profile/BadgesSection.tsx`     | Streak badge pills + expanded cards |
+| `components/profile/BadgesSection.tsx`     | XP/level bar + streak pills + achievements grid |
 | `components/activities/CalorieFlame.tsx`   | SVG outline flame visual          |
 | `components/ErrorBoundary.tsx`             | Error fallback using static LightColors |
+| `components/ToastNotification.tsx`         | Animated top-of-screen toast banner |
+| `components/GamificationWatcher.tsx`       | Invisible root-level XP/achievement watcher |
+| `context/ToastContext.tsx`                 | Toast context — showToast(), dismiss(), current |
+| `utils/achievementCalculation.ts`          | ACHIEVEMENTS + checkNewAchievements() |
+| `utils/xpCalculation.ts`                  | XP constants, level thresholds, getLevelProgress() |
 | `utils/streakCalculation.ts`              | Streak computation logic           |
 | `utils/crashReporting.ts`                 | Crash logging + optional Sentry    |
