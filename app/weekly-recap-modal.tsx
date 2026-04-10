@@ -31,7 +31,7 @@ const makeStyles = (colors: typeof LightColors) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: Spacing.md,
-      paddingTop: Spacing.sm,
+      paddingTop: Spacing.lg,
       paddingBottom: Spacing.xs,
     },
     progressBar: {
@@ -100,10 +100,11 @@ export default function WeeklyRecapModal() {
 
   const [currentPage, setCurrentPage] = useState(0);
 
-  // The recap covers the previous week (7 days ending yesterday)
+  // The recap always covers the most recently completed ISO week (last Mon–Sun)
   const today = getToday();
-  const weekEnd = addDays(today, -1);
-  const weekStart = getISOWeekMonday(weekEnd);
+  const thisMonday = getISOWeekMonday(today);
+  const weekStart = addDays(thisMonday, -7);
+  const weekEnd = addDays(weekStart, 6);
 
   // Mark recap as shown for current ISO week when modal opens
   useEffect(() => {
