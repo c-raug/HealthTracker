@@ -51,6 +51,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 ### Profile Tab
 - **ProfileCard** (always visible) — circular avatar (tap to pick from camera roll, falls back to initials or default icon), user name, height, current weight, and activity level; tap to expand inline edit form with Name, DOB, Sex, Height, Activity Tracking Mode (Auto/Manual/Smart Watch), and Activity Level
 - **Badges** (collapsible) — XP/level display always visible (⭐ level name + XP progress bar; at Level 10 a "Prestige →" button resets XP and increments prestige counter); four streak badges: Calorie Goal, Weight, Food, and Activity (collapsed pill row / expanded streak cards); 8 permanently-unlockable achievement tiles in a 2-column grid (4 streak milestones × 7/30/100/365 days, 4 food-logged milestones × 10/50/100/500 entries) — unlocked in full color, locked in gray with a lock icon
+- **Food Library →** — navigates to Food Library modal; two tabs: Foods (alphabetical list of all custom foods with create/edit/delete) and Meals (alphabetical list of all saved meal templates with create/edit/delete)
 - **Nutrition Goals →** — navigates to Nutrition Goals modal (Goals & Calorie Target, Macros with gram equivalents, Daily Water Goal with auto/manual + creatine adjustment)
 - **Appearance →** — navigates to Appearance modal (Light/Dark/System mode picker + 6-swatch accent color picker)
 - **App Settings →** — navigates to App Settings modal (Default Tab, Weight Unit, Expand sections toggle, Data Backup, Debug Info with crash log viewer)
@@ -112,6 +113,8 @@ app/
 ├── app-settings-modal.tsx   # App Settings sub-screen (Default Tab, Units, Expand toggle, Backup, Debug Info)
 ├── appearance-modal.tsx     # Appearance sub-screen (Color Mode + Accent Color)
 ├── nutrition-goals-modal.tsx # Nutrition Goals sub-screen (Goals, Macros, Water Goal)
+├── food-library-modal.tsx   # Food Library sub-screen (Foods + Meals tabs with create/edit/delete)
+├── weekly-recap-modal.tsx   # Full-screen story-style weekly recap (4 pages: Weight, Nutrition, Streaks, Rating)
 └── (tabs)/
     ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Profile) + global feedback button
     ├── index.tsx            # Weight screen — entry, chart (with range selector), insights
@@ -157,7 +160,7 @@ components/
     ├── WeeklyIntakeGraph.tsx # WeeklyCalorieGraph, WeeklyWaterGraph, WeeklyActivityGraph (tap-to-tooltip)
     └── ProfilePrompt.tsx    # CTA card when profile or weight entry is missing
 
-context/AppContext.tsx       # Global state (38 action types) with auto-save + auto-backup
+context/AppContext.tsx       # Global state (39 action types) with auto-save + auto-backup
 context/ToastContext.tsx     # Toast notification context — showToast(), dismiss(), current message
 storage/
 ├── storage.ts               # AsyncStorage read/write helpers
