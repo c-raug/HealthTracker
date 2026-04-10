@@ -29,6 +29,20 @@ function FeedbackHeaderButton() {
   );
 }
 
+function RecapHeaderButton() {
+  const router = useRouter();
+  const colors = useColors();
+  return (
+    <TouchableOpacity
+      onPress={() => router.push('/weekly-recap-modal')}
+      style={{ marginLeft: 8, padding: 4 }}
+      activeOpacity={0.7}
+    >
+      <Ionicons name="trophy-outline" size={22} color={colors.text} />
+    </TouchableOpacity>
+  );
+}
+
 export default function TabLayout() {
   const colors = useColors();
 
@@ -45,6 +59,7 @@ export default function TabLayout() {
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
         headerShadowVisible: false,
+        headerLeft: () => <RecapHeaderButton />,
         headerRight: () => <FeedbackHeaderButton />,
       }}
     >

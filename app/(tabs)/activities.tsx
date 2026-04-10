@@ -474,6 +474,11 @@ export default function ActivitiesScreen() {
   const [showSavedConfirmation, setShowSavedConfirmation] = useState(false);
   const savedConfirmationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Scroll-into-view refs for smartwatch input
+  const scrollViewRef = useRef<ScrollView>(null);
+  const smartwatchInputWrapperRef = useRef<View>(null);
+  const smartwatchFocusedRef = useRef(false);
+
   // Drum refs
   const hoursScrollRef = useRef<ScrollView>(null);
   const minutesScrollRef = useRef<ScrollView>(null);
@@ -627,6 +632,31 @@ export default function ActivitiesScreen() {
     };
   }, []);
 
+  const scrollSmartwatchIntoView = useCallback(() => {
+    if (!smartwatchInputWrapperRef.current || !scrollViewRef.current) return;
+    smartwatchInputWrapperRef.current.measureLayout(
+      scrollViewRef.current as any,
+      (_x: number, y: number) => {
+        scrollViewRef.current?.scrollTo({ y: y - Spacing.md, animated: true });
+      },
+      () => {}
+    );
+  }, []);
+
+  const handleSmartwatchFocus = useCallback(() => {
+    smartwatchFocusedRef.current = true;
+    scrollSmartwatchIntoView();
+  }, [scrollSmartwatchIntoView]);
+
+  useEffect(() => {
+    const subscription = Keyboard.addListener('keyboardDidShow', () => {
+      if (smartwatchFocusedRef.current) {
+        scrollSmartwatchIntoView();
+      }
+    });
+    return () => subscription.remove();
+  }, [scrollSmartwatchIntoView]);
+
   const handleDelete = (activityId: string) => {
     dispatch({ type: 'DELETE_ACTIVITY', date: selectedDate, activityId });
   };
@@ -677,7 +707,7 @@ export default function ActivitiesScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Date navigation */}
         <View style={styles.dateNav}>
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
@@ -774,7 +804,7 @@ export default function ActivitiesScreen() {
               <Text style={styles.smartwatchInstruction}>
                 Enter your total calories burned from your smart watch
               </Text>
-              <View style={styles.inputRow}>
+              <View ref={smartwatchInputWrapperRef} style={styles.inputRow}>
                 <TextInput
                   style={[styles.stepsInput, { flex: 1 }]}
                   value={smartwatchInput}
@@ -782,6 +812,9 @@ export default function ActivitiesScreen() {
                   keyboardType="numeric"
                   returnKeyType="done"
                   onSubmitEditing={handleSaveSmartwatch}
+                  onFocus={handleSmartwatchFocus}
+                  onBlur={() => { smartwatchFocusedRef.current = false; }}
+                  selectTextOnFocus={true}
                   placeholder="e.g. 450"
                   placeholderTextColor={colors.textSecondary}
                 />

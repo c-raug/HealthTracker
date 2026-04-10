@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { initCrashReporting } from '../utils/crashReporting';
 import { ToastProvider } from '../context/ToastContext';
 import ToastNotification from '../components/ToastNotification';
 import GamificationWatcher from '../components/GamificationWatcher';
+import { getToday, getISOWeekString } from '../utils/dateUtils';
 
 initCrashReporting();
 
@@ -19,12 +20,13 @@ function RootNavigator() {
   const colors = useColors();
   const router = useRouter();
   const segments = useSegments();
+  const recapShownRef = useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
 
     const onboardingComplete = preferences.onboardingComplete === true;
-    const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal' || segments[0] === 'create-meal-modal' || segments[0] === 'app-settings-modal' || segments[0] === 'appearance-modal' || segments[0] === 'nutrition-goals-modal';
+    const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal' || segments[0] === 'create-meal-modal' || segments[0] === 'app-settings-modal' || segments[0] === 'appearance-modal' || segments[0] === 'nutrition-goals-modal' || segments[0] === 'weekly-recap-modal';
 
     if (onboardingComplete && !inApp) {
       const tab = preferences.defaultTab ?? 'nutrition';
@@ -37,6 +39,28 @@ function RootNavigator() {
       router.replace('/welcome');
     }
   }, [isLoading, preferences.onboardingComplete, segments]);
+
+  // Auto-show weekly recap on Monday if not yet shown this week
+  useEffect(() => {
+    if (isLoading) return;
+    if (!preferences.onboardingComplete) return;
+    if (recapShownRef.current) return;
+    // Only trigger when the user is on a tabs screen
+    if (segments[0] !== '(tabs)') return;
+
+    const today = getToday();
+    const [yearStr, monthStr, dayStr] = today.split('-');
+    const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, parseInt(dayStr));
+    const dayOfWeek = date.getDay(); // 0=Sunday, 1=Monday
+
+    if (dayOfWeek === 1) {
+      const currentWeek = getISOWeekString(today);
+      if (preferences.lastRecapShownWeek !== currentWeek) {
+        recapShownRef.current = true;
+        router.push('/weekly-recap-modal');
+      }
+    }
+  }, [isLoading, preferences.onboardingComplete, preferences.lastRecapShownWeek, segments]);
 
   if (isLoading) {
     return (
@@ -89,6 +113,13 @@ function RootNavigator() {
         name="nutrition-goals-modal"
         options={{
           presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="weekly-recap-modal"
+        options={{
+          presentation: 'fullScreenModal',
           headerShown: false,
         }}
       />
