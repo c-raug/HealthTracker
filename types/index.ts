@@ -91,6 +91,14 @@ export interface SavedMeal {
   pinnedOrder?: Record<string, number>;
 }
 
+export interface XpDayLog {
+  food: number;          // total food XP earned today (0–25)
+  calorieGoal: boolean;
+  waterGoal: boolean;
+  weight: boolean;
+  activity: boolean;
+}
+
 export interface UserPreferences {
   unit: 'lbs' | 'kg';
   profile?: UserProfile;
@@ -107,6 +115,11 @@ export interface UserPreferences {
   sectionsExpanded?: boolean;
   appearanceMode?: 'light' | 'dark' | 'system';
   avatarUri?: string;
+  // Gamification
+  unlockedAchievements?: string[];
+  totalXp?: number;
+  prestige?: number;
+  xpLog?: Record<string, XpDayLog>;
 }
 
 export type ExerciseType = 'weight_lifting';

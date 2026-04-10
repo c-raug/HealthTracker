@@ -50,7 +50,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Profile Tab
 - **ProfileCard** (always visible) — circular avatar (tap to pick from camera roll, falls back to initials or default icon), user name, height, current weight, and activity level; tap to expand inline edit form with Name, DOB, Sex, Height, Activity Tracking Mode (Auto/Manual/Smart Watch), and Activity Level
-- **Badges** (collapsible) — four streak badges: Calorie Goal, Weight, Food, and Activity; collapsed view shows pill row with icons, labels, and streak counts; expanded view shows current and longest-ever streaks for each
+- **Badges** (collapsible) — XP/level display always visible (⭐ level name + XP progress bar; at Level 10 a "Prestige →" button resets XP and increments prestige counter); four streak badges: Calorie Goal, Weight, Food, and Activity (collapsed pill row / expanded streak cards); 8 permanently-unlockable achievement tiles in a 2-column grid (4 streak milestones × 7/30/100/365 days, 4 food-logged milestones × 10/50/100/500 entries) — unlocked in full color, locked in gray with a lock icon
 - **Nutrition Goals →** — navigates to Nutrition Goals modal (Goals & Calorie Target, Macros with gram equivalents, Daily Water Goal with auto/manual + creatine adjustment)
 - **Appearance →** — navigates to Appearance modal (Light/Dark/System mode picker + 6-swatch accent color picker)
 - **App Settings →** — navigates to App Settings modal (Default Tab, Weight Unit, Expand sections toggle, Data Backup, Debug Info with crash log viewer)
@@ -71,6 +71,8 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - Full **dark mode** support with Light / Dark / System appearance modes
 - **6 accent color themes** — Green (default), Blue, Orange, Purple, Red, Teal
 - **Global feedback button** — chatbubble icon in the header of Weight, Nutrition, and Activities tabs; taps navigate to the feedback form on the Profile tab
+- **XP & level system** — earn XP for daily actions (food logging, hitting calorie/water goals, logging weight/activity, streak bonuses); 10 named levels (Novice → Legend); level-up toast notification; Prestige system for indefinite progression
+- **Achievement badges** — 8 permanently-unlockable milestones (streak and food-logged); toast notification on first unlock; persisted across restarts
 - **Error boundary** — catches unhandled JS exceptions, logs crash details to AsyncStorage, renders a "Something went wrong" fallback with Restart button; optional Sentry integration via `SENTRY_DSN`
 - **Shared date state** — changing the date on any tab instantly reflects on all others; resets to today on app restart
 - **Collapsible sections** — all sections default to collapsed; "Expand sections by default" toggle available in App Settings
@@ -119,6 +121,8 @@ app/
 
 components/
 ├── ErrorBoundary.tsx        # React error boundary with crash logging and Sentry integration
+├── GamificationWatcher.tsx  # Invisible root component — grants XP, unlocks achievements, shows level-up toasts
+├── ToastNotification.tsx    # Animated top-of-screen toast banner (slide-in, 3s auto-dismiss)
 ├── WeightChart.tsx          # Line chart with dropdown range selector (1W/1M/3M/1Y/All) + summary row
 ├── WeightInsights.tsx       # 7-day progress insights card (rate, on-track badge)
 ├── WeightEntryList.tsx      # FlatList of all entries, newest first
@@ -128,7 +132,7 @@ components/
 │   └── CalorieFlame.tsx     # SVG flame outline visual with total burned overlay
 ├── profile/
 │   ├── ProfileCard.tsx      # Avatar + summary + inline edit form (name, DOB, sex, height, activity mode)
-│   └── BadgesSection.tsx    # Collapsible streak badges (Calorie Goal, Weight, Food, Activity)
+│   └── BadgesSection.tsx    # XP/level bar + collapsible streaks + achievements grid
 ├── settings/
 │   ├── AppearanceModePicker.tsx # Light / Dark / System 3-card picker
 │   ├── ProfileSection.tsx   # Name, DOB picker, sex toggle, height input
@@ -153,7 +157,8 @@ components/
     ├── WeeklyIntakeGraph.tsx # WeeklyCalorieGraph, WeeklyWaterGraph, WeeklyActivityGraph (tap-to-tooltip)
     └── ProfilePrompt.tsx    # CTA card when profile or weight entry is missing
 
-context/AppContext.tsx       # Global state (35 action types) with auto-save + auto-backup
+context/AppContext.tsx       # Global state (38 action types) with auto-save + auto-backup
+context/ToastContext.tsx     # Toast notification context — showToast(), dismiss(), current message
 storage/
 ├── storage.ts               # AsyncStorage read/write helpers
 └── backupStorage.ts         # Cross-platform backup: share sheet / file picker + silent auto-backup
@@ -166,10 +171,12 @@ utils/
 ├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays
 ├── featureFlags.ts          # Feature flag utilities
 ├── generateId.ts            # Shared UUID v4 generator
+├── achievementCalculation.ts # ACHIEVEMENTS constant + checkNewAchievements() — 8 milestone badges
 ├── streakCalculation.ts     # foodStreak, calorieGoalStreak, weightStreak, activityStreak
 ├── tdeeCalculation.ts       # Mifflin-St Jeor BMR/TDEE, goal calorie offset, ageFromDob
 ├── unitConversion.ts        # lbsToKg, kgToLbs, convertWeight, weightToKg
-└── waterCalculation.ts      # calculateWaterGoal (weight-based, ×1.2 active multiplier, creatine flag)
+├── waterCalculation.ts      # calculateWaterGoal (weight-based, ×1.2 active multiplier, creatine flag)
+└── xpCalculation.ts         # XP constants, LEVEL_THRESHOLDS, LEVEL_NAMES, getLevelFromXp(), getLevelProgress()
 ```
 
 ---
@@ -213,6 +220,11 @@ interface UserPreferences {
   sectionsExpanded?: boolean;          // "Expand sections by default" toggle
   appearanceMode?: 'light' | 'dark' | 'system';
   avatarUri?: string;                  // path to avatar image
+  // Gamification
+  unlockedAchievements?: string[];     // IDs of permanently unlocked achievements (+ streak XP guards)
+  totalXp?: number;                    // cumulative XP (resets to 0 on Prestige)
+  prestige?: number;                   // prestige counter (increments on each Prestige)
+  xpLog?: Record<string, XpDayLog>;   // per-date XP tracking to prevent duplicate daily grants
 }
 
 type ActivityMode = 'auto' | 'manual' | 'smartwatch';
