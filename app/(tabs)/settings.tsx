@@ -162,7 +162,17 @@ export default function SettingsScreen() {
         {/* 2. Badges — collapsible */}
         <BadgesSection />
 
-        {/* 3. Nutrition Goals → tappable row → nutrition-goals-modal */}
+        {/* 3. Food Library → tappable row → food-library-modal */}
+        <TouchableOpacity
+          style={styles.navRow}
+          onPress={() => router.push('/food-library-modal')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.navRowText}>Food Library</Text>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        {/* 4. Nutrition Goals → tappable row → nutrition-goals-modal */}
         <TouchableOpacity
           style={styles.navRow}
           onPress={() => router.push('/nutrition-goals-modal')}
@@ -172,7 +182,7 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* 4. Appearance → tappable row → appearance-modal */}
+        {/* 5. Appearance → tappable row → appearance-modal */}
         <TouchableOpacity
           style={styles.navRow}
           onPress={() => router.push('/appearance-modal')}
@@ -182,7 +192,7 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* 5. App Settings → sub-screen */}
+        {/* 6. App Settings → sub-screen */}
         <TouchableOpacity
           style={styles.navRow}
           onPress={() => router.push('/app-settings-modal')}
@@ -192,7 +202,7 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* 6. Send Feedback */}
+        {/* 7. Send Feedback */}
         <View
           style={styles.collapsibleCard}
           onLayout={(e) => setFeedbackSectionY(e.nativeEvent.layout.y)}
