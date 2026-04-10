@@ -94,7 +94,8 @@ type Action =
   | { type: 'SET_AVATAR'; uri: string | undefined }
   | { type: 'UNLOCK_ACHIEVEMENT'; id: string }
   | { type: 'ADD_XP'; amount: number; date: string; source: 'food' | 'calorieGoal' | 'waterGoal' | 'weight' | 'activity' | 'streak7' | 'streak30' }
-  | { type: 'PRESTIGE' };
+  | { type: 'PRESTIGE' }
+  | { type: 'SET_LAST_RECAP_WEEK'; week: string };
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -402,6 +403,11 @@ function reducer(state: State, action: Action): State {
         },
       };
     }
+    case 'SET_LAST_RECAP_WEEK':
+      return {
+        ...state,
+        preferences: { ...state.preferences, lastRecapShownWeek: action.week },
+      };
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.date };
     case 'REORDER_PINNED_FOODS':

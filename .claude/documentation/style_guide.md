@@ -713,6 +713,7 @@ All icons use `@expo/vector-icons` Ionicons.
 | `settings-outline`           | Settings                |
 | `information-circle-outline` | Info tooltip            |
 | `chatbubble-outline`         | Feedback                |
+| `trophy-outline`             | Weekly recap header     |
 | `warning-outline`            | Warning banner icon     |
 | `checkmark`                  | Selected/confirmed      |
 | `create-outline`             | Edit (pencil)           |
@@ -797,7 +798,55 @@ headerTitle: {
 
 ---
 
-## 13. Drag-to-Reorder Pattern
+## 13. Story-Style Full-Screen Modal
+
+Used by `app/weekly-recap-modal.tsx`. A full-screen modal (`presentation: 'fullScreenModal'`) with an Instagram-style story layout: top progress bar, page content, invisible tap zones for navigation, and a footer button.
+
+### SafeAreaView edges
+
+```typescript
+<SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+```
+
+Use `edges={['top', 'bottom']}` (both edges) for full-screen modals that manage their own header — unlike sub-screen modals that use `edges={['bottom']}` only.
+
+### Progress Bar
+
+```typescript
+progressBar: {
+  flexDirection: 'row',
+  gap: Spacing.xs,
+  flex: 1,
+  marginRight: Spacing.sm,
+},
+progressSegment: {
+  flex: 1,
+  height: 3,
+  borderRadius: 2,
+  backgroundColor: colors.border,
+},
+progressSegmentFilled: {
+  backgroundColor: colors.primary,
+},
+```
+
+Filled segments: `i <= currentPage` (fills all segments up to and including the current page).
+
+### Tap Zones (Invisible Navigation)
+
+Absolute-positioned `View` with `pointerEvents="box-none"` overlaid on the page content. Left half goes back; right half advances.
+
+```typescript
+tapZones: {
+  position: 'absolute',
+  top: 0, left: 0, right: 0, bottom: 0,
+  flexDirection: 'row',
+},
+```
+
+---
+
+## 14. Drag-to-Reorder Pattern
 
 > **Read this entire section before touching any drag-to-reorder code.** Two bugs were introduced by violating these rules.
 

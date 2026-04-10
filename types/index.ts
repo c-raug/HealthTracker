@@ -120,6 +120,8 @@ export interface UserPreferences {
   totalXp?: number;
   prestige?: number;
   xpLog?: Record<string, XpDayLog>;
+  // Weekly Recap
+  lastRecapShownWeek?: string; // ISO week string e.g. "2026-W15"
 }
 
 export type ExerciseType = 'weight_lifting';
