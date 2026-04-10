@@ -754,6 +754,14 @@ These rules are absolute and must never be violated:
 
 All modal sub-screens (Appearance, Nutrition Goals, App Settings) use an identical header bar with a back chevron and title. This pattern must be followed exactly for any new modal sub-screen.
 
+### SafeAreaView edges
+
+All modal sub-screens must use `edges={['top', 'bottom']}` to prevent the custom header from overlapping the Android status bar and iPhone notch / Dynamic Island:
+
+```typescript
+<SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+```
+
 ### Header Styles
 
 ```typescript
@@ -788,6 +796,7 @@ headerTitle: {
 
 | Property | Value | Rationale |
 |---|---|---|
+| SafeAreaView edges | `['top', 'bottom']` | Prevents header overlapping status bar / Dynamic Island |
 | Vertical padding | `Spacing.md` (16px) | Adequate tap target for back button |
 | Chevron size | 28 | Larger than default (24) for easier tapping |
 | Title typography | `Typography.h2` (22px, 600) | Distinct from card headers (`Typography.h3`) |
@@ -808,7 +817,7 @@ Used by `app/weekly-recap-modal.tsx`. A full-screen modal (`presentation: 'fullS
 <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
 ```
 
-Use `edges={['top', 'bottom']}` (both edges) for full-screen modals that manage their own header — unlike sub-screen modals that use `edges={['bottom']}` only.
+Use `edges={['top', 'bottom']}` (both edges) for all modals that manage their own header, including sub-screen modals (Appearance, Nutrition Goals, App Settings) and full-screen story modals (Weekly Recap).
 
 ### Progress Bar
 
