@@ -10,7 +10,7 @@ import {
 import { checkNewAchievements, ACHIEVEMENTS } from '../utils/achievementCalculation';
 import {
   getLevelFromXp,
-  getLevelName,
+  getLevelLabel,
   XP_FOOD,
   XP_FOOD_CAP,
   XP_CALORIE_GOAL,
@@ -208,7 +208,7 @@ export default function GamificationWatcher() {
       const prevLevel = getLevelFromXp(prev);
       const currLevel = getLevelFromXp(current);
       if (currLevel > prevLevel) {
-        showToast(`Level Up! You are now ${getLevelName(current)}`, '⬆️');
+        showToast(`Level Up! ${getLevelLabel(current)}`, '⬆️');
       }
     }
     prevXpRef.current = current;

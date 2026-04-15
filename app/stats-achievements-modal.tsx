@@ -13,7 +13,7 @@ import {
   StreakResult,
 } from '../utils/streakCalculation';
 import { ACHIEVEMENTS } from '../utils/achievementCalculation';
-import { getLevelProgress } from '../utils/xpCalculation';
+import { getLevelProgress, getLevelLabel } from '../utils/xpCalculation';
 
 interface BadgeInfo {
   label: string;
@@ -62,6 +62,12 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '600',
       marginBottom: Spacing.sm,
     },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.sm,
+    },
     // ── Level section ────────────────────────────────────────────────────────
     xpRow: {
       flexDirection: 'row',
@@ -87,6 +93,12 @@ const makeStyles = (colors: typeof LightColors) =>
     xpBarFill: {
       height: 8,
       borderRadius: 4,
+    },
+    levelHint: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginTop: Spacing.xs,
     },
     prestigeBtn: {
       backgroundColor: colors.primary,
@@ -177,8 +189,9 @@ export default function StatsAchievementsModal() {
   // ── Level / XP data ────────────────────────────────────────────────────────
   const totalXp = preferences.totalXp ?? 0;
   const prestige = preferences.prestige ?? 0;
-  const { name, currentLevelXp, nextLevelXp, isMax } = getLevelProgress(totalXp);
-  const levelLabel = prestige > 0 ? `P${prestige} · ${name}` : name;
+  const { level, name, currentLevelXp, nextLevelXp, isMax } = getLevelProgress(totalXp);
+  const numberedLabel = getLevelLabel(totalXp);
+  const levelLabel = prestige > 0 ? `P${prestige} · ${numberedLabel}` : numberedLabel;
   const xpProgress = isMax
     ? 1
     : Math.min(1, (totalXp - currentLevelXp) / (nextLevelXp - currentLevelXp));
@@ -267,7 +280,16 @@ export default function StatsAchievementsModal() {
       >
         {/* ── Level ── */}
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>Level</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>Level</Text>
+            <TouchableOpacity
+              onPress={() => router.push('/leveling-tutorial-modal')}
+              activeOpacity={0.6}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="information-circle-outline" size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
           <View style={styles.xpRow}>
             <Text style={styles.levelText}>⭐ {levelLabel}</Text>
             {!isMax && (
@@ -285,17 +307,22 @@ export default function StatsAchievementsModal() {
               <Text style={styles.prestigeBtnText}>Prestige →</Text>
             </TouchableOpacity>
           ) : (
-            <View style={styles.xpBarBg}>
-              <View
-                style={[
-                  styles.xpBarFill,
-                  {
-                    width: `${Math.round(xpProgress * 100)}%`,
-                    backgroundColor: colors.primary,
-                  },
-                ]}
-              />
-            </View>
+            <>
+              <View style={styles.xpBarBg}>
+                <View
+                  style={[
+                    styles.xpBarFill,
+                    {
+                      width: `${Math.round(xpProgress * 100)}%`,
+                      backgroundColor: colors.primary,
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={styles.levelHint}>
+                Level {level} → Level {level + 1}
+              </Text>
+            </>
           )}
         </View>
 

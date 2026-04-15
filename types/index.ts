@@ -80,6 +80,8 @@ export interface CustomFood {
   createdAt: string;
   pinned?: boolean;
   pinnedOrder?: number;
+  mealTags?: string[];
+  foodType?: string;
 }
 
 export interface SavedMeal {
@@ -122,6 +124,8 @@ export interface UserPreferences {
   xpLog?: Record<string, XpDayLog>;
   // Weekly Recap
   lastRecapShownWeek?: string; // ISO week string e.g. "2026-W15"
+  // Food categorization
+  foodTypeCategories?: string[];
 }
 
 export type ExerciseType = 'weight_lifting';

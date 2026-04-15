@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { convertWeight } from '../../utils/unitConversion';
-import { getLevelName } from '../../utils/xpCalculation';
+import { getLevelLabel } from '../../utils/xpCalculation';
 
 const AVATAR_SIZE = 72;
 
@@ -158,7 +158,7 @@ export default function ProfileCard() {
   const totalXp = preferences.totalXp ?? 0;
   const prestige = preferences.prestige ?? 0;
   const levelLabel =
-    prestige > 0 ? `⭐ P${prestige}·${getLevelName(totalXp)}` : `⭐ ${getLevelName(totalXp)}`;
+    prestige > 0 ? `⭐ P${prestige} · ${getLevelLabel(totalXp)}` : `⭐ ${getLevelLabel(totalXp)}`;
 
   return (
     <View style={styles.card}>
