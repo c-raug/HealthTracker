@@ -1050,6 +1050,8 @@ sectionHeaderRow: {
 | `components/nutrition/PortionSelector.tsx` | Drum picker pattern              |
 | `components/nutrition/CalorieRing.tsx`  | SVG ring + proximity colors         |
 | `components/nutrition/MacroProgressBars.tsx` | Progress bar pattern            |
+| `components/nutrition/FoodFilterModal.tsx`  | Bottom-sheet filter modal pattern |
+| `components/nutrition/CustomFoodForm.tsx`   | Tab switcher + categorization UI  |
 | `components/settings/ThemeColorPicker.tsx` | Accent color swatch pattern      |
 | `components/settings/AppearanceModePicker.tsx` | Light/Dark/System card picker |
 | `components/profile/ProfileCard.tsx`       | Avatar + inline edit form pattern |

@@ -95,7 +95,10 @@ type Action =
   | { type: 'UNLOCK_ACHIEVEMENT'; id: string }
   | { type: 'ADD_XP'; amount: number; date: string; source: 'food' | 'calorieGoal' | 'waterGoal' | 'weight' | 'activity' | 'streak7' | 'streak30' }
   | { type: 'PRESTIGE' }
-  | { type: 'SET_LAST_RECAP_WEEK'; week: string };
+  | { type: 'SET_LAST_RECAP_WEEK'; week: string }
+  | { type: 'SET_FOOD_TYPE_CATEGORIES'; categories: string[] };
+
+const DEFAULT_FOOD_TYPE_CATEGORIES = ['Meat', 'Fruit', 'Vegetable', 'Grain', 'Dairy', 'Snack', 'Beverage', 'Other'];
 
 const EMPTY_MEALS = (): DayNutrition['meals'] => ({
   breakfast: [],
@@ -140,10 +143,17 @@ function reducer(state: State, action: Action): State {
       // Auto-migrate existing users: if they have a profile and weight entries
       // but onboardingComplete is not set, mark it as complete so they skip onboarding.
       const prefs = action.preferences;
-      const migratedPrefs =
+      let migratedPrefs =
         prefs.profile && action.entries.length > 0 && !prefs.onboardingComplete
           ? { ...prefs, onboardingComplete: true }
           : prefs;
+      // Initialize default food type categories if not yet set
+      if (!migratedPrefs.foodTypeCategories) {
+        migratedPrefs = {
+          ...migratedPrefs,
+          foodTypeCategories: DEFAULT_FOOD_TYPE_CATEGORIES,
+        };
+      }
       return {
         ...state,
         entries: action.entries,
@@ -441,6 +451,11 @@ function reducer(state: State, action: Action): State {
       };
       return { ...state, nutritionLog: upsertDay(state.nutritionLog, updatedDay) };
     }
+    case 'SET_FOOD_TYPE_CATEGORIES':
+      return {
+        ...state,
+        preferences: { ...state.preferences, foodTypeCategories: action.categories },
+      };
     default:
       return state;
   }

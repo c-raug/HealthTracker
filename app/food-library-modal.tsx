@@ -17,6 +17,7 @@ import { CustomFood, SavedMeal } from '../types';
 import CustomFoodForm from '../components/nutrition/CustomFoodForm';
 import CreateMealFlow from '../components/nutrition/CreateMealFlow';
 import EditMealFlow from '../components/nutrition/EditMealFlow';
+import FoodFilterModal, { FoodFilters } from '../components/nutrition/FoodFilterModal';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -66,11 +67,15 @@ const makeStyles = (colors: typeof LightColors) =>
       flex: 1,
     },
     searchWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingHorizontal: Spacing.md,
       paddingTop: Spacing.md,
       paddingBottom: Spacing.xs,
+      gap: Spacing.sm,
     },
     searchInput: {
+      flex: 1,
       backgroundColor: colors.card,
       borderRadius: Radius.md,
       borderWidth: 1,
@@ -79,6 +84,19 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       ...Typography.body,
       color: colors.text,
+    },
+    filterBtn: {
+      padding: Spacing.sm,
+      position: 'relative',
+    },
+    filterBadge: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.primary,
     },
     createBtn: {
       flexDirection: 'row',
@@ -132,6 +150,28 @@ const makeStyles = (colors: typeof LightColors) =>
     },
   });
 
+function applyFoodFilters(foods: CustomFood[], filters: FoodFilters): CustomFood[] {
+  return foods.filter((food) => {
+    // Meal tag filter: OR logic — food must have at least one of the selected tags
+    if (filters.mealTags.length > 0) {
+      if (!food.mealTags || !food.mealTags.some((t) => filters.mealTags.includes(t))) {
+        return false;
+      }
+    }
+    // Food type filter: exact match
+    if (filters.foodType) {
+      if (food.foodType !== filters.foodType) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function hasActiveFilters(filters: FoodFilters): boolean {
+  return filters.mealTags.length > 0 || filters.foodType !== null;
+}
+
 type Tab = 'foods' | 'meals';
 type FoodsView = 'list' | 'create' | 'edit';
 type MealsView = 'list' | 'create' | 'edit';
@@ -146,6 +186,10 @@ export default function FoodLibraryModal() {
   const [foodQuery, setFoodQuery] = useState('');
   const [mealQuery, setMealQuery] = useState('');
 
+  // Filter state
+  const [foodFilters, setFoodFilters] = useState<FoodFilters>({ mealTags: [], foodType: null });
+  const [showFilterModal, setShowFilterModal] = useState(false);
+
   // Foods sub-view state
   const [foodsView, setFoodsView] = useState<FoodsView>('list');
   const [editingFood, setEditingFood] = useState<CustomFood | null>(null);
@@ -157,9 +201,16 @@ export default function FoodLibraryModal() {
   // Filtered & sorted lists
   const sortedFoods = [...customFoods]
     .sort((a, b) => a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase()));
-  const filteredFoods = foodQuery.trim()
+
+  // Apply text search
+  const textFilteredFoods = foodQuery.trim()
     ? sortedFoods.filter((f) => f.name.toLocaleLowerCase().includes(foodQuery.trim().toLocaleLowerCase()))
     : sortedFoods;
+
+  // Apply category filters
+  const filteredFoods = hasActiveFilters(foodFilters)
+    ? applyFoodFilters(textFilteredFoods, foodFilters)
+    : textFilteredFoods;
 
   const sortedMeals = [...savedMeals]
     .sort((a, b) => a.name.toLocaleLowerCase().localeCompare(b.name.toLocaleLowerCase()));
@@ -215,6 +266,8 @@ export default function FoodLibraryModal() {
     (activeTab === 'foods' && foodsView !== 'list') ||
     (activeTab === 'meals' && mealsView !== 'list');
 
+  const filtersActive = hasActiveFilters(foodFilters);
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
@@ -264,6 +317,18 @@ export default function FoodLibraryModal() {
               returnKeyType="search"
               clearButtonMode="while-editing"
             />
+            <TouchableOpacity
+              style={styles.filterBtn}
+              onPress={() => setShowFilterModal(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="filter-outline"
+                size={22}
+                color={filtersActive ? colors.primary : colors.textSecondary}
+              />
+              {filtersActive && <View style={styles.filterBadge} />}
+            </TouchableOpacity>
           </View>
           <TouchableOpacity
             style={styles.createBtn}
@@ -303,7 +368,9 @@ export default function FoodLibraryModal() {
             )}
             ListEmptyComponent={
               <Text style={styles.emptyText}>
-                {foodQuery.trim() ? 'No foods match your search.' : 'No custom foods yet. Create one!'}
+                {foodQuery.trim() || filtersActive
+                  ? 'No foods match your search or filters.'
+                  : 'No custom foods yet. Create one!'}
               </Text>
             }
           />
@@ -411,6 +478,14 @@ export default function FoodLibraryModal() {
           />
         </View>
       )}
+
+      {/* Filter modal */}
+      <FoodFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={setFoodFilters}
+        currentFilters={foodFilters}
+      />
     </SafeAreaView>
   );
 }

@@ -9,12 +9,14 @@ import {
   ScrollView,
   type TextInput as TextInputType,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import { CustomFood } from '../../types';
 
 const PORTION_UNITS = ['g', 'oz', 'cup', 'qty'] as const;
+const MEAL_TAG_OPTIONS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const;
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -24,7 +26,38 @@ const makeStyles = (colors: typeof LightColors) =>
     title: {
       ...Typography.h3,
       color: colors.text,
+      marginBottom: Spacing.sm,
+    },
+    // Tab switcher
+    tabRow: {
+      flexDirection: 'row',
       marginBottom: Spacing.md,
+      backgroundColor: colors.background,
+      borderRadius: Radius.md,
+      padding: 2,
+    },
+    tab: {
+      flex: 1,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+      borderRadius: Radius.md - 2,
+    },
+    tabActive: {
+      backgroundColor: colors.card,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    tabText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    tabTextActive: {
+      color: colors.text,
+      fontWeight: '600',
     },
     label: {
       ...Typography.small,
@@ -153,6 +186,99 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.primary,
       fontWeight: '600',
     },
+    // Meal tags styles
+    pillRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+      marginBottom: Spacing.md,
+    },
+    pill: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.md,
+      backgroundColor: colors.border,
+    },
+    pillActive: {
+      backgroundColor: colors.primary,
+    },
+    pillText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    pillTextActive: {
+      color: colors.white,
+    },
+    // Food type styles
+    foodTypeRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+      marginBottom: Spacing.md,
+    },
+    foodTypeChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.sm,
+      backgroundColor: colors.border,
+      gap: Spacing.xs,
+    },
+    foodTypeChipActive: {
+      backgroundColor: colors.primary,
+    },
+    foodTypeChipText: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    foodTypeChipTextActive: {
+      color: colors.white,
+    },
+    removeTypeBtn: {
+      padding: 2,
+    },
+    addTypeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.sm,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderStyle: 'dashed',
+    },
+    addTypeBtnText: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+    addTypeInputRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      marginBottom: Spacing.md,
+    },
+    addTypeInput: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderRadius: Radius.md,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      ...Typography.body,
+      color: colors.text,
+    },
+    addTypeConfirmBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.md,
+      paddingHorizontal: Spacing.md,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
   });
 
 interface Props {
@@ -162,10 +288,12 @@ interface Props {
   initialName?: string;
 }
 
+type FormTab = 'required' | 'optional';
+
 export default function CustomFoodForm({ onDone, initialFood, mode = 'create', initialName }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { dispatch } = useApp();
+  const { preferences, customFoods, dispatch } = useApp();
 
   // Parse serving size from initialFood (format: "qty unit")
   const parsedQty = initialFood ? (initialFood.servingSize.split(' ')[0] ?? '1') : '1';
@@ -176,6 +304,7 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
   const carbsRef = useRef<TextInputType>(null);
   const fatRef = useRef<TextInputType>(null);
 
+  const [activeTab, setActiveTab] = useState<FormTab>('required');
   const [name, setName] = useState(initialFood?.name ?? initialName ?? '');
   const [calories, setCalories] = useState(initialFood ? initialFood.calories.toString() : '');
   const [protein, setProtein] = useState(initialFood ? initialFood.protein.toString() : '');
@@ -188,6 +317,15 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
     ? Math.round((initialFood.protein * 4) + (initialFood.carbs * 4) + (initialFood.fat * 9)) !== initialFood.calories
     : false;
   const [isCaloriesManual, setIsCaloriesManual] = useState(initialIsManual);
+
+  // Optional tab state
+  const [mealTags, setMealTags] = useState<string[]>(initialFood?.mealTags ?? []);
+  const [foodType, setFoodType] = useState<string | undefined>(initialFood?.foodType);
+  const [showAddType, setShowAddType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const addTypeInputRef = useRef<TextInputType>(null);
+
+  const foodTypeCategories = preferences.foodTypeCategories ?? [];
 
   // Auto-compute calories from macros when not in manual mode
   useEffect(() => {
@@ -211,6 +349,67 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
           onPress: () => {
             setIsCaloriesManual(true);
             setCalories('');
+          },
+        },
+      ],
+    );
+  };
+
+  const toggleMealTag = (tag: string) => {
+    setMealTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleSelectFoodType = (type: string) => {
+    setFoodType((prev) => (prev === type ? undefined : type));
+  };
+
+  const handleAddFoodType = () => {
+    setShowAddType(true);
+    setNewTypeName('');
+    setTimeout(() => addTypeInputRef.current?.focus(), 100);
+  };
+
+  const handleConfirmAddType = () => {
+    const trimmed = newTypeName.trim();
+    if (!trimmed) {
+      setShowAddType(false);
+      return;
+    }
+    if (foodTypeCategories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      Alert.alert('Duplicate', 'This food type already exists.');
+      return;
+    }
+    dispatch({
+      type: 'SET_FOOD_TYPE_CATEGORIES',
+      categories: [...foodTypeCategories, trimmed],
+    });
+    setShowAddType(false);
+    setNewTypeName('');
+  };
+
+  const handleRemoveFoodType = (type: string) => {
+    Alert.alert(
+      'Remove Food Type',
+      `Remove "${type}"? Foods using this type will have it cleared.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            dispatch({
+              type: 'SET_FOOD_TYPE_CATEGORIES',
+              categories: foodTypeCategories.filter((c) => c !== type),
+            });
+            // Clear foodType from existing custom foods that use this type
+            for (const food of customFoods) {
+              if (food.foodType === type) {
+                dispatch({ type: 'UPDATE_CUSTOM_FOOD', food: { ...food, foodType: undefined } });
+              }
+            }
+            if (foodType === type) setFoodType(undefined);
           },
         },
       ],
@@ -241,6 +440,8 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
           carbs: parseFloat(carbs) || 0,
           fat: parseFloat(fat) || 0,
           servingSize,
+          mealTags: mealTags.length > 0 ? mealTags : undefined,
+          foodType,
         },
       });
       onDone();
@@ -254,6 +455,8 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
         fat: parseFloat(fat) || 0,
         servingSize,
         createdAt: new Date().toISOString(),
+        mealTags: mealTags.length > 0 ? mealTags : undefined,
+        foodType,
       };
       dispatch({ type: 'ADD_CUSTOM_FOOD', food: newFood });
       onDone(newFood);
@@ -266,134 +469,244 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
         {mode === 'edit' ? 'Edit Custom Food' : 'Create Custom Food'}
       </Text>
 
-      <Text style={styles.label}>Name *</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="e.g. Homemade Granola"
-        placeholderTextColor={colors.textSecondary}
-        autoFocus={mode === 'create'}
-        returnKeyType="next"
-        blurOnSubmit={false}
-        onSubmitEditing={() => proteinRef.current?.focus()}
-      />
+      {/* Tab switcher */}
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'required' && styles.tabActive]}
+          onPress={() => setActiveTab('required')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.tabText, activeTab === 'required' && styles.tabTextActive]}>
+            Required
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'optional' && styles.tabActive]}
+          onPress={() => setActiveTab('optional')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.tabText, activeTab === 'optional' && styles.tabTextActive]}>
+            Optional
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      <Text style={styles.label}>Serving Size</Text>
-      <View style={styles.portionRow}>
-        <TextInput
-          style={[styles.input, styles.portionQtyInput]}
-          value={portionQty}
-          onChangeText={setPortionQty}
-          keyboardType="decimal-pad"
-          placeholder="1"
-          placeholderTextColor={colors.textSecondary}
-        />
-        <View style={styles.unitScroll}>
-          {PORTION_UNITS.map((u) => (
+      {/* Required tab */}
+      {activeTab === 'required' && (
+        <>
+          <Text style={styles.label}>Name *</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. Homemade Granola"
+            placeholderTextColor={colors.textSecondary}
+            autoFocus={mode === 'create'}
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => proteinRef.current?.focus()}
+          />
+
+          <Text style={styles.label}>Serving Size</Text>
+          <View style={styles.portionRow}>
+            <TextInput
+              style={[styles.input, styles.portionQtyInput]}
+              value={portionQty}
+              onChangeText={setPortionQty}
+              keyboardType="decimal-pad"
+              placeholder="1"
+              placeholderTextColor={colors.textSecondary}
+            />
+            <View style={styles.unitScroll}>
+              {PORTION_UNITS.map((u) => (
+                <TouchableOpacity
+                  key={u}
+                  style={[styles.unitChip, portionUnit === u && styles.unitChipActive]}
+                  onPress={() => setPortionUnit(u)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.unitChipText, portionUnit === u && styles.unitChipTextActive]}>
+                    {u}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <Text style={styles.label}>
+            Calories *{'  '}
+            {!isCaloriesManual && <Text style={styles.autoLabel}>(auto-computed)</Text>}
+          </Text>
+          <View style={styles.caloriesRow}>
+            {isCaloriesManual ? (
+              <TextInput
+                style={[styles.input, styles.caloriesInput]}
+                value={calories}
+                onChangeText={setCalories}
+                keyboardType="decimal-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textSecondary}
+              />
+            ) : (
+              <TouchableOpacity
+                style={styles.caloriesReadOnlyTouchable}
+                onPress={handleOverrideTap}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.caloriesReadOnlyText}>
+                  {calories || '0'}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {isCaloriesManual ? (
+              <TouchableOpacity
+                style={styles.overrideBtn}
+                onPress={() => setIsCaloriesManual(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.overrideBtnText}>Auto</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.overrideBtn}
+                onPress={handleOverrideTap}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.overrideBtnText}>Override</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>Protein (g)</Text>
+              <TextInput
+                ref={proteinRef}
+                style={styles.input}
+                value={protein}
+                onChangeText={setProtein}
+                keyboardType="decimal-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textSecondary}
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => carbsRef.current?.focus()}
+              />
+            </View>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>Carbs (g)</Text>
+              <TextInput
+                ref={carbsRef}
+                style={styles.input}
+                value={carbs}
+                onChangeText={setCarbs}
+                keyboardType="decimal-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textSecondary}
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => fatRef.current?.focus()}
+              />
+            </View>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>Fat (g)</Text>
+              <TextInput
+                ref={fatRef}
+                style={styles.input}
+                value={fat}
+                onChangeText={setFat}
+                keyboardType="decimal-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textSecondary}
+                returnKeyType="done"
+              />
+            </View>
+          </View>
+        </>
+      )}
+
+      {/* Optional tab */}
+      {activeTab === 'optional' && (
+        <>
+          <Text style={styles.label}>Meal Tags</Text>
+          <View style={styles.pillRow}>
+            {MEAL_TAG_OPTIONS.map((tag) => {
+              const active = mealTags.includes(tag);
+              return (
+                <TouchableOpacity
+                  key={tag}
+                  style={[styles.pill, active && styles.pillActive]}
+                  onPress={() => toggleMealTag(tag)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                    {tag}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={styles.label}>Food Type</Text>
+          <View style={styles.foodTypeRow}>
+            {foodTypeCategories.map((type) => {
+              const active = foodType === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  style={[styles.foodTypeChip, active && styles.foodTypeChipActive]}
+                  onPress={() => handleSelectFoodType(type)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.foodTypeChipText, active && styles.foodTypeChipTextActive]}>
+                    {type}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.removeTypeBtn}
+                    onPress={() => handleRemoveFoodType(type)}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={14}
+                      color={active ? colors.white : colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              );
+            })}
             <TouchableOpacity
-              key={u}
-              style={[styles.unitChip, portionUnit === u && styles.unitChipActive]}
-              onPress={() => setPortionUnit(u)}
-              activeOpacity={0.8}
+              style={styles.addTypeBtn}
+              onPress={handleAddFoodType}
+              activeOpacity={0.7}
             >
-              <Text style={[styles.unitChipText, portionUnit === u && styles.unitChipTextActive]}>
-                {u}
-              </Text>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={styles.addTypeBtnText}>Add</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <Text style={styles.label}>
-        Calories *{'  '}
-        {!isCaloriesManual && <Text style={styles.autoLabel}>(auto-computed)</Text>}
-      </Text>
-      <View style={styles.caloriesRow}>
-        {isCaloriesManual ? (
-          <TextInput
-            style={[styles.input, styles.caloriesInput]}
-            value={calories}
-            onChangeText={setCalories}
-            keyboardType="decimal-pad"
-            placeholder="0"
-            placeholderTextColor={colors.textSecondary}
-          />
-        ) : (
-          <TouchableOpacity
-            style={styles.caloriesReadOnlyTouchable}
-            onPress={handleOverrideTap}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.caloriesReadOnlyText}>
-              {calories || '0'}
-            </Text>
-          </TouchableOpacity>
-        )}
-        {isCaloriesManual ? (
-          <TouchableOpacity
-            style={styles.overrideBtn}
-            onPress={() => setIsCaloriesManual(false)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.overrideBtnText}>Auto</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.overrideBtn}
-            onPress={handleOverrideTap}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.overrideBtnText}>Override</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={styles.row}>
-        <View style={styles.halfInput}>
-          <Text style={styles.label}>Protein (g)</Text>
-          <TextInput
-            ref={proteinRef}
-            style={styles.input}
-            value={protein}
-            onChangeText={setProtein}
-            keyboardType="decimal-pad"
-            placeholder="0"
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => carbsRef.current?.focus()}
-          />
-        </View>
-        <View style={styles.halfInput}>
-          <Text style={styles.label}>Carbs (g)</Text>
-          <TextInput
-            ref={carbsRef}
-            style={styles.input}
-            value={carbs}
-            onChangeText={setCarbs}
-            keyboardType="decimal-pad"
-            placeholder="0"
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => fatRef.current?.focus()}
-          />
-        </View>
-        <View style={styles.halfInput}>
-          <Text style={styles.label}>Fat (g)</Text>
-          <TextInput
-            ref={fatRef}
-            style={styles.input}
-            value={fat}
-            onChangeText={setFat}
-            keyboardType="decimal-pad"
-            placeholder="0"
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="done"
-          />
-        </View>
-      </View>
+          </View>
+          {showAddType && (
+            <View style={styles.addTypeInputRow}>
+              <TextInput
+                ref={addTypeInputRef}
+                style={styles.addTypeInput}
+                value={newTypeName}
+                onChangeText={setNewTypeName}
+                placeholder="New food type..."
+                placeholderTextColor={colors.textSecondary}
+                returnKeyType="done"
+                onSubmitEditing={handleConfirmAddType}
+              />
+              <TouchableOpacity
+                style={styles.addTypeConfirmBtn}
+                onPress={handleConfirmAddType}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="checkmark" size={20} color={colors.white} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
+      )}
 
       <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
         <Text style={styles.saveBtnText}>

@@ -19,6 +19,7 @@ import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import CustomFoodForm from './CustomFoodForm';
 import PortionSelector from './PortionSelector';
+import FoodFilterModal, { FoodFilters } from './FoodFilterModal';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -41,6 +42,19 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.text,
       borderWidth: 1,
       borderColor: colors.border,
+    },
+    filterBtn: {
+      padding: Spacing.xs,
+      position: 'relative',
+    },
+    filterBadge: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.primary,
     },
     resultItem: {
       backgroundColor: colors.card,
@@ -171,6 +185,26 @@ const makeStyles = (colors: typeof LightColors) =>
     },
   });
 
+function applyFoodFilters(foods: CustomFood[], filters: FoodFilters): CustomFood[] {
+  return foods.filter((food) => {
+    if (filters.mealTags.length > 0) {
+      if (!food.mealTags || !food.mealTags.some((t) => filters.mealTags.includes(t))) {
+        return false;
+      }
+    }
+    if (filters.foodType) {
+      if (food.foodType !== filters.foodType) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function hasActiveFilters(filters: FoodFilters): boolean {
+  return filters.mealTags.length > 0 || filters.foodType !== null;
+}
+
 interface Props {
   date: string;
   category: MealCategory;
@@ -188,6 +222,11 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingFood, setEditingFood] = useState<CustomFood | null>(null);
   const [editingPinned, setEditingPinned] = useState(false);
+
+  // Filter state
+  const [foodFilters, setFoodFilters] = useState<FoodFilters>({ mealTags: [], foodType: null });
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const filtersActive = hasActiveFilters(foodFilters);
 
   // Compute food frequency map from all logged entries (by name)
   const foodFrequencyMap = useMemo(() => {
@@ -207,9 +246,12 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const isSearching = trimmed.length > 0;
 
   // When searching: filter all foods by query
-  const filtered = isSearching
+  const textFiltered = isSearching
     ? customFoods.filter((f) => f.name.toLowerCase().includes(trimmed))
     : customFoods;
+
+  // Apply category filters
+  const filtered = filtersActive ? applyFoodFilters(textFiltered, foodFilters) : textFiltered;
 
   const sortedPinned = filtered
     .filter((f) => f.pinned)
@@ -219,14 +261,15 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   // When searching: show all matching unpinned (My Foods)
   const recentFoods = useMemo(() => {
     if (isSearching) return [];
-    return customFoods
+    const base = filtersActive ? applyFoodFilters(customFoods, foodFilters) : customFoods;
+    return base
       .filter((f) => !f.pinned && (foodFrequencyMap[f.name.toLowerCase().trim()] ?? 0) > 0)
       .sort((a, b) =>
         (foodFrequencyMap[b.name.toLowerCase().trim()] ?? 0) -
         (foodFrequencyMap[a.name.toLowerCase().trim()] ?? 0)
       )
       .slice(0, 7);
-  }, [isSearching, customFoods, foodFrequencyMap]);
+  }, [isSearching, customFoods, foodFrequencyMap, filtersActive, foodFilters]);
 
   const unpinned = isSearching ? filtered.filter((f) => !f.pinned) : [];
 
@@ -431,6 +474,18 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           placeholderTextColor={colors.textSecondary}
           returnKeyType="search"
         />
+        <TouchableOpacity
+          style={styles.filterBtn}
+          onPress={() => setShowFilterModal(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="filter-outline"
+            size={22}
+            color={filtersActive ? colors.primary : colors.textSecondary}
+          />
+          {filtersActive && <View style={styles.filterBadge} />}
+        </TouchableOpacity>
       </View>
 
       <ScrollView keyboardShouldPersistTaps="handled">
@@ -601,12 +656,20 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
 
         {isEmpty && (
           <Text style={styles.empty}>
-            {isSearching
+            {isSearching || filtersActive
               ? 'No matching foods found'
               : 'No custom foods yet. Tap "Create Custom Food" to add one.'}
           </Text>
         )}
       </ScrollView>
+
+      {/* Filter modal */}
+      <FoodFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={setFoodFilters}
+        currentFilters={foodFilters}
+      />
     </View>
   );
 }
