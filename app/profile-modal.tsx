@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -208,28 +208,14 @@ const makeStyles = (colors: typeof LightColors) =>
     modeInfoIcon: {
       padding: Spacing.xs,
     },
-    saveRow: {
-      flexDirection: 'row',
-      gap: Spacing.sm,
-    },
-    cancelBtn: {
-      flex: 1,
-      backgroundColor: colors.background,
-      borderRadius: Radius.sm,
-      paddingVertical: Spacing.sm,
-      alignItems: 'center',
-    },
-    cancelBtnText: {
-      ...Typography.body,
-      color: colors.textSecondary,
-      fontWeight: '600',
-    },
     saveBtn: {
-      flex: 2,
       backgroundColor: colors.primary,
       borderRadius: Radius.sm,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
+    },
+    saveBtnDisabled: {
+      opacity: 0.5,
     },
     saveBtnText: {
       ...Typography.body,
@@ -313,6 +299,43 @@ export default function ProfileModal() {
     }
   }, []);
 
+  // Track initial values for change detection
+  const initialValues = useRef({
+    name: profile?.name ?? '',
+    dob: profile?.dob ?? null,
+    sex: profile?.sex ?? 'male',
+    heightFt: profile?.heightUnit === 'in' ? Math.floor((profile?.heightValue ?? 0) / 12).toString() : '',
+    heightIn: profile?.heightUnit === 'in' ? ((profile?.heightValue ?? 0) % 12).toString() : '',
+    heightCm: profile?.heightUnit === 'cm' ? (profile?.heightValue ?? 0).toString() : '',
+    activityMode: preferences.activityMode ?? 'auto',
+    activityLevel: profile?.activityLevel ?? 'moderately_active',
+  });
+
+  const hasChanges = useMemo(() => {
+    const init = initialValues.current;
+    return (
+      name !== init.name ||
+      dob !== init.dob ||
+      sex !== init.sex ||
+      heightFt !== init.heightFt ||
+      heightIn !== init.heightIn ||
+      heightCm !== init.heightCm ||
+      activityMode !== init.activityMode ||
+      activityLevel !== init.activityLevel
+    );
+  }, [name, dob, sex, heightFt, heightIn, heightCm, activityMode, activityLevel]);
+
+  const handleBack = () => {
+    if (hasChanges) {
+      Alert.alert('Discard changes?', 'You have unsaved changes.', [
+        { text: 'Keep Editing', style: 'cancel' },
+        { text: 'Discard', style: 'destructive', onPress: () => router.back() },
+      ]);
+    } else {
+      router.back();
+    }
+  };
+
   const handleActivityModeChange = (mode: ActivityMode) => {
     setActivityModeState(mode);
     dispatch({ type: 'SET_ACTIVITY_MODE', mode });
@@ -391,7 +414,7 @@ export default function ProfileModal() {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={handleBack}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
@@ -566,20 +589,16 @@ export default function ProfileModal() {
           </View>
         )}
 
-        {/* Save / Cancel */}
+        {/* Save */}
         <View style={styles.card}>
-          <View style={styles.saveRow}>
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave} activeOpacity={0.8}>
-              <Text style={styles.saveBtnText}>Save</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.saveBtn, !hasChanges && styles.saveBtnDisabled]}
+            onPress={handleSave}
+            activeOpacity={0.8}
+            disabled={!hasChanges}
+          >
+            <Text style={styles.saveBtnText}>Save</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 

@@ -37,9 +37,15 @@ export function getLevelFromXp(totalXp: number): number {
   return level;
 }
 
-/** Returns the level name for a given total XP. */
+/** Returns the level name (without number) for a given total XP. */
 export function getLevelName(totalXp: number): string {
   return LEVEL_NAMES[getLevelFromXp(totalXp) - 1];
+}
+
+/** Returns the level label with number for a given total XP (e.g. "Level 4 · Dedicated"). */
+export function getLevelLabel(totalXp: number): string {
+  const level = getLevelFromXp(totalXp);
+  return `Level ${level} · ${LEVEL_NAMES[level - 1]}`;
 }
 
 /**
