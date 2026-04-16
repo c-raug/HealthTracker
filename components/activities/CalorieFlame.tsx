@@ -2,8 +2,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 
-const FLAME_WIDTH = 160;
-const FLAME_HEIGHT = 224;
+const FLAME_WIDTH = 114;
+const FLAME_HEIGHT = 160;
 
 // Flame SVG path — viewBox "0 0 120 168"
 // Wide body at bottom, tapers to a point at top
@@ -41,7 +41,7 @@ const makeStyles = (colors: typeof LightColors) =>
       bottom: 0,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingTop: 40,
+      paddingTop: 28,
     },
     calories: {
       ...Typography.h1,
