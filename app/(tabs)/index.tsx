@@ -124,6 +124,14 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     fontWeight: '600',
   },
 
+  // Section label
+  sectionLabel: {
+    ...Typography.h3,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: Spacing.sm,
+  },
+
   // Saved confirmation message
   savedMessage: {
     ...Typography.small,
@@ -172,6 +180,7 @@ export default function WeightScreen() {
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [animateToValue, setAnimateToValue] = useState<number | null>(null);
 
   const today = getToday();
   const existingEntry = entries.find((e) => e.date === selectedDate);
@@ -179,6 +188,7 @@ export default function WeightScreen() {
 
   // Pre-fill input when date or entries change
   useEffect(() => {
+    setAnimateToValue(null);
     if (existingEntry) {
       const val = convertWeight(
         existingEntry.weight,
@@ -238,6 +248,7 @@ export default function WeightScreen() {
 
     dispatch({ type: 'UPSERT_ENTRY', entry });
     Keyboard.dismiss();
+    setAnimateToValue(parsed);
 
     const now = new Date();
     const [y, m, d] = selectedDate.split('-').map(Number);
@@ -324,7 +335,10 @@ export default function WeightScreen() {
         )}
 
         {/* Digital scale graphic */}
-        <DigitalScale weight={weightInput} unit={preferences.unit} />
+        <DigitalScale weight={weightInput} unit={preferences.unit} animateToValue={animateToValue} />
+
+        {/* Log Weight section label */}
+        <Text style={styles.sectionLabel}>Log Weight ({preferences.unit})</Text>
 
         {/* Weight input + Save side-by-side */}
         <View style={styles.inputRow}>

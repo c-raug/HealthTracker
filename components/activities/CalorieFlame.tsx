@@ -2,15 +2,15 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 
-const FLAME_WIDTH = 114;
+const FLAME_WIDTH = 160;
 const FLAME_HEIGHT = 160;
 
-// Flame SVG path — viewBox "0 0 120 168"
+// Flame SVG path — viewBox "0 0 168 168"
 // Wide body at bottom, tapers to a point at top
 const FLAME_PATH =
-  'M60 165 C40 150 8 128 8 96 C8 68 22 56 32 46 C30 60 38 70 46 66 ' +
-  'C43 53 51 32 60 14 C67 34 80 54 77 72 C84 68 87 58 85 48 ' +
-  'C96 62 112 82 112 102 C112 138 82 155 60 165 Z';
+  'M84 165 C58 148 10 124 10 88 C10 58 28 44 42 32 C40 50 50 62 60 58 ' +
+  'C56 42 68 18 84 4 C100 18 112 42 108 58 C118 62 128 50 126 32 ' +
+  'C140 44 158 58 158 88 C158 124 110 148 84 165 Z';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -64,7 +64,7 @@ export default function CalorieFlame({ totalBurned }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.flameWrapper}>
-        <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 120 168">
+        <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 168 168">
           <Path d={FLAME_PATH} fill="none" stroke={colors.primary} strokeWidth={3} />
         </Svg>
         <View style={styles.overlay}>
