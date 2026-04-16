@@ -79,7 +79,7 @@ type Action =
   | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode }
   | { type: 'SET_ONBOARDING_COMPLETE' }
   | { type: 'SET_THEME_COLOR'; color: string }
-  | { type: 'SET_DEFAULT_TAB'; tab: 'weight' | 'nutrition' | 'activity' }
+  | { type: 'SET_DEFAULT_TAB'; tab: 'weight' | 'nutrition' | 'activity' | 'profile' }
   | { type: 'ADD_WATER_ENTRY'; date: string; entry: WaterEntry }
   | { type: 'DELETE_WATER_ENTRY'; date: string; entryId: string }
   | { type: 'SET_WATER_GOAL_OVERRIDE'; amount: number | undefined }
