@@ -5,45 +5,11 @@ import { useColors, LightColors, Spacing, Typography } from '../../constants/the
 const FLAME_WIDTH = 192;
 const FLAME_HEIGHT = 192;
 
-// Fixed warm flame colors — always the same regardless of user's accent theme.
-const FLAME_OUTER_COLOR = '#F44336';
-const FLAME_INNER_COLOR = '#FFC107';
-
-// Main center tongue — tallest, classic flame silhouette with pointed tip.
-const FLAME_PATH_CENTER =
-  'M 100 8 ' +
-  'C 78 32 52 62 48 105 ' +
-  'C 44 140 48 160 68 182 ' +
-  'L 132 182 ' +
-  'C 152 160 156 140 152 105 ' +
-  'C 148 62 122 32 100 8 Z';
-
-// Left side tongue — shorter, flanks the main tongue.
-const FLAME_PATH_LEFT =
-  'M 38 82 ' +
-  'C 20 112 12 148 30 176 ' +
-  'C 35 182 44 184 56 182 ' +
-  'L 64 182 ' +
-  'C 58 164 56 142 54 122 ' +
-  'C 52 104 46 86 38 82 Z';
-
-// Right side tongue — mirror of left.
-const FLAME_PATH_RIGHT =
-  'M 162 82 ' +
-  'C 180 112 188 148 170 176 ' +
-  'C 165 182 156 184 144 182 ' +
-  'L 136 182 ' +
-  'C 142 164 144 142 146 122 ' +
-  'C 148 104 154 86 162 82 Z';
-
-// Nested inner teardrop — wide lower-middle to host calorie number + label.
-const FLAME_PATH_INNER =
-  'M 100 55 ' +
-  'C 82 75 65 105 62 140 ' +
-  'C 58 160 60 175 74 182 ' +
-  'L 126 182 ' +
-  'C 140 175 142 160 138 140 ' +
-  'C 135 105 118 75 100 55 Z';
+// Ionicons `flame-outline` path (viewBox 0 0 512 512) — same vector glyph used by
+// the Activities tab-bar icon, scaled up and stroked with the user's accent color.
+const FLAME_OUTLINE_PATH =
+  'M112,320c0-93,124-165,96-272c66,0,192,96,192,272a144,144,0,0,1-288,0Z';
+const FLAME_INNER_SWIRL_PATH = 'M320,368c0,57.71-32,80-64,80';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -92,11 +58,25 @@ export default function CalorieFlame({ totalBurned }: Props) {
   return (
     <View style={styles.wrapper}>
       <View style={styles.flameWrapper}>
-        <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 200 200">
-          <Path d={FLAME_PATH_LEFT} fill={FLAME_OUTER_COLOR} />
-          <Path d={FLAME_PATH_RIGHT} fill={FLAME_OUTER_COLOR} />
-          <Path d={FLAME_PATH_CENTER} fill={FLAME_OUTER_COLOR} />
-          <Path d={FLAME_PATH_INNER} fill={FLAME_INNER_COLOR} />
+        <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 512 512">
+          <Path
+            d={FLAME_OUTLINE_PATH}
+            stroke={colors.primary}
+            fill="none"
+            strokeWidth={3.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          <Path
+            d={FLAME_INNER_SWIRL_PATH}
+            stroke={colors.primary}
+            fill="none"
+            strokeWidth={3.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
         </Svg>
         <View style={styles.overlay}>
           <Text style={styles.calories}>{totalBurned.toLocaleString()}</Text>
