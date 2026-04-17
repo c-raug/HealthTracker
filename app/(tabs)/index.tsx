@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,11 +13,13 @@ import {
   Modal,
   ActivityIndicator,
   useColorScheme,
+  useWindowDimensions,
 } from 'react-native';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
@@ -84,12 +86,58 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   calendarIcon: {
     marginLeft: Spacing.xs,
   },
-  existingNote: {
-    ...Typography.small,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
+
+  // Pager
+  pagerContainer: {
+    overflow: 'hidden',
+  },
+  pageDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: Spacing.xs,
     marginBottom: Spacing.sm,
-    marginLeft: Spacing.xs,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.border,
+  },
+  dotActive: {
+    backgroundColor: colors.primary,
+  },
+  scalePage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.lg,
+  },
+
+  // Log Weight card (smartwatch-style)
+  sectionCard: {
+    backgroundColor: colors.card,
+    borderRadius: Radius.lg,
+    marginBottom: Spacing.md,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.md,
+  },
+  sectionTitle: {
+    ...Typography.h3,
+    color: colors.text,
+  },
+  sectionBody: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
   },
 
   // Weight input row (side-by-side)
@@ -97,11 +145,10 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
-    marginBottom: Spacing.sm,
   },
   input: {
     flex: 1,
-    backgroundColor: colors.card,
+    backgroundColor: colors.background,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -122,14 +169,6 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     ...Typography.body,
     color: colors.white,
     fontWeight: '600',
-  },
-
-  // Section label
-  sectionLabel: {
-    ...Typography.h3,
-    color: colors.text,
-    fontWeight: '600',
-    marginBottom: Spacing.sm,
   },
 
   // Saved confirmation message
@@ -176,15 +215,28 @@ export default function WeightScreen() {
   const styles = makeStyles(colors);
   const systemScheme = useColorScheme();
   const resolvedScheme: 'light' | 'dark' = preferences.appearanceMode === 'light' ? 'light' : preferences.appearanceMode === 'dark' ? 'dark' : (systemScheme ?? 'light');
+  const { width: windowWidth } = useWindowDimensions();
+  const pagerWidth = windowWidth - Spacing.md * 2;
 
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [animateToValue, setAnimateToValue] = useState<number | null>(null);
+  const [activePagerPage, setActivePagerPage] = useState(0);
+  const [chartHeight, setChartHeight] = useState(280);
+
+  const pagerScrollRef = useRef<ScrollView>(null);
 
   const today = getToday();
   const existingEntry = entries.find((e) => e.date === selectedDate);
   const isForwardDisabled = selectedDate >= today;
+
+  useFocusEffect(
+    useCallback(() => {
+      pagerScrollRef.current?.scrollTo({ x: 0, animated: false });
+      setActivePagerPage(0);
+    }, []),
+  );
 
   // Pre-fill input when date or entries change
   useEffect(() => {
@@ -328,45 +380,77 @@ export default function WeightScreen() {
           )}
         </View>
 
-        {existingEntry && (
-          <Text style={styles.existingNote}>
-            Existing entry: {existingEntry.weight} {existingEntry.unit} — saving will replace it.
-          </Text>
-        )}
-
-        {/* Digital scale graphic */}
-        <DigitalScale weight={weightInput} unit={preferences.unit} animateToValue={animateToValue} />
-
-        {/* Log Weight section label */}
-        <Text style={styles.sectionLabel}>Log Weight ({preferences.unit})</Text>
-
-        {/* Weight input + Save side-by-side */}
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            value={weightInput}
-            onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
-            keyboardType="decimal-pad"
-            placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="done"
-            onSubmitEditing={handleSave}
-          />
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={handleSave}
-            activeOpacity={0.8}
+        {/* Swipeable pager: Page 0 = scale, Page 1 = weight chart */}
+        <View style={styles.pagerContainer}>
+          <ScrollView
+            ref={pagerScrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={32}
+            contentOffset={{ x: 0, y: 0 }}
+            onMomentumScrollEnd={(e) => {
+              const page = Math.round(e.nativeEvent.contentOffset.x / pagerWidth);
+              setActivePagerPage(page);
+            }}
           >
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
+            {/* Page 0: Digital scale */}
+            <View style={[styles.scalePage, { width: pagerWidth, height: chartHeight }]}>
+              <DigitalScale weight={weightInput} unit={preferences.unit} animateToValue={animateToValue} />
+            </View>
+
+            {/* Page 1: Weight chart */}
+            <View
+              style={{ width: pagerWidth }}
+              onLayout={(e) => {
+                const h = e.nativeEvent.layout.height;
+                if (h > 0 && Math.abs(h - chartHeight) > 1) setChartHeight(h);
+              }}
+            >
+              <WeightChart />
+            </View>
+          </ScrollView>
+
+          <View style={styles.pageDots}>
+            {[0, 1].map((i) => (
+              <View key={i} style={[styles.dot, activePagerPage === i && styles.dotActive]} />
+            ))}
+          </View>
+        </View>
+
+        {/* Log Weight card (smartwatch-style) */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Log Weight ({preferences.unit})</Text>
+          </View>
+          <View style={styles.sectionBody}>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                value={weightInput}
+                onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
+                keyboardType="decimal-pad"
+                placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
+                placeholderTextColor={colors.textSecondary}
+                returnKeyType="done"
+                onSubmitEditing={handleSave}
+              />
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSave}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {savedMessage && (
           <Text style={styles.savedMessage}>{savedMessage}</Text>
         )}
 
-        {/* History & Insights — always visible below entry */}
-        <WeightChart />
+        {/* Insights — always visible below input card */}
         <WeightInsights />
       </ScrollView>
 
