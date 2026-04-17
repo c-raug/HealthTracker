@@ -152,15 +152,8 @@ const makeStyles = (colors: typeof LightColors) =>
 
 function applyFoodFilters(foods: CustomFood[], filters: FoodFilters): CustomFood[] {
   return foods.filter((food) => {
-    // Meal tag filter: OR logic — food must have at least one of the selected tags
-    if (filters.mealTags.length > 0) {
-      if (!food.mealTags || !food.mealTags.some((t) => filters.mealTags.includes(t))) {
-        return false;
-      }
-    }
-    // Food type filter: exact match
-    if (filters.foodType) {
-      if (food.foodType !== filters.foodType) {
+    if (filters.foodTypes.length > 0) {
+      if (!food.foodTypes || !food.foodTypes.some((t) => filters.foodTypes.includes(t))) {
         return false;
       }
     }
@@ -169,7 +162,7 @@ function applyFoodFilters(foods: CustomFood[], filters: FoodFilters): CustomFood
 }
 
 function hasActiveFilters(filters: FoodFilters): boolean {
-  return filters.mealTags.length > 0 || filters.foodType !== null;
+  return filters.foodTypes.length > 0;
 }
 
 type Tab = 'foods' | 'meals';
@@ -187,7 +180,7 @@ export default function FoodLibraryModal() {
   const [mealQuery, setMealQuery] = useState('');
 
   // Filter state
-  const [foodFilters, setFoodFilters] = useState<FoodFilters>({ mealTags: [], foodType: null });
+  const [foodFilters, setFoodFilters] = useState<FoodFilters>({ foodTypes: [] });
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   // Foods sub-view state

@@ -245,14 +245,18 @@ export default function EditMealFlow({ meal, onDone }: Props) {
     : customFoods;
 
   const pinnedCustom = filtered
-    .filter((f) => f.pinned)
-    .sort((a, b) => (a.pinnedOrder ?? Infinity) - (b.pinnedOrder ?? Infinity));
+    .filter((f) => f.pinnedCategories && f.pinnedCategories.length > 0)
+    .sort((a, b) => {
+      const aMin = a.pinnedOrder ? Math.min(...Object.values(a.pinnedOrder)) : Infinity;
+      const bMin = b.pinnedOrder ? Math.min(...Object.values(b.pinnedOrder)) : Infinity;
+      return aMin - bMin;
+    });
 
   // Recent: top 7 non-pinned custom foods by frequency (logged at least once)
   const recentCustom = useMemo(() => {
     if (isSearching) return [];
     return customFoods
-      .filter((f) => !f.pinned && (foodFrequencyMap[f.name.toLowerCase().trim()] ?? 0) > 0)
+      .filter((f) => !(f.pinnedCategories && f.pinnedCategories.length > 0) && (foodFrequencyMap[f.name.toLowerCase().trim()] ?? 0) > 0)
       .sort((a, b) =>
         (foodFrequencyMap[b.name.toLowerCase().trim()] ?? 0) -
         (foodFrequencyMap[a.name.toLowerCase().trim()] ?? 0)
@@ -260,7 +264,7 @@ export default function EditMealFlow({ meal, onDone }: Props) {
       .slice(0, 7);
   }, [isSearching, customFoods, foodFrequencyMap]);
 
-  const unpinnedCustom = isSearching ? filtered.filter((f) => !f.pinned) : [];
+  const unpinnedCustom = isSearching ? filtered.filter((f) => !(f.pinnedCategories && f.pinnedCategories.length > 0)) : [];
 
   // Build sections: "In Meal" only when not searching; Pinned + Recent/My Foods
   const sections: { title: string; data: SectionItem[] }[] = [];

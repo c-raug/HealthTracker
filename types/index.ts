@@ -78,10 +78,9 @@ export interface CustomFood {
   fat: number;
   servingSize: string;
   createdAt: string;
-  pinned?: boolean;
-  pinnedOrder?: number;
-  mealTags?: string[];
-  foodType?: string;
+  pinnedCategories?: MealCategory[];
+  pinnedOrder?: Record<string, number>;
+  foodTypes?: string[];
 }
 
 export interface SavedMeal {
