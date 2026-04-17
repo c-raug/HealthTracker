@@ -119,7 +119,7 @@ export default function AppSettingsModal() {
               Choose which tab opens when you launch the app.
             </Text>
             <View style={styles.toggle}>
-              {(['weight', 'nutrition', 'activity'] as const).map((tab) => (
+              {(['weight', 'nutrition', 'activity', 'profile'] as const).map((tab) => (
                 <TouchableOpacity
                   key={tab}
                   style={[styles.toggleOption, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleOptionActive]}
@@ -127,7 +127,7 @@ export default function AppSettingsModal() {
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.toggleText, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleTextActive]}>
-                    {tab === 'weight' ? 'Weight' : tab === 'nutrition' ? 'Nutrition' : 'Activity'}
+                    {tab === 'weight' ? 'Weight' : tab === 'nutrition' ? 'Nutrition' : tab === 'activity' ? 'Activity' : 'Profile'}
                   </Text>
                 </TouchableOpacity>
               ))}

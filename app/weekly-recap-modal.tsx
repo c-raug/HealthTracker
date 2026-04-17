@@ -6,7 +6,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
@@ -96,6 +96,7 @@ export default function WeeklyRecapModal() {
   const router = useRouter();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
   const { entries, preferences, nutritionLog, waterLog, activityLog, dispatch } = useApp();
 
   const [currentPage, setCurrentPage] = useState(0);
@@ -186,7 +187,7 @@ export default function WeeklyRecapModal() {
   const isLastPage = currentPage === PAGE_COUNT - 1;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {/* Header: progress bar + close */}
       <View style={styles.header}>
         <View style={styles.progressBar}>
@@ -262,6 +263,6 @@ export default function WeeklyRecapModal() {
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

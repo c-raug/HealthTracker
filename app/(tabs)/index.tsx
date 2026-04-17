@@ -24,6 +24,7 @@ import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
 import { convertWeight } from '../../utils/unitConversion';
 import WeightChart from '../../components/WeightChart';
 import WeightInsights from '../../components/WeightInsights';
+import DigitalScale from '../../components/weight/DigitalScale';
 import { WeightEntry } from '../../types';
 import { generateId } from '../../utils/generateId';
 
@@ -91,47 +92,44 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     marginLeft: Spacing.xs,
   },
 
-  // Weight input
-  sectionLabel: {
-    ...Typography.small,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: Spacing.xs,
-    marginTop: Spacing.sm,
+  // Weight input row (side-by-side)
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   input: {
+    flex: 1,
     backgroundColor: colors.card,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    ...Typography.h1,
+    paddingVertical: Spacing.sm,
+    ...Typography.h3,
     color: colors.text,
     textAlign: 'center',
-  },
-
-  // Save button wrapper — holds top/bottom margins so spacing is preserved
-  // whether or not the savedMessage is visible below the button
-  saveButtonArea: {
-    marginTop: Spacing.md,
-    marginBottom: Spacing.xl,
   },
   saveButton: {
     backgroundColor: colors.primary,
     borderRadius: Radius.md,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    width: 90,
   },
   saveButtonText: {
-    ...Typography.h3,
+    ...Typography.body,
     color: colors.white,
+    fontWeight: '600',
+  },
+
+  // Section label
+  sectionLabel: {
+    ...Typography.h3,
+    color: colors.text,
+    fontWeight: '600',
+    marginBottom: Spacing.sm,
   },
 
   // Saved confirmation message
@@ -139,7 +137,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     ...Typography.small,
     color: colors.primary,
     textAlign: 'center',
-    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
     fontStyle: 'italic',
   },
 
@@ -182,6 +180,7 @@ export default function WeightScreen() {
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [animateToValue, setAnimateToValue] = useState<number | null>(null);
 
   const today = getToday();
   const existingEntry = entries.find((e) => e.date === selectedDate);
@@ -189,6 +188,7 @@ export default function WeightScreen() {
 
   // Pre-fill input when date or entries change
   useEffect(() => {
+    setAnimateToValue(null);
     if (existingEntry) {
       const val = convertWeight(
         existingEntry.weight,
@@ -248,6 +248,7 @@ export default function WeightScreen() {
 
     dispatch({ type: 'UPSERT_ENTRY', entry });
     Keyboard.dismiss();
+    setAnimateToValue(parsed);
 
     const now = new Date();
     const [y, m, d] = selectedDate.split('-').map(Number);
@@ -333,35 +334,36 @@ export default function WeightScreen() {
           </Text>
         )}
 
-        {/* Weight input */}
-        <Text style={styles.sectionLabel}>
-          Weight ({preferences.unit})
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={weightInput}
-          onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
-          keyboardType="decimal-pad"
-          placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
-          placeholderTextColor={colors.textSecondary}
-          returnKeyType="done"
-          onSubmitEditing={handleSave}
-        />
+        {/* Digital scale graphic */}
+        <DigitalScale weight={weightInput} unit={preferences.unit} animateToValue={animateToValue} />
 
-        {/* Save button + confirmation message — wrapped so Spacing.xl gap before chart is preserved regardless of message visibility */}
-        <View style={styles.saveButtonArea}>
+        {/* Log Weight section label */}
+        <Text style={styles.sectionLabel}>Log Weight ({preferences.unit})</Text>
+
+        {/* Weight input + Save side-by-side */}
+        <View style={styles.inputRow}>
+          <TextInput
+            style={styles.input}
+            value={weightInput}
+            onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
+            keyboardType="decimal-pad"
+            placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
+            placeholderTextColor={colors.textSecondary}
+            returnKeyType="done"
+            onSubmitEditing={handleSave}
+          />
           <TouchableOpacity
             style={styles.saveButton}
             onPress={handleSave}
             activeOpacity={0.8}
           >
-            <Text style={styles.saveButtonText}>Save Entry</Text>
+            <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
-
-          {savedMessage && (
-            <Text style={styles.savedMessage}>{savedMessage}</Text>
-          )}
         </View>
+
+        {savedMessage && (
+          <Text style={styles.savedMessage}>{savedMessage}</Text>
+        )}
 
         {/* History & Insights — always visible below entry */}
         <WeightChart />

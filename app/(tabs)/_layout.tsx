@@ -1,7 +1,9 @@
-import { TouchableOpacity } from 'react-native';
+import { useState, useEffect } from 'react';
+import { TouchableOpacity, View, Text, Image } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../../constants/theme';
+import { useApp } from '../../context/AppContext';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -15,16 +17,55 @@ function TabIcon({
   return <Ionicons name={name} size={24} color={color} />;
 }
 
-function FeedbackHeaderButton() {
+const AVATAR_BTN_SIZE = 28;
+
+function ProfileHeaderButton() {
   const router = useRouter();
   const colors = useColors();
+  const { preferences } = useApp();
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (preferences.avatarUri) {
+      setAvatarUri(preferences.avatarUri);
+    }
+  }, [preferences.avatarUri]);
+
+  const getInitials = () => {
+    if (!preferences.profile?.name) return null;
+    const parts = preferences.profile.name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return parts[0][0]?.toUpperCase() ?? null;
+  };
+
+  const initials = getInitials();
+
   return (
     <TouchableOpacity
-      onPress={() => router.push({ pathname: '/(tabs)/settings', params: { focusFeedback: '1' } })}
+      onPress={() => router.push('/(tabs)/profile')}
       style={{ marginRight: 8, padding: 4 }}
       activeOpacity={0.7}
     >
-      <Ionicons name="chatbubble-outline" size={22} color={colors.text} />
+      <View style={{
+        width: AVATAR_BTN_SIZE,
+        height: AVATAR_BTN_SIZE,
+        borderRadius: AVATAR_BTN_SIZE / 2,
+        backgroundColor: colors.background,
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+      }}>
+        {avatarUri ? (
+          <Image
+            source={{ uri: avatarUri }}
+            style={{ width: AVATAR_BTN_SIZE, height: AVATAR_BTN_SIZE, borderRadius: AVATAR_BTN_SIZE / 2 }}
+          />
+        ) : initials ? (
+          <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>{initials}</Text>
+        ) : (
+          <Ionicons name="person-circle-outline" size={AVATAR_BTN_SIZE} color={colors.text} />
+        )}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -60,7 +101,7 @@ export default function TabLayout() {
         headerTintColor: colors.text,
         headerShadowVisible: false,
         headerLeft: () => <RecapHeaderButton />,
-        headerRight: () => <FeedbackHeaderButton />,
+        headerRight: () => <ProfileHeaderButton />,
       }}
     >
       <Tabs.Screen
@@ -91,12 +132,22 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
           title: 'Profile',
           headerRight: () => null,
           tabBarIcon: ({ color }) => (
             <TabIcon name="person-circle" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          headerRight: () => null,
+          tabBarIcon: ({ color }) => (
+            <TabIcon name="settings-outline" color={color} />
           ),
         }}
       />

@@ -4,18 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
-import { convertWeight } from '../../utils/unitConversion';
 import { getLevelLabel } from '../../utils/xpCalculation';
 
 const AVATAR_SIZE = 72;
-
-const ACTIVITY_LABELS: Record<string, string> = {
-  sedentary: 'Sedentary',
-  lightly_active: 'Lightly Active',
-  moderately_active: 'Moderate',
-  active: 'Active',
-  very_active: 'Very Active',
-};
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -63,11 +54,6 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.text,
       marginBottom: Spacing.xs,
     },
-    statRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: Spacing.sm,
-    },
     statItem: {
       ...Typography.small,
       color: colors.textSecondary,
@@ -78,7 +64,7 @@ const makeStyles = (colors: typeof LightColors) =>
   });
 
 export default function ProfileCard() {
-  const { preferences, entries, dispatch } = useApp();
+  const { preferences, dispatch } = useApp();
   const router = useRouter();
   const colors = useColors();
   const styles = makeStyles(colors);
@@ -133,25 +119,6 @@ export default function ProfileCard() {
     return parts[0][0]?.toUpperCase() ?? null;
   };
 
-  // Current weight
-  const sortedEntries = [...entries].sort((a, b) => b.date.localeCompare(a.date));
-  const latestWeight = sortedEntries[0];
-  const displayUnit = preferences.unit;
-  const currentWeight = latestWeight
-    ? convertWeight(latestWeight.weight, latestWeight.unit, displayUnit)
-    : null;
-
-  // Height display
-  const displayHeight = (() => {
-    if (!profile?.heightValue) return null;
-    if (profile.heightUnit === 'in') {
-      const ft = Math.floor(profile.heightValue / 12);
-      const inches = profile.heightValue % 12;
-      return `${ft}'${inches}"`;
-    }
-    return `${profile.heightValue} cm`;
-  })();
-
   const initials = getInitials();
 
   // Level label
@@ -180,22 +147,9 @@ export default function ProfileCard() {
           activeOpacity={0.7}
         >
           <Text style={styles.nameText}>{profile?.name || 'Your Profile'}</Text>
-          <View style={styles.statRow}>
-            {displayHeight !== null && <Text style={styles.statItem}>{displayHeight}</Text>}
-            {currentWeight !== null && (
-              <Text style={styles.statItem}>
-                {currentWeight} {displayUnit}
-              </Text>
-            )}
-            {(preferences.activityMode ?? 'auto') === 'auto' && profile?.activityLevel && (
-              <Text style={styles.statItem}>
-                {ACTIVITY_LABELS[profile.activityLevel] ?? profile.activityLevel}
-              </Text>
-            )}
-            <Text style={styles.statItem} numberOfLines={1} ellipsizeMode="tail">
-              {levelLabel}
-            </Text>
-          </View>
+          <Text style={styles.statItem} numberOfLines={1} ellipsizeMode="tail">
+            {levelLabel}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push('/profile-modal')}

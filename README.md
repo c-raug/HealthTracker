@@ -49,13 +49,15 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - Requires a profile + weight entry (shows a prompt otherwise)
 
 ### Profile Tab
-- **ProfileCard** (always visible) — circular avatar (tap to pick from camera roll, falls back to initials or default icon), user name, height, current weight, and activity level; tap to expand inline edit form with Name, DOB, Sex, Height, Activity Tracking Mode (Auto/Manual/Smart Watch), and Activity Level
-- **Badges** (collapsible) — XP/level display always visible (⭐ level name + XP progress bar; at Level 10 a "Prestige →" button resets XP and increments prestige counter); four streak badges: Calorie Goal, Weight, Food, and Activity (collapsed pill row / expanded streak cards); 8 permanently-unlockable achievement tiles in a 2-column grid (4 streak milestones × 7/30/100/365 days, 4 food-logged milestones × 10/50/100/500 entries) — unlocked in full color, locked in gray with a lock icon
+- **ProfileCard** (always visible) — circular avatar (tap to pick from camera roll, falls back to initials or default icon), user name, and level label; tap to open Edit Profile modal
+- **Stats & Achievements →** — navigates to Stats & Achievements modal (Level, Badges, Achievements)
 - **Food Library →** — navigates to Food Library modal; two tabs: Foods (alphabetical list of all custom foods with create/edit/delete) and Meals (alphabetical list of all saved meal templates with create/edit/delete)
 - **Nutrition Goals →** — navigates to Nutrition Goals modal (Goals & Calorie Target, Macros with gram equivalents, Daily Water Goal with auto/manual + creatine adjustment)
+
+### Settings Tab
 - **Appearance →** — navigates to Appearance modal (Light/Dark/System mode picker + 6-swatch accent color picker)
-- **App Settings →** — navigates to App Settings modal (Default Tab, Weight Unit, Expand sections toggle, Data Backup, Debug Info with crash log viewer)
-- **Send Feedback** — in-app feedback form; also reachable via the feedback button in the header of all other tabs
+- **App Settings →** — navigates to App Settings modal (Default Tab with Profile option, Weight Unit, Expand sections toggle, Data Backup, Debug Info with crash log viewer)
+- **Send Feedback** — in-app feedback form
 - **Footer** — app version string
 
 ### Onboarding
@@ -65,13 +67,13 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 ### Data Backup
 - **Save backup** — opens the OS share sheet on native (iOS/Android) or downloads a `.json` file on web
 - **Load backup** — opens the OS document picker on native or a file picker on web
-- Available via the Settings tab; also accessible from the Welcome screen on first launch
+- Available via App Settings (Settings tab → App Settings); also accessible from the Welcome screen on first launch
 
 ### General
 - All data stored on-device (no accounts or internet connection required)
 - Full **dark mode** support with Light / Dark / System appearance modes
 - **6 accent color themes** — Green (default), Blue, Orange, Purple, Red, Teal
-- **Global feedback button** — chatbubble icon in the header of Weight, Nutrition, and Activities tabs; taps navigate to the feedback form on the Profile tab
+- **Global avatar button** — circular avatar button in the header of Weight, Nutrition, and Activities tabs; taps navigate to the Profile tab
 - **XP & level system** — earn XP for daily actions (food logging, hitting calorie/water goals, logging weight/activity, streak bonuses); 10 named levels (Novice → Legend); level-up toast notification; Prestige system for indefinite progression
 - **Achievement badges** — 8 permanently-unlockable milestones (streak and food-logged); toast notification on first unlock; persisted across restarts
 - **Error boundary** — catches unhandled JS exceptions, logs crash details to AsyncStorage, renders a "Something went wrong" fallback with Restart button; optional Sentry integration via `SENTRY_DSN`
@@ -116,11 +118,12 @@ app/
 ├── food-library-modal.tsx   # Food Library sub-screen (Foods + Meals tabs with create/edit/delete)
 ├── weekly-recap-modal.tsx   # Full-screen story-style weekly recap (4 pages: Weight, Nutrition, Streaks, Rating)
 └── (tabs)/
-    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Profile) + global feedback button
+    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Profile, Settings) + global avatar button
     ├── index.tsx            # Weight screen — entry, chart (with range selector), insights
     ├── nutrition.tsx        # Nutrition screen — 3-page pager (calorie graph / ring+bottle / water graph), macros, meals
     ├── activities.tsx       # Activities screen — 2-page pager (CalorieFlame / WeeklyActivityGraph), exercise/steps/smartwatch logging
-    └── settings.tsx         # Profile screen (ProfileCard, Badges, navigation rows to modals, Feedback)
+    ├── profile.tsx          # Profile tab (ProfileCard, Stats & Achievements, Food Library, Nutrition Goals)
+    └── settings.tsx         # Settings tab (Appearance, App Settings, Feedback, Footer)
 
 components/
 ├── ErrorBoundary.tsx        # React error boundary with crash logging and Sentry integration
@@ -134,8 +137,8 @@ components/
 ├── activities/
 │   └── CalorieFlame.tsx     # SVG flame outline visual with total burned overlay
 ├── profile/
-│   ├── ProfileCard.tsx      # Avatar + summary + inline edit form (name, DOB, sex, height, activity mode)
-│   └── BadgesSection.tsx    # XP/level bar + collapsible streaks + achievements grid
+│   ├── ProfileCard.tsx      # Avatar + name + level label; tappable to open Edit Profile modal
+│   └── BadgesSection.tsx    # Tappable nav row to Stats & Achievements modal
 ├── settings/
 │   ├── AppearanceModePicker.tsx # Light / Dark / System 3-card picker
 │   ├── ProfileSection.tsx   # Name, DOB picker, sex toggle, height input

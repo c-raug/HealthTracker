@@ -33,6 +33,7 @@ function RootNavigator() {
       const route =
         tab === 'weight' ? '/(tabs)/' :
         tab === 'activity' ? '/(tabs)/activities' :
+        tab === 'profile' ? '/(tabs)/profile' :
         '/(tabs)/nutrition';
       router.replace(route);
     } else if (!onboardingComplete && inApp) {
