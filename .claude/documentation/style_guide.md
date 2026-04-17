@@ -1056,7 +1056,7 @@ sectionHeaderRow: {
 | `components/settings/AppearanceModePicker.tsx` | Light/Dark/System card picker |
 | `components/profile/ProfileCard.tsx`       | Avatar + inline edit form pattern |
 | `components/profile/BadgesSection.tsx`     | XP/level bar + streak pills + achievements grid |
-| `components/activities/CalorieFlame.tsx`   | SVG outline flame visual          |
+| `components/activities/CalorieFlame.tsx`   | Nested-layer SVG flame: inner `primaryLight` fill + outer `primary` stroke, text overlay in wider body |
 | `components/ErrorBoundary.tsx`             | Error fallback using static LightColors |
 | `components/ToastNotification.tsx`         | Animated top-of-screen toast banner |
 | `components/GamificationWatcher.tsx`       | Invisible root-level XP/achievement watcher |

@@ -135,17 +135,14 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          href: null,
           headerRight: () => null,
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="person-circle" color={color} />
-          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          headerRight: () => null,
           tabBarIcon: ({ color }) => (
             <TabIcon name="settings-outline" color={color} />
           ),

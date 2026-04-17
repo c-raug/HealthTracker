@@ -37,9 +37,9 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Activities Tab
 - Log exercise and steps for any date with date navigation
-- **2-page swipeable pager** — Page 0: CalorieFlame visual (SVG flame outline with total burned overlay), Page 1: Weekly Activity Graph (7-day bar chart with tap-to-tooltip); resets to page 0 on tab focus
+- **2-page swipeable pager** — Page 0: CalorieFlame visual (nested-layer SVG flame with `primaryLight` inner fill + `primary` outer stroke, total burned overlaid in the wider body), Page 1: Weekly Activity Graph (7-day bar chart with tap-to-tooltip); resets to page 0 on tab focus
 - **Three tracking modes** — Auto (exercise is reference-only; TDEE activity level handles the burn), Manual (all logged calories add to your nutrition target), Smartwatch (only smartwatch entries add to target)
-- **Activity Tracking Mode** — configured in ProfileCard on the Profile tab (Auto/Manual/Smart Watch pills with info icons)
+- **Activity Tracking Mode** — configured in the Edit Profile modal (Auto/Manual/Smart Watch pills with info icons), opened from the ProfileCard on the Profile screen
 - **Exercise logging** — collapsible section with exercise type pill + hour/minute drum pickers + calorie burn preview
 - **Step logging** — collapsible section with numeric input + calorie preview (input and button side-by-side)
 - **Smartwatch input** — dedicated calorie entry field (visible only in Smartwatch mode) with "Entry saved" confirmation toast
@@ -48,7 +48,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **"Go to Today" pill** and **"Change tracking mode →"** deep-link to Profile
 - Requires a profile + weight entry (shows a prompt otherwise)
 
-### Profile Tab
+### Profile Screen (accessed via avatar button)
 - **ProfileCard** (always visible) — circular avatar (tap to pick from camera roll, falls back to initials or default icon), user name, and level label; tap to open Edit Profile modal
 - **Stats & Achievements →** — navigates to Stats & Achievements modal (Level, Badges, Achievements)
 - **Food Library →** — navigates to Food Library modal; two tabs: Foods (alphabetical list of all custom foods with create/edit/delete) and Meals (alphabetical list of all saved meal templates with create/edit/delete)
@@ -73,7 +73,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - All data stored on-device (no accounts or internet connection required)
 - Full **dark mode** support with Light / Dark / System appearance modes
 - **6 accent color themes** — Green (default), Blue, Orange, Purple, Red, Teal
-- **Global avatar button** — circular avatar button in the header of Weight, Nutrition, and Activities tabs; taps navigate to the Profile tab
+- **Global avatar button** — circular avatar button in the header of Weight, Nutrition, Activities, and Settings tabs; taps navigate to the Profile screen (which is no longer in the bottom tab bar — the avatar button is the sole entry point)
 - **XP & level system** — earn XP for daily actions (food logging, hitting calorie/water goals, logging weight/activity, streak bonuses); 10 named levels (Novice → Legend); level-up toast notification; Prestige system for indefinite progression
 - **Achievement badges** — 8 permanently-unlockable milestones (streak and food-logged); toast notification on first unlock; persisted across restarts
 - **Error boundary** — catches unhandled JS exceptions, logs crash details to AsyncStorage, renders a "Something went wrong" fallback with Restart button; optional Sentry integration via `SENTRY_DSN`
@@ -122,7 +122,7 @@ app/
     ├── index.tsx            # Weight screen — entry, chart (with range selector), insights
     ├── nutrition.tsx        # Nutrition screen — 3-page pager (calorie graph / ring+bottle / water graph), macros, meals
     ├── activities.tsx       # Activities screen — 2-page pager (CalorieFlame / WeeklyActivityGraph), exercise/steps/smartwatch logging
-    ├── profile.tsx          # Profile tab (ProfileCard, Stats & Achievements, Food Library, Nutrition Goals)
+    ├── profile.tsx          # Profile screen (ProfileCard, Stats & Achievements, Food Library, Nutrition Goals) — hidden from bottom tab bar via href: null; reached only via the avatar button in the header
     └── settings.tsx         # Settings tab (Appearance, App Settings, Feedback, Footer)
 
 components/
@@ -135,7 +135,7 @@ components/
 ├── WeightEntryItem.tsx      # Single entry row with delete + confirmation
 ├── InfoModal.tsx            # Reusable info/help overlay modal
 ├── activities/
-│   └── CalorieFlame.tsx     # SVG flame outline visual with total burned overlay
+│   └── CalorieFlame.tsx     # Nested-layer SVG flame (inner fill + outer stroke) with total burned overlay
 ├── profile/
 │   ├── ProfileCard.tsx      # Avatar + name + level label; tappable to open Edit Profile modal
 │   └── BadgesSection.tsx    # Tappable nav row to Stats & Achievements modal

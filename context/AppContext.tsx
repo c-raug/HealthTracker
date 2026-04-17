@@ -154,6 +154,10 @@ function reducer(state: State, action: Action): State {
           foodTypeCategories: DEFAULT_FOOD_TYPE_CATEGORIES,
         };
       }
+      // Migrate users whose default tab was Profile — Profile is no longer in the bottom bar.
+      if ((migratedPrefs.defaultTab as string | undefined) === 'profile') {
+        migratedPrefs = { ...migratedPrefs, defaultTab: 'nutrition' };
+      }
       return {
         ...state,
         entries: action.entries,
