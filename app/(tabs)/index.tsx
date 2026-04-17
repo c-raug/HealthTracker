@@ -110,7 +110,6 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   scalePage: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.lg,
   },
 
   // Log Weight card (smartwatch-style)
@@ -238,9 +237,13 @@ export default function WeightScreen() {
     }, []),
   );
 
-  // Pre-fill input when date or entries change
+  // Reset animation only on date change (not on save, which also updates entries)
   useEffect(() => {
     setAnimateToValue(null);
+  }, [selectedDate]);
+
+  // Pre-fill input when date or entries change
+  useEffect(() => {
     if (existingEntry) {
       const val = convertWeight(
         existingEntry.weight,
@@ -396,7 +399,12 @@ export default function WeightScreen() {
           >
             {/* Page 0: Digital scale */}
             <View style={[styles.scalePage, { width: pagerWidth, height: chartHeight }]}>
-              <DigitalScale weight={weightInput} unit={preferences.unit} animateToValue={animateToValue} />
+              <DigitalScale
+                weight={existingEntry ? String(convertWeight(existingEntry.weight, existingEntry.unit, preferences.unit)) : ''}
+                unit={preferences.unit}
+                animateToValue={animateToValue}
+                size={chartHeight}
+              />
             </View>
 
             {/* Page 1: Weight chart */}

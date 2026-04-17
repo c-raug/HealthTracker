@@ -84,8 +84,6 @@ import { Colors, Typography, Spacing, Radius, useColors, LightColors } from '@/c
 | Protein         | `#3B82F6` | Macro progress bar and label                   |
 | Carbs           | `#F59E0B` | Macro progress bar and label                   |
 | Fat             | `#EF4444` | Macro progress bar and label                   |
-| Flame Outer     | `#F44336` | CalorieFlame outer tongues (red-orange)        |
-| Flame Inner     | `#FFC107` | CalorieFlame nested inner teardrop (yellow)    |
 
 ### Calorie Proximity Colors (Computed)
 
@@ -728,7 +726,7 @@ These rules are absolute and must never be violated:
 
 1. **Water UI (`#2196F3` / `#E3F2FD`)** — `WaterTracker`, `WaterBottleVisual`, water bars in `WeeklyIntakeGraph`, water entry badges, water preset buttons, and the "Save as Meal" swipe action all use fixed blue. Never use `colors.primary` for any water element.
 
-2. **CalorieFlame colors (`#F44336` / `#FFC107`)** — The `CalorieFlame` on the Activities tab uses fixed warm colors: outer tongues `#F44336` (red-orange), inner teardrop `#FFC107` (yellow). Declared as module-scope constants (`FLAME_OUTER_COLOR`, `FLAME_INNER_COLOR`). Never use `colors.primary` or `colors.primaryLight` for flame fills — text overlay uses `colors.text` for theme-aware contrast.
+2. **CalorieFlame stroke** — The `CalorieFlame` on the Activities tab is rendered as the Ionicons `flame-outline` glyph with a themed stroke (`stroke={colors.primary}`, `fill="none"`, `strokeWidth={3.5}`, `vectorEffect="non-scaling-stroke"`). The text overlay uses `colors.text` for theme-aware contrast.
 
 3. **Macro colors** — Protein `#3B82F6`, Carbs `#F59E0B`, Fat `#EF4444`. These are fixed across all screens (Nutrition, Settings macro section).
 
@@ -738,7 +736,7 @@ These rules are absolute and must never be violated:
 
 6. **Card shadows** — Always the standard shadow values. Never create custom shadow variations.
 
-7. **Accent color** — `colors.primary` and `colors.primaryLight` reflect the user's chosen accent. Use these for all interactive accent elements except water, flame, macros, and calorie proximity indicators.
+7. **Accent color** — `colors.primary` and `colors.primaryLight` reflect the user's chosen accent. Use these for all interactive accent elements except water, macros, and calorie proximity indicators.
 
 ---
 
@@ -1060,7 +1058,7 @@ sectionHeaderRow: {
 | `components/settings/AppearanceModePicker.tsx` | Light/Dark/System card picker |
 | `components/profile/ProfileCard.tsx`       | Avatar + inline edit form pattern |
 | `components/profile/BadgesSection.tsx`     | XP/level bar + streak pills + achievements grid |
-| `components/activities/CalorieFlame.tsx`   | Borderless multi-tongue SVG flame: fixed warm fills (`#F44336` outer / `#FFC107` inner), text overlay uses `colors.text` |
+| `components/activities/CalorieFlame.tsx`   | Borderless themed outline flame: Ionicons `flame-outline` path with `colors.primary` stroke, `fill="none"`, `vectorEffect="non-scaling-stroke"`; text overlay uses `colors.text` |
 | `components/weight/DigitalScale.tsx`       | Themed bathroom-scale visual: `primary` stroke + `primaryLight` fill, recessed LCD, 1500ms count-up + `primary` glow |
 | `components/ErrorBoundary.tsx`             | Error fallback using static LightColors |
 | `components/ToastNotification.tsx`         | Animated top-of-screen toast banner |

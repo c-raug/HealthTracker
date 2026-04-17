@@ -477,6 +477,7 @@ export default function ActivitiesScreen() {
   // Scroll-into-view refs for smartwatch input
   const scrollViewRef = useRef<ScrollView>(null);
   const smartwatchInputWrapperRef = useRef<View>(null);
+  const smartwatchInputRef = useRef<TextInput>(null);
   const smartwatchFocusedRef = useRef(false);
 
   // Drum refs
@@ -602,6 +603,8 @@ export default function ActivitiesScreen() {
   };
 
   const handleSaveSmartwatch = () => {
+    smartwatchInputRef.current?.blur();
+    smartwatchFocusedRef.current = false;
     Keyboard.dismiss();
     const cals = parseInt(smartwatchInput, 10);
     if (isNaN(cals) || cals < 0) return;
@@ -806,6 +809,7 @@ export default function ActivitiesScreen() {
               </Text>
               <View ref={smartwatchInputWrapperRef} style={styles.inputRow}>
                 <TextInput
+                  ref={smartwatchInputRef}
                   style={[styles.stepsInput, { flex: 1 }]}
                   value={smartwatchInput}
                   onChangeText={setSmartwatchInput}
