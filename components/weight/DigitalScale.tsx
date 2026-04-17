@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
+import { useColors, LightColors, Spacing, Radius } from '../../constants/theme';
 
-const SCALE_HEIGHT = 220;
 const ANIMATION_DURATION = 1500;
 
-const makeStyles = (colors: typeof LightColors) =>
+const makeStyles = (colors: typeof LightColors, size: number) =>
   StyleSheet.create({
     scaleOuter: {
-      width: '100%',
+      width: size,
+      height: size,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -20,52 +20,52 @@ const makeStyles = (colors: typeof LightColors) =>
       elevation: 10,
     },
     scaleBody: {
-      width: '100%',
-      height: SCALE_HEIGHT,
+      width: size,
+      height: size,
       borderRadius: Radius.lg,
       borderWidth: 3,
       borderColor: colors.primary,
       backgroundColor: colors.primaryLight,
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: Spacing.lg,
+      overflow: 'hidden',
     },
-    platformBase: {
+    platformBorder: {
       position: 'absolute',
-      left: Spacing.md,
-      right: Spacing.md,
-      bottom: Spacing.md,
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: colors.primary,
-      opacity: 0.25,
+      top: 8,
+      left: 8,
+      right: 8,
+      bottom: 8,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: Radius.md,
     },
     lcdRecess: {
+      position: 'absolute',
+      top: size * 0.18,
+      left: size * 0.225,
+      width: size * 0.55,
+      height: size * 0.22,
       backgroundColor: colors.background,
       borderRadius: Radius.md,
-      paddingHorizontal: Spacing.xl,
-      paddingVertical: Spacing.md,
       borderWidth: 1,
       borderColor: colors.border,
       flexDirection: 'row',
-      alignItems: 'baseline',
+      alignItems: 'center',
+      justifyContent: 'center',
       gap: Spacing.xs,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.12,
       shadowRadius: 3,
       elevation: 2,
-      minWidth: '70%',
-      justifyContent: 'center',
     },
     lcdValue: {
-      fontSize: 48,
+      fontSize: Math.round(size * 0.13),
       fontWeight: '700',
       fontVariant: ['tabular-nums'],
       letterSpacing: 1,
     },
     lcdUnit: {
-      ...Typography.h3,
+      fontSize: Math.round(size * 0.065),
       fontWeight: '600',
     },
   });
@@ -74,11 +74,12 @@ interface Props {
   weight: string;
   unit: string;
   animateToValue: number | null;
+  size?: number;
 }
 
-export default function DigitalScale({ weight, unit, animateToValue }: Props) {
+export default function DigitalScale({ weight, unit, animateToValue, size = 280 }: Props) {
   const colors = useColors();
-  const styles = makeStyles(colors);
+  const styles = makeStyles(colors, size);
 
   const [displayNumber, setDisplayNumber] = useState<string | null>(null);
   const [animationDone, setAnimationDone] = useState<boolean>(false);
@@ -118,6 +119,8 @@ export default function DigitalScale({ weight, unit, animateToValue }: Props) {
     };
   }, [animateToValue]);
 
+  // weight is the committed saved value (never the live TextInput value).
+  // The LCD shows: animated count-up (during/after Save) → saved entry value → placeholder.
   const hasSavedValue = weight.length > 0 && weight !== '0';
   const showAnimated = displayNumber !== null;
   const displayValue = showAnimated ? displayNumber : (hasSavedValue ? weight : (unit === 'lbs' ? '175.5' : '80.0'));
@@ -128,6 +131,7 @@ export default function DigitalScale({ weight, unit, animateToValue }: Props) {
   return (
     <View style={[styles.scaleOuter, showGlow && styles.scaleOuterGlow]}>
       <View style={styles.scaleBody}>
+        <View style={styles.platformBorder} />
         <View style={styles.lcdRecess}>
           <Text style={[styles.lcdValue, { color: valueColor }]}>
             {displayValue}
@@ -136,7 +140,6 @@ export default function DigitalScale({ weight, unit, animateToValue }: Props) {
             {unit}
           </Text>
         </View>
-        <View style={styles.platformBase} />
       </View>
     </View>
   );
