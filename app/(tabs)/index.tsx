@@ -403,7 +403,7 @@ export default function WeightScreen() {
                 weight={existingEntry ? String(convertWeight(existingEntry.weight, existingEntry.unit, preferences.unit)) : ''}
                 unit={preferences.unit}
                 animateToValue={animateToValue}
-                size={chartHeight}
+                size={Math.round(chartHeight * 0.6)}
               />
             </View>
 
