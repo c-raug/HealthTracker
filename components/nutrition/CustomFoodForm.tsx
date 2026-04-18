@@ -16,7 +16,6 @@ import { generateId } from '../../utils/generateId';
 import { CustomFood } from '../../types';
 
 const PORTION_UNITS = ['g', 'oz', 'cup', 'qty'] as const;
-const MEAL_TAG_OPTIONS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const;
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -186,30 +185,6 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.primary,
       fontWeight: '600',
     },
-    // Meal tags styles
-    pillRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: Spacing.sm,
-      marginBottom: Spacing.md,
-    },
-    pill: {
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      borderRadius: Radius.md,
-      backgroundColor: colors.border,
-    },
-    pillActive: {
-      backgroundColor: colors.primary,
-    },
-    pillText: {
-      ...Typography.body,
-      color: colors.textSecondary,
-      fontWeight: '500',
-    },
-    pillTextActive: {
-      color: colors.white,
-    },
     // Food type styles
     foodTypeRow: {
       flexDirection: 'row',
@@ -293,7 +268,7 @@ type FormTab = 'required' | 'optional';
 export default function CustomFoodForm({ onDone, initialFood, mode = 'create', initialName }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { preferences, customFoods, dispatch } = useApp();
+  const { preferences, dispatch } = useApp();
 
   // Parse serving size from initialFood (format: "qty unit")
   const parsedQty = initialFood ? (initialFood.servingSize.split(' ')[0] ?? '1') : '1';
@@ -319,8 +294,7 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
   const [isCaloriesManual, setIsCaloriesManual] = useState(initialIsManual);
 
   // Optional tab state
-  const [mealTags, setMealTags] = useState<string[]>(initialFood?.mealTags ?? []);
-  const [foodType, setFoodType] = useState<string | undefined>(initialFood?.foodType);
+  const [foodTypes, setFoodTypes] = useState<string[]>(initialFood?.foodTypes ?? []);
   const [showAddType, setShowAddType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const addTypeInputRef = useRef<TextInputType>(null);
@@ -355,14 +329,10 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
     );
   };
 
-  const toggleMealTag = (tag: string) => {
-    setMealTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+  const toggleFoodType = (type: string) => {
+    setFoodTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
-  };
-
-  const handleSelectFoodType = (type: string) => {
-    setFoodType((prev) => (prev === type ? undefined : type));
   };
 
   const handleAddFoodType = () => {
@@ -403,13 +373,7 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
               type: 'SET_FOOD_TYPE_CATEGORIES',
               categories: foodTypeCategories.filter((c) => c !== type),
             });
-            // Clear foodType from existing custom foods that use this type
-            for (const food of customFoods) {
-              if (food.foodType === type) {
-                dispatch({ type: 'UPDATE_CUSTOM_FOOD', food: { ...food, foodType: undefined } });
-              }
-            }
-            if (foodType === type) setFoodType(undefined);
+            setFoodTypes((prev) => prev.filter((t) => t !== type));
           },
         },
       ],
@@ -440,8 +404,7 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
           carbs: parseFloat(carbs) || 0,
           fat: parseFloat(fat) || 0,
           servingSize,
-          mealTags: mealTags.length > 0 ? mealTags : undefined,
-          foodType,
+          foodTypes: foodTypes.length > 0 ? foodTypes : undefined,
         },
       });
       onDone();
@@ -455,8 +418,7 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
         fat: parseFloat(fat) || 0,
         servingSize,
         createdAt: new Date().toISOString(),
-        mealTags: mealTags.length > 0 ? mealTags : undefined,
-        foodType,
+        foodTypes: foodTypes.length > 0 ? foodTypes : undefined,
       };
       dispatch({ type: 'ADD_CUSTOM_FOOD', food: newFood });
       onDone(newFood);
@@ -628,34 +590,15 @@ export default function CustomFoodForm({ onDone, initialFood, mode = 'create', i
       {/* Optional tab */}
       {activeTab === 'optional' && (
         <>
-          <Text style={styles.label}>Meal Tags</Text>
-          <View style={styles.pillRow}>
-            {MEAL_TAG_OPTIONS.map((tag) => {
-              const active = mealTags.includes(tag);
-              return (
-                <TouchableOpacity
-                  key={tag}
-                  style={[styles.pill, active && styles.pillActive]}
-                  onPress={() => toggleMealTag(tag)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.pillText, active && styles.pillTextActive]}>
-                    {tag}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
           <Text style={styles.label}>Food Type</Text>
           <View style={styles.foodTypeRow}>
             {foodTypeCategories.map((type) => {
-              const active = foodType === type;
+              const active = foodTypes.includes(type);
               return (
                 <TouchableOpacity
                   key={type}
                   style={[styles.foodTypeChip, active && styles.foodTypeChipActive]}
-                  onPress={() => handleSelectFoodType(type)}
+                  onPress={() => toggleFoodType(type)}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.foodTypeChipText, active && styles.foodTypeChipTextActive]}>

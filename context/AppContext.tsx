@@ -87,7 +87,7 @@ type Action =
   | { type: 'SET_WATER_CREATINE'; enabled: boolean }
   | { type: 'SET_WATER_PRESETS'; presets: [number, number, number] }
   | { type: 'SET_SECTIONS_EXPANDED'; enabled: boolean }
-  | { type: 'REORDER_PINNED_FOODS'; ids: string[] }
+  | { type: 'REORDER_PINNED_FOODS'; category: MealCategory; ids: string[] }
   | { type: 'REORDER_PINNED_MEALS'; category: MealCategory; ids: string[] }
   | { type: 'REORDER_MEAL_FOODS'; date: string; category: MealCategory; foods: NutritionFoodItem[] }
   | { type: 'SET_APPEARANCE_MODE'; mode: 'light' | 'dark' | 'system' }
@@ -158,12 +158,33 @@ function reducer(state: State, action: Action): State {
       if ((migratedPrefs.defaultTab as string | undefined) === 'profile') {
         migratedPrefs = { ...migratedPrefs, defaultTab: 'nutrition' };
       }
+      // Migrate custom foods: old pinned/pinnedOrder (number) → pinnedCategories/pinnedOrder (Record)
+      // and old foodType (string) → foodTypes (string[]); drop mealTags silently
+      const allCats: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
+      const migratedFoods = action.customFoods.map((food: any) => {
+        let f = { ...food };
+        if (f.pinned && !f.pinnedCategories) {
+          f.pinnedCategories = allCats;
+          if (typeof f.pinnedOrder === 'number') {
+            const order: Record<string, number> = {};
+            allCats.forEach((c) => { order[c] = f.pinnedOrder; });
+            f.pinnedOrder = order;
+          }
+          delete f.pinned;
+        }
+        if (f.foodType && !f.foodTypes) {
+          f.foodTypes = [f.foodType];
+          delete f.foodType;
+        }
+        if ('mealTags' in f) delete f.mealTags;
+        return f as CustomFood;
+      });
       return {
         ...state,
         entries: action.entries,
         preferences: migratedPrefs,
         nutritionLog: action.nutritionLog,
-        customFoods: action.customFoods,
+        customFoods: migratedFoods,
         savedMeals: action.savedMeals,
         activityLog: action.activityLog,
         waterLog: action.waterLog ?? [],
@@ -429,7 +450,11 @@ function reducer(state: State, action: Action): State {
         ...state,
         customFoods: state.customFoods.map((f) => {
           const idx = action.ids.indexOf(f.id);
-          return idx !== -1 ? { ...f, pinnedOrder: idx } : f;
+          if (idx === -1) return f;
+          return {
+            ...f,
+            pinnedOrder: { ...(f.pinnedOrder ?? {}), [action.category]: idx },
+          };
         }),
       };
     case 'REORDER_PINNED_MEALS':
@@ -455,11 +480,20 @@ function reducer(state: State, action: Action): State {
       };
       return { ...state, nutritionLog: upsertDay(state.nutritionLog, updatedDay) };
     }
-    case 'SET_FOOD_TYPE_CATEGORIES':
+    case 'SET_FOOD_TYPE_CATEGORIES': {
+      const newCats = action.categories;
+      const updatedFoods = state.customFoods.map((food) => {
+        if (!food.foodTypes || food.foodTypes.length === 0) return food;
+        const filtered = food.foodTypes.filter((t) => newCats.includes(t));
+        if (filtered.length === food.foodTypes.length) return food;
+        return { ...food, foodTypes: filtered.length > 0 ? filtered : undefined };
+      });
       return {
         ...state,
-        preferences: { ...state.preferences, foodTypeCategories: action.categories },
+        customFoods: updatedFoods,
+        preferences: { ...state.preferences, foodTypeCategories: newCats },
       };
+    }
     default:
       return state;
   }

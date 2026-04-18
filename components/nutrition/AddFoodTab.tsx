@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   Keyboard,
+  Modal,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DraggableFlatList, {
@@ -20,6 +22,15 @@ import { generateId } from '../../utils/generateId';
 import CustomFoodForm from './CustomFoodForm';
 import PortionSelector from './PortionSelector';
 import FoodFilterModal, { FoodFilters } from './FoodFilterModal';
+
+const CATEGORY_LABELS: Record<MealCategory, string> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  dinner: 'Dinner',
+  snacks: 'Snacks',
+};
+
+const ALL_CATEGORIES: MealCategory[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -183,17 +194,66 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.primary,
       fontWeight: '600',
     },
+    // Pin modal styles
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0,0,0,0.35)',
+    },
+    modalSheet: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: Radius.lg,
+      borderTopRightRadius: Radius.lg,
+      paddingBottom: Spacing.xl,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    modalTitle: {
+      ...Typography.h3,
+      color: colors.text,
+    },
+    modalCancelText: {
+      ...Typography.body,
+      color: colors.textSecondary,
+    },
+    categoryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    categoryLabel: {
+      ...Typography.body,
+      color: colors.text,
+    },
+    saveBtn: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.md,
+      marginHorizontal: Spacing.md,
+      marginTop: Spacing.md,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    saveBtnText: {
+      ...Typography.body,
+      color: colors.white,
+      fontWeight: '600',
+    },
   });
 
 function applyFoodFilters(foods: CustomFood[], filters: FoodFilters): CustomFood[] {
   return foods.filter((food) => {
-    if (filters.mealTags.length > 0) {
-      if (!food.mealTags || !food.mealTags.some((t) => filters.mealTags.includes(t))) {
-        return false;
-      }
-    }
-    if (filters.foodType) {
-      if (food.foodType !== filters.foodType) {
+    if (filters.foodTypes.length > 0) {
+      if (!food.foodTypes || !food.foodTypes.some((t) => filters.foodTypes.includes(t))) {
         return false;
       }
     }
@@ -202,7 +262,7 @@ function applyFoodFilters(foods: CustomFood[], filters: FoodFilters): CustomFood
 }
 
 function hasActiveFilters(filters: FoodFilters): boolean {
-  return filters.mealTags.length > 0 || filters.foodType !== null;
+  return filters.foodTypes.length > 0;
 }
 
 interface Props {
@@ -223,8 +283,12 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const [editingFood, setEditingFood] = useState<CustomFood | null>(null);
   const [editingPinned, setEditingPinned] = useState(false);
 
+  // Pin modal state
+  const [pinning, setPinning] = useState<CustomFood | null>(null);
+  const [selectedPins, setSelectedPins] = useState<MealCategory[]>([]);
+
   // Filter state
-  const [foodFilters, setFoodFilters] = useState<FoodFilters>({ mealTags: [], foodType: null });
+  const [foodFilters, setFoodFilters] = useState<FoodFilters>({ foodTypes: [] });
   const [showFilterModal, setShowFilterModal] = useState(false);
   const filtersActive = hasActiveFilters(foodFilters);
 
@@ -245,33 +309,29 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const trimmed = query.trim().toLowerCase();
   const isSearching = trimmed.length > 0;
 
-  // When searching: filter all foods by query
   const textFiltered = isSearching
     ? customFoods.filter((f) => f.name.toLowerCase().includes(trimmed))
     : customFoods;
 
-  // Apply category filters
   const filtered = filtersActive ? applyFoodFilters(textFiltered, foodFilters) : textFiltered;
 
   const sortedPinned = filtered
-    .filter((f) => f.pinned)
-    .sort((a, b) => (a.pinnedOrder ?? Infinity) - (b.pinnedOrder ?? Infinity));
+    .filter((f) => f.pinnedCategories?.includes(category))
+    .sort((a, b) => (a.pinnedOrder?.[category] ?? Infinity) - (b.pinnedOrder?.[category] ?? Infinity));
 
-  // When not searching: show Recent (top 7 non-pinned by frequency, logged at least once)
-  // When searching: show all matching unpinned (My Foods)
   const recentFoods = useMemo(() => {
     if (isSearching) return [];
     const base = filtersActive ? applyFoodFilters(customFoods, foodFilters) : customFoods;
     return base
-      .filter((f) => !f.pinned && (foodFrequencyMap[f.name.toLowerCase().trim()] ?? 0) > 0)
+      .filter((f) => !f.pinnedCategories?.includes(category) && (foodFrequencyMap[f.name.toLowerCase().trim()] ?? 0) > 0)
       .sort((a, b) =>
         (foodFrequencyMap[b.name.toLowerCase().trim()] ?? 0) -
         (foodFrequencyMap[a.name.toLowerCase().trim()] ?? 0)
       )
       .slice(0, 7);
-  }, [isSearching, customFoods, foodFrequencyMap, filtersActive, foodFilters]);
+  }, [isSearching, customFoods, foodFrequencyMap, filtersActive, foodFilters, category]);
 
-  const unpinned = isSearching ? filtered.filter((f) => !f.pinned) : [];
+  const unpinned = isSearching ? filtered.filter((f) => !f.pinnedCategories?.includes(category)) : [];
 
   const isEmpty = isSearching
     ? sortedPinned.length === 0 && unpinned.length === 0
@@ -288,8 +348,24 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
     servings: 1,
   }), []);
 
-  const handleTogglePin = (food: CustomFood) => {
-    dispatch({ type: 'UPDATE_CUSTOM_FOOD', food: { ...food, pinned: !food.pinned } });
+  const handleOpenPin = (food: CustomFood) => {
+    setPinning(food);
+    setSelectedPins(food.pinnedCategories ?? []);
+  };
+
+  const handleTogglePinCategory = (cat: MealCategory) => {
+    setSelectedPins((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
+    );
+  };
+
+  const handleSavePin = () => {
+    if (!pinning) return;
+    dispatch({
+      type: 'UPDATE_CUSTOM_FOOD',
+      food: { ...pinning, pinnedCategories: selectedPins },
+    });
+    setPinning(null);
   };
 
   const handleDelete = (id: string) => {
@@ -319,6 +395,8 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
     dispatch({ type: 'ADD_FOOD_TO_MEAL', date, category, food });
     onDone();
   };
+
+  const isPinnedHere = (food: CustomFood) => food.pinnedCategories?.includes(category) ?? false;
 
   if (showCreateForm) {
     return (
@@ -409,13 +487,13 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           <View style={styles.actionBtns}>
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => handleTogglePin(item)}
+              onPress={() => handleOpenPin(item)}
               activeOpacity={0.7}
             >
               <Ionicons
-                name={item.pinned ? 'pin' : 'pin-outline'}
+                name={isPinnedHere(item) ? 'pin' : 'pin-outline'}
                 size={18}
-                color={item.pinned ? colors.primary : colors.textSecondary}
+                color={isPinnedHere(item) ? colors.primary : colors.textSecondary}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -454,11 +532,51 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
               keyExtractor={(item) => item.id}
               renderItem={renderPinnedItem}
               onDragEnd={({ data }) =>
-                dispatch({ type: 'REORDER_PINNED_FOODS', ids: data.map((f) => f.id) })
+                dispatch({ type: 'REORDER_PINNED_FOODS', category, ids: data.map((f) => f.id) })
               }
             />
           </>
         )}
+
+        {/* Pin category modal */}
+        <Modal
+          visible={pinning !== null}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setPinning(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <SafeAreaView style={styles.modalSheet}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setPinning(null)}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>Pin to meal categories</Text>
+                <View style={{ width: 50 }} />
+              </View>
+
+              {ALL_CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={styles.categoryRow}
+                  onPress={() => handleTogglePinCategory(cat)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.categoryLabel}>{CATEGORY_LABELS[cat]}</Text>
+                  <Ionicons
+                    name={selectedPins.includes(cat) ? 'checkbox' : 'square-outline'}
+                    size={22}
+                    color={selectedPins.includes(cat) ? colors.primary : colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              ))}
+
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSavePin} activeOpacity={0.8}>
+                <Text style={styles.saveBtnText}>Save</Text>
+              </TouchableOpacity>
+            </SafeAreaView>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -523,13 +641,13 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
                 <View style={styles.actionBtns}>
                   <TouchableOpacity
                     style={styles.actionBtn}
-                    onPress={() => handleTogglePin(item)}
+                    onPress={() => handleOpenPin(item)}
                     activeOpacity={0.7}
                   >
                     <Ionicons
-                      name={item.pinned ? 'pin' : 'pin-outline'}
+                      name={isPinnedHere(item) ? 'pin' : 'pin-outline'}
                       size={18}
-                      color={item.pinned ? colors.primary : colors.textSecondary}
+                      color={isPinnedHere(item) ? colors.primary : colors.textSecondary}
                     />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -574,13 +692,13 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
                 <View style={styles.actionBtns}>
                   <TouchableOpacity
                     style={styles.actionBtn}
-                    onPress={() => handleTogglePin(item)}
+                    onPress={() => handleOpenPin(item)}
                     activeOpacity={0.7}
                   >
                     <Ionicons
-                      name={item.pinned ? 'pin' : 'pin-outline'}
+                      name={isPinnedHere(item) ? 'pin' : 'pin-outline'}
                       size={18}
-                      color={item.pinned ? colors.primary : colors.textSecondary}
+                      color={isPinnedHere(item) ? colors.primary : colors.textSecondary}
                     />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -625,13 +743,13 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
                 <View style={styles.actionBtns}>
                   <TouchableOpacity
                     style={styles.actionBtn}
-                    onPress={() => handleTogglePin(item)}
+                    onPress={() => handleOpenPin(item)}
                     activeOpacity={0.7}
                   >
                     <Ionicons
-                      name={item.pinned ? 'pin' : 'pin-outline'}
+                      name={isPinnedHere(item) ? 'pin' : 'pin-outline'}
                       size={18}
-                      color={item.pinned ? colors.primary : colors.textSecondary}
+                      color={isPinnedHere(item) ? colors.primary : colors.textSecondary}
                     />
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -670,6 +788,46 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         onApply={setFoodFilters}
         currentFilters={foodFilters}
       />
+
+      {/* Pin category modal */}
+      <Modal
+        visible={pinning !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPinning(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <SafeAreaView style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setPinning(null)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Pin to meal categories</Text>
+              <View style={{ width: 50 }} />
+            </View>
+
+            {ALL_CATEGORIES.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={styles.categoryRow}
+                onPress={() => handleTogglePinCategory(cat)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.categoryLabel}>{CATEGORY_LABELS[cat]}</Text>
+                <Ionicons
+                  name={selectedPins.includes(cat) ? 'checkbox' : 'square-outline'}
+                  size={22}
+                  color={selectedPins.includes(cat) ? colors.primary : colors.textSecondary}
+                />
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity style={styles.saveBtn} onPress={handleSavePin} activeOpacity={0.8}>
+              <Text style={styles.saveBtnText}>Save</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+        </View>
+      </Modal>
     </View>
   );
 }
