@@ -28,7 +28,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     overlay: {
       position: 'absolute',
-      top: '45%',
+      top: '40%',
       left: 0,
       right: 0,
       bottom: 0,
@@ -60,7 +60,7 @@ export default function CalorieFlame({ totalBurned }: Props) {
   return (
     <View style={styles.wrapper}>
       <View style={styles.flameWrapper}>
-        <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 512 512">
+        <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 512 600">
           {/* Main flame with primaryLight fill */}
           <Path
             d={FLAME_OUTLINE_PATH}
