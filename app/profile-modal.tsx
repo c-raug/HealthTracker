@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  Image,
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -248,6 +249,43 @@ const makeStyles = (colors: typeof LightColors) =>
     iosPicker: {
       height: 200,
     },
+    avatarSection: {
+      alignItems: 'center',
+      paddingVertical: Spacing.lg,
+    },
+    modalAvatarContainer: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: colors.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      marginBottom: Spacing.sm,
+    },
+    modalAvatarImage: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+    },
+    editAvatarBtn: {
+      backgroundColor: colors.background,
+      borderRadius: Radius.lg,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    editAvatarBtnText: {
+      ...Typography.small,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+    modalInitialsText: {
+      fontSize: 48,
+      fontWeight: '700' as const,
+      color: colors.primary,
+    },
   });
 
 export default function ProfileModal() {
@@ -266,6 +304,72 @@ export default function ProfileModal() {
 
   const profile = preferences.profile;
   const isImperial = preferences.unit === 'lbs';
+
+  const [avatarUri, setAvatarUri] = useState<string | null>(preferences.avatarUri ?? null);
+
+  useEffect(() => {
+    setAvatarUri(preferences.avatarUri ?? null);
+  }, [preferences.avatarUri]);
+
+  const getInitials = () => {
+    if (!name) return null;
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return parts[0][0]?.toUpperCase() ?? null;
+  };
+
+  const handlePickAvatar = async () => {
+    const ImagePicker = await import('expo-image-picker');
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow photo library access to set an avatar.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1] as [number, number],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const sourceUri = result.assets[0].uri;
+      try {
+        if (Platform.OS !== 'web') {
+          const FileSystem = await import('expo-file-system/legacy');
+          const avatarPath = (FileSystem.documentDirectory ?? '') + 'avatar.jpg';
+          await FileSystem.copyAsync({ from: sourceUri, to: avatarPath });
+          setAvatarUri(avatarPath);
+          dispatch({ type: 'SET_AVATAR', uri: avatarPath });
+        } else {
+          setAvatarUri(sourceUri);
+          dispatch({ type: 'SET_AVATAR', uri: sourceUri });
+        }
+      } catch {
+        setAvatarUri(sourceUri);
+        dispatch({ type: 'SET_AVATAR', uri: sourceUri });
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      if (Platform.OS !== 'web' && avatarUri) {
+        const FileSystem = await import('expo-file-system/legacy');
+        await (FileSystem as any).deleteAsync(avatarUri, { idempotent: true });
+      }
+    } catch {
+      // ignore
+    }
+    setAvatarUri(null);
+    dispatch({ type: 'SET_AVATAR', uri: undefined });
+  };
+
+  const handleEditAvatar = () => {
+    Alert.alert('Profile Picture', '', [
+      { text: 'Choose Photo', onPress: handlePickAvatar },
+      { text: 'Remove Photo', style: 'destructive', onPress: handleRemoveAvatar },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   const [name, setName] = useState(profile?.name ?? '');
   const [dob, setDob] = useState<string | null>(profile?.dob ?? null);
@@ -428,6 +532,26 @@ export default function ProfileModal() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: Spacing.xl }}
       >
+        {/* Avatar */}
+        <View style={styles.avatarSection}>
+          <View style={styles.modalAvatarContainer}>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.modalAvatarImage} />
+            ) : getInitials() ? (
+              <Text style={styles.modalInitialsText}>{getInitials()}</Text>
+            ) : (
+              <Ionicons name="person" size={60} color={colors.textSecondary} />
+            )}
+          </View>
+          <TouchableOpacity
+            onPress={handleEditAvatar}
+            style={styles.editAvatarBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.editAvatarBtnText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Name */}
         <View style={styles.card}>
           <Text style={styles.inputLabel}>Name (optional)</Text>

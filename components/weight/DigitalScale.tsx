@@ -40,7 +40,7 @@ const makeStyles = (colors: typeof LightColors, size: number) =>
     },
     lcdRecess: {
       position: 'absolute',
-      top: size * 0.18,
+      top: size * 0.08,
       left: size * 0.225,
       width: size * 0.55,
       height: size * 0.22,

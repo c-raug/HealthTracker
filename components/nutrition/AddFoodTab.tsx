@@ -413,7 +413,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
               activeOpacity={0.7}
             >
               <Ionicons
-                name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                name={item.pinned ? 'pin' : 'pin-outline'}
                 size={18}
                 color={item.pinned ? colors.primary : colors.textSecondary}
               />
@@ -527,7 +527,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
                     activeOpacity={0.7}
                   >
                     <Ionicons
-                      name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                      name={item.pinned ? 'pin' : 'pin-outline'}
                       size={18}
                       color={item.pinned ? colors.primary : colors.textSecondary}
                     />
@@ -578,7 +578,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
                     activeOpacity={0.7}
                   >
                     <Ionicons
-                      name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                      name={item.pinned ? 'pin' : 'pin-outline'}
                       size={18}
                       color={item.pinned ? colors.primary : colors.textSecondary}
                     />
@@ -629,7 +629,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
                     activeOpacity={0.7}
                   >
                     <Ionicons
-                      name={item.pinned ? 'bookmark' : 'bookmark-outline'}
+                      name={item.pinned ? 'pin' : 'pin-outline'}
                       size={18}
                       color={item.pinned ? colors.primary : colors.textSecondary}
                     />

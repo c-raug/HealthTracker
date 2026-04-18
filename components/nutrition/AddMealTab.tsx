@@ -280,7 +280,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
                   onPress={() => handleOpenPin(item)}
                 >
                   <Ionicons
-                    name={isPinnedHere ? 'bookmark' : 'bookmark-outline'}
+                    name={isPinnedHere ? 'pin' : 'pin-outline'}
                     size={18}
                     color={isPinnedHere ? colors.primary : colors.textSecondary}
                   />
@@ -414,7 +414,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
                         onPress={() => handleOpenPin(item)}
                       >
                         <Ionicons
-                          name={isPinnedHere ? 'bookmark' : 'bookmark-outline'}
+                          name={isPinnedHere ? 'pin' : 'pin-outline'}
                           size={18}
                           color={isPinnedHere ? colors.primary : colors.textSecondary}
                         />
@@ -465,7 +465,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
                         onPress={() => handleOpenPin(item)}
                       >
                         <Ionicons
-                          name={isPinnedHere ? 'bookmark' : 'bookmark-outline'}
+                          name={isPinnedHere ? 'pin' : 'pin-outline'}
                           size={18}
                           color={isPinnedHere ? colors.primary : colors.textSecondary}
                         />

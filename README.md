@@ -49,7 +49,8 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - Requires a profile + weight entry (shows a prompt otherwise)
 
 ### Profile Screen (accessed via avatar button)
-- **ProfileCard** (always visible) — circular avatar (tap to pick from camera roll, falls back to initials or default icon), user name, and level label; tap to open Edit Profile modal
+- **ProfileCard** (always visible) — circular avatar in a `colors.primary` story-ring; tapping the avatar opens the Weekly Recap modal; a red dot badge appears when the current week's recap hasn't been viewed yet. Tap the name/level area or chevron to open Edit Profile modal
+- **Edit Profile modal** — avatar section at top with 120px avatar and "Edit" button (action sheet: Choose Photo, Remove Photo, Cancel); profile fields below (Name, DOB, Sex, Height, Activity Mode, Activity Level)
 - **Stats & Achievements →** — navigates to Stats & Achievements modal (Level, Badges, Achievements)
 - **Food Library →** — navigates to Food Library modal; two tabs: Foods (alphabetical list of all custom foods with create/edit/delete) and Meals (alphabetical list of all saved meal templates with create/edit/delete)
 - **Nutrition Goals →** — navigates to Nutrition Goals modal (Goals & Calorie Target, Macros with gram equivalents, Daily Water Goal with auto/manual + creatine adjustment)
@@ -73,7 +74,9 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - All data stored on-device (no accounts or internet connection required)
 - Full **dark mode** support with Light / Dark / System appearance modes
 - **6 accent color themes** — Green (default), Blue, Orange, Purple, Red, Teal
-- **Global avatar button** — circular avatar button in the header of Weight, Nutrition, Activities, and Settings tabs; taps navigate to the Profile screen (which is no longer in the bottom tab bar — the avatar button is the sole entry point)
+- **Global avatar button** — circular avatar button in `headerLeft` of Weight, Nutrition, and Activities tabs; taps navigate to the Profile screen
+- **Global settings button** — `settings-outline` gear icon in `headerRight` of Weight, Nutrition, Activities, and Profile tabs; taps navigate to the Settings screen (which is no longer in the bottom tab bar — the gear button is the entry point)
+- **Bottom tab bar** — shows 3 tabs only: Weight, Nutrition, Activities; Profile and Settings are hidden routes accessed via header buttons
 - **XP & level system** — earn XP for daily actions (food logging, hitting calorie/water goals, logging weight/activity, streak bonuses); 10 named levels (Novice → Legend); level-up toast notification; Prestige system for indefinite progression
 - **Achievement badges** — 8 permanently-unlockable milestones (streak and food-logged); toast notification on first unlock; persisted across restarts
 - **Error boundary** — catches unhandled JS exceptions, logs crash details to AsyncStorage, renders a "Something went wrong" fallback with Restart button; optional Sentry integration via `SENTRY_DSN`
@@ -118,7 +121,7 @@ app/
 ├── food-library-modal.tsx   # Food Library sub-screen (Foods + Meals tabs with create/edit/delete)
 ├── weekly-recap-modal.tsx   # Full-screen story-style weekly recap (4 pages: Weight, Nutrition, Streaks, Rating)
 └── (tabs)/
-    ├── _layout.tsx          # Tab bar (Weight, Nutrition, Activities, Profile, Settings) + global avatar button
+    ├── _layout.tsx          # Tab bar (3 visible: Weight, Nutrition, Activities; Profile + Settings hidden) + avatar headerLeft + settings gear headerRight
     ├── index.tsx            # Weight screen — entry, chart (with range selector), insights
     ├── nutrition.tsx        # Nutrition screen — 3-page pager (calorie graph / ring+bottle / water graph), macros, meals
     ├── activities.tsx       # Activities screen — 2-page pager (CalorieFlame / WeeklyActivityGraph), exercise/steps/smartwatch logging
@@ -174,7 +177,7 @@ utils/
 ├── activityCalculation.ts   # calculateExerciseCalories (MET-based), calculateStepCalories
 ├── calorieColor.ts          # ringColorForProximity() — proximity-based calorie indicator colors
 ├── crashReporting.ts        # CRASH_LOG_KEY, initCrashReporting(), captureCrash() — optional Sentry integration
-├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays
+├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays, getISOWeekString, getISOWeekMonday
 ├── featureFlags.ts          # Feature flag utilities
 ├── generateId.ts            # Shared UUID v4 generator
 ├── achievementCalculation.ts # ACHIEVEMENTS constant + checkNewAchievements() — 8 milestone badges

@@ -43,7 +43,7 @@ function ProfileHeaderButton() {
   return (
     <TouchableOpacity
       onPress={() => router.push('/(tabs)/profile')}
-      style={{ marginRight: 8, padding: 4 }}
+      style={{ marginLeft: 8, padding: 4 }}
       activeOpacity={0.7}
     >
       <View style={{
@@ -70,16 +70,30 @@ function ProfileHeaderButton() {
   );
 }
 
-function RecapHeaderButton() {
+function SettingsHeaderButton() {
   const router = useRouter();
   const colors = useColors();
   return (
     <TouchableOpacity
-      onPress={() => router.push('/weekly-recap-modal')}
+      onPress={() => router.push('/(tabs)/settings')}
+      style={{ marginRight: 8, padding: 4 }}
+      activeOpacity={0.7}
+    >
+      <Ionicons name="settings-outline" size={22} color={colors.text} />
+    </TouchableOpacity>
+  );
+}
+
+function BackHeaderButton() {
+  const router = useRouter();
+  const colors = useColors();
+  return (
+    <TouchableOpacity
+      onPress={() => router.back()}
       style={{ marginLeft: 8, padding: 4 }}
       activeOpacity={0.7}
     >
-      <Ionicons name="trophy-outline" size={22} color={colors.text} />
+      <Ionicons name="chevron-back" size={28} color={colors.text} />
     </TouchableOpacity>
   );
 }
@@ -100,8 +114,8 @@ export default function TabLayout() {
         headerStyle: { backgroundColor: colors.card },
         headerTintColor: colors.text,
         headerShadowVisible: false,
-        headerLeft: () => <RecapHeaderButton />,
-        headerRight: () => <ProfileHeaderButton />,
+        headerLeft: () => <ProfileHeaderButton />,
+        headerRight: () => <SettingsHeaderButton />,
       }}
     >
       <Tabs.Screen
@@ -136,16 +150,16 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           href: null,
-          headerRight: () => null,
+          headerLeft: () => <BackHeaderButton />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color }) => (
-            <TabIcon name="settings-outline" color={color} />
-          ),
+          href: null,
+          headerLeft: () => <BackHeaderButton />,
+          headerRight: () => null,
         }}
       />
     </Tabs>
