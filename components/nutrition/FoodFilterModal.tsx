@@ -12,11 +12,8 @@ import { useColors, LightColors, Spacing, Typography, Radius } from '../../const
 import { useApp } from '../../context/AppContext';
 
 export interface FoodFilters {
-  mealTags: string[];
-  foodType: string | null;
+  foodTypes: string[];
 }
-
-const MEAL_TAG_OPTIONS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const;
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -76,23 +73,6 @@ const makeStyles = (colors: typeof LightColors) =>
     pillTextActive: {
       color: colors.white,
     },
-    foodTypeChip: {
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      borderRadius: Radius.md,
-      backgroundColor: colors.border,
-    },
-    foodTypeChipActive: {
-      backgroundColor: colors.primary,
-    },
-    foodTypeChipText: {
-      ...Typography.body,
-      color: colors.textSecondary,
-      fontWeight: '500',
-    },
-    foodTypeChipTextActive: {
-      color: colors.white,
-    },
     buttonRow: {
       flexDirection: 'row',
       gap: Spacing.sm,
@@ -138,28 +118,22 @@ export default function FoodFilterModal({ visible, onClose, onApply, currentFilt
   const styles = makeStyles(colors);
   const { preferences } = useApp();
 
-  const [mealTags, setMealTags] = useState<string[]>(currentFilters.mealTags);
-  const [foodType, setFoodType] = useState<string | null>(currentFilters.foodType);
+  const [foodTypes, setFoodTypes] = useState<string[]>(currentFilters.foodTypes);
 
   const foodTypeCategories = preferences.foodTypeCategories ?? [];
 
-  const toggleMealTag = (tag: string) => {
-    setMealTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+  const toggleFoodType = (type: string) => {
+    setFoodTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
     );
   };
 
-  const handleSelectFoodType = (type: string) => {
-    setFoodType((prev) => (prev === type ? null : type));
-  };
-
   const handleClear = () => {
-    setMealTags([]);
-    setFoodType(null);
+    setFoodTypes([]);
   };
 
   const handleApply = () => {
-    onApply({ mealTags, foodType });
+    onApply({ foodTypes });
     onClose();
   };
 
@@ -184,37 +158,18 @@ export default function FoodFilterModal({ visible, onClose, onApply, currentFilt
           </View>
 
           <ScrollView style={styles.content}>
-            <Text style={styles.sectionLabel}>Meal Tags</Text>
-            <View style={styles.pillRow}>
-              {MEAL_TAG_OPTIONS.map((tag) => {
-                const active = mealTags.includes(tag);
-                return (
-                  <TouchableOpacity
-                    key={tag}
-                    style={[styles.pill, active && styles.pillActive]}
-                    onPress={() => toggleMealTag(tag)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.pillText, active && styles.pillTextActive]}>
-                      {tag}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
             <Text style={styles.sectionLabel}>Food Type</Text>
             <View style={styles.pillRow}>
               {foodTypeCategories.map((type) => {
-                const active = foodType === type;
+                const active = foodTypes.includes(type);
                 return (
                   <TouchableOpacity
                     key={type}
-                    style={[styles.foodTypeChip, active && styles.foodTypeChipActive]}
-                    onPress={() => handleSelectFoodType(type)}
+                    style={[styles.pill, active && styles.pillActive]}
+                    onPress={() => toggleFoodType(type)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.foodTypeChipText, active && styles.foodTypeChipTextActive]}>
+                    <Text style={[styles.pillText, active && styles.pillTextActive]}>
                       {type}
                     </Text>
                   </TouchableOpacity>
