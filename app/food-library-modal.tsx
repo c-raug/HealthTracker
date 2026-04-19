@@ -67,7 +67,7 @@ const makeStyles = (colors: typeof LightColors) =>
       flex: 1,
     },
     flatListContent: {
-      paddingBottom: 120,
+      paddingBottom: 80,
     },
     foodRow: {
       flexDirection: 'row',

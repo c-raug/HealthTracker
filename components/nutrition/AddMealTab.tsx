@@ -38,7 +38,7 @@ const makeStyles = (colors: typeof LightColors) =>
       flex: 1,
     },
     listContent: {
-      paddingBottom: 120,
+      paddingBottom: 80,
     },
     sectionHeader: {
       ...Typography.small,

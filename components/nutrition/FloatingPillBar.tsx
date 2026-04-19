@@ -8,6 +8,8 @@ import {
   Keyboard,
   Animated,
   LayoutChangeEvent,
+  Platform,
+  KeyboardEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,35 +27,13 @@ interface Props {
 
 const PILL_SIZE = 48;
 const ANIM_DURATION = 200;
-const CREATE_WIDTH_ESTIMATE = 108;
 
-const makeStyles = (colors: typeof LightColors, insetsBottom: number) =>
+const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
-    fadeWrapper: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-    },
-    fadeLayerMid: {
-      height: Spacing.lg,
-      backgroundColor: colors.background,
-      opacity: 0.5,
-    },
-    fadeLayerBot: {
-      height: Spacing.xl,
-      backgroundColor: colors.background,
-      opacity: 0.9,
-    },
-    fadeSolid: {
-      height: insetsBottom + Spacing.md + PILL_SIZE + Spacing.md,
-      backgroundColor: colors.background,
-    },
     pillRow: {
       position: 'absolute',
       left: Spacing.md,
       right: Spacing.md,
-      bottom: insetsBottom + Spacing.md,
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.sm,
@@ -67,6 +47,20 @@ const makeStyles = (colors: typeof LightColors, insetsBottom: number) =>
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.06,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    createPillCompact: {
+      width: PILL_SIZE,
+      height: PILL_SIZE,
+      borderRadius: PILL_SIZE / 2,
+      paddingHorizontal: 0,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.06,
@@ -100,8 +94,7 @@ const makeStyles = (colors: typeof LightColors, insetsBottom: number) =>
     searchExpandedContent: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingLeft: Spacing.md,
-      paddingRight: Spacing.sm,
+      paddingHorizontal: Spacing.md,
       height: PILL_SIZE,
       flex: 1,
     },
@@ -111,19 +104,7 @@ const makeStyles = (colors: typeof LightColors, insetsBottom: number) =>
       color: colors.text,
       paddingVertical: 0,
     },
-    clearIcon: {
-      padding: Spacing.xs,
-    },
-    cancelBtn: {
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: Spacing.xs,
-    },
-    cancelText: {
-      ...Typography.body,
-      color: colors.primary,
-      fontWeight: '600',
-    },
-    filterPill: {
+    circlePill: {
       width: PILL_SIZE,
       height: PILL_SIZE,
       borderRadius: PILL_SIZE / 2,
@@ -161,10 +142,11 @@ export default function FloatingPillBar({
 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const styles = makeStyles(colors, insets.bottom);
+  const styles = makeStyles(colors);
   const inputRef = useRef<TextInput>(null);
   const widthAnim = useRef(new Animated.Value(searchExpanded ? 1 : 0)).current;
   const [rowWidth, setRowWidth] = useState(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     Animated.timing(widthAnim, {
@@ -177,6 +159,21 @@ export default function FloatingPillBar({
     }
   }, [searchExpanded, widthAnim]);
 
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, (e: KeyboardEvent) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const handleRowLayout = (e: LayoutChangeEvent) => {
     setRowWidth(e.nativeEvent.layout.width);
   };
@@ -187,19 +184,11 @@ export default function FloatingPillBar({
     }
   };
 
-  const handleCancel = () => {
+  const handleClose = () => {
     onSearchChange('');
     Keyboard.dismiss();
     inputRef.current?.blur();
     onSearchToggle(false);
-  };
-
-  const handleClear = () => {
-    if (searchValue.length === 0) {
-      handleCancel();
-      return;
-    }
-    onSearchChange('');
   };
 
   const handleSubmit = () => {
@@ -210,21 +199,32 @@ export default function FloatingPillBar({
     }
   };
 
-  // Compute expanded width: row width minus Create pill width, minus Filter pill, minus 2 gaps
+  // On iOS the keyboard overlays the view, so lift the bar by the keyboard height.
+  // On Android Expo defaults to adjustResize, which shrinks the view so the
+  // absolutely-positioned bar already rises with it — no extra lift needed.
+  const bottomOffset =
+    Platform.OS === 'ios' && keyboardHeight > 0
+      ? keyboardHeight + Spacing.sm
+      : insets.bottom + Spacing.sm;
+
+  // In expanded mode the Create pill collapses to a 48px circle and the Filter
+  // pill becomes an X circle. Expanded width fills the remaining row space.
   const expandedWidth = Math.max(
     PILL_SIZE,
-    rowWidth - CREATE_WIDTH_ESTIMATE - PILL_SIZE - Spacing.sm * 2,
+    rowWidth - PILL_SIZE - PILL_SIZE - Spacing.sm * 2,
   );
 
   return (
-    <>
-      <View style={styles.fadeWrapper} pointerEvents="none">
-        <View style={styles.fadeLayerMid} />
-        <View style={styles.fadeLayerBot} />
-        <View style={styles.fadeSolid} />
-      </View>
-
-      <View style={styles.pillRow} onLayout={handleRowLayout}>
+    <View style={[styles.pillRow, { bottom: bottomOffset }]} onLayout={handleRowLayout}>
+      {searchExpanded ? (
+        <TouchableOpacity
+          style={styles.createPillCompact}
+          onPress={onCreate}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={26} color={colors.white} />
+        </TouchableOpacity>
+      ) : (
         <TouchableOpacity
           style={styles.createPill}
           onPress={onCreate}
@@ -232,65 +232,60 @@ export default function FloatingPillBar({
         >
           <Text style={styles.createText}>+ Create</Text>
         </TouchableOpacity>
+      )}
 
-        <Animated.View
-          style={[
-            styles.searchWrapper,
-            {
-              width: widthAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [PILL_SIZE, expandedWidth],
-              }),
-            },
-          ]}
-        >
-          {!searchExpanded ? (
-            <TouchableOpacity
-              style={styles.searchCircleContent}
-              onPress={handleSearchPress}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="search" size={22} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.searchExpandedContent}>
-              <Ionicons
-                name="search"
-                size={20}
-                color={colors.textSecondary}
-                style={{ marginRight: Spacing.sm }}
-              />
-              <TextInput
-                ref={inputRef}
-                style={styles.searchInput}
-                value={searchValue}
-                onChangeText={onSearchChange}
-                placeholder="Search..."
-                placeholderTextColor={colors.textSecondary}
-                returnKeyType="search"
-                onSubmitEditing={handleSubmit}
-              />
-              <TouchableOpacity
-                style={styles.clearIcon}
-                onPress={handleClear}
-                activeOpacity={0.7}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              >
-                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={handleCancel}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </Animated.View>
+      <Animated.View
+        style={[
+          styles.searchWrapper,
+          {
+            width: widthAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [PILL_SIZE, expandedWidth],
+            }),
+          },
+        ]}
+      >
+        {!searchExpanded ? (
+          <TouchableOpacity
+            style={styles.searchCircleContent}
+            onPress={handleSearchPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="search" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.searchExpandedContent}>
+            <Ionicons
+              name="search"
+              size={20}
+              color={colors.textSecondary}
+              style={{ marginRight: Spacing.sm }}
+            />
+            <TextInput
+              ref={inputRef}
+              style={styles.searchInput}
+              value={searchValue}
+              onChangeText={onSearchChange}
+              placeholder="Search..."
+              placeholderTextColor={colors.textSecondary}
+              returnKeyType="search"
+              onSubmitEditing={handleSubmit}
+            />
+          </View>
+        )}
+      </Animated.View>
 
+      {searchExpanded ? (
         <TouchableOpacity
-          style={styles.filterPill}
+          style={styles.circlePill}
+          onPress={handleClose}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          style={styles.circlePill}
           onPress={onFilterPress}
           activeOpacity={0.7}
         >
@@ -301,7 +296,7 @@ export default function FloatingPillBar({
           />
           {hasActiveFilter && <View style={styles.filterBadge} />}
         </TouchableOpacity>
-      </View>
-    </>
+      )}
+    </View>
   );
 }
