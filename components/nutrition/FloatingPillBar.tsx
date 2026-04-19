@@ -168,12 +168,12 @@ export default function FloatingPillBar({
   // sits flush with the keyboard top rather than floating above it.
   const bottomOffset =
     Platform.OS === 'ios' && keyboardHeight > 0
-      ? Math.max(0, keyboardHeight - insets.bottom)
+      ? Math.max(0, keyboardHeight - insets.bottom) + Spacing.xs
       : 0;
 
   const isDark = colors.background === '#1C1C1E';
   const blurTint = isDark ? 'dark' : 'light';
-  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.5)' : 'rgba(255,255,255,0.5)';
+  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.2)' : 'rgba(255,255,255,0.2)';
 
   return (
     <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
