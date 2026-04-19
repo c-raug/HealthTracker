@@ -241,10 +241,9 @@ Used on: `MealCategory`, `MacroProgressBars`, `WaterTracker`, `WeightChart`, `We
 
 ### Water Bottle Glow (Special Case — Only for WaterBottleVisual)
 
-Applied when the water goal is met (`rawPct >= 1.0`):
+Applied when the water goal is met (`rawPct >= 1.0`). On **iOS**, applies a shadow to the full bottle wrapper (cap + neck + body):
 
 ```typescript
-// On the full bottle wrapper (cap + neck + body)
 shadowColor: '#64B5F6',
 shadowOffset: { width: 0, height: 0 },
 shadowOpacity: 0.85,
@@ -252,7 +251,27 @@ shadowRadius: 10,
 elevation: 10,
 ```
 
+On **Android**, uses `<AndroidGlowBackdrop color="#64B5F6" intensity={1} shape="rect" size={{ width: 68, height: 137 }} borderRadius={13} />` as first child of the bottle container instead (iOS shadow API doesn't produce colored glows on Android).
+
 No border color is applied to `bottleBody` on goal completion — only the shadow/glow effect. Do not use this glow pattern anywhere else.
+
+### DigitalScale Glow (Special Case — Only for DigitalScale)
+
+Applied when `showGlow` is true (after save animation or when a saved value exists). On **iOS**, applies a shadow to `scaleOuter`:
+
+```typescript
+shadowColor: colors.primary,
+shadowOffset: { width: 0, height: 0 },
+shadowOpacity: 0.6,
+shadowRadius: 10,
+elevation: 10,
+```
+
+On **Android**, uses `<AndroidGlowBackdrop color={colors.primary} intensity={1} shape="rect" size={{ width: size, height: size }} borderRadius={Radius.lg} />` as first child of `scaleOuter`.
+
+### CalorieFlame Glow (Special Case — Only for CalorieFlame)
+
+Applied proportionally based on `glowIntensityForBurn(totalBurned)` (0–1 as burn rises 0→600). On **iOS**, applies dynamic shadow to `flameWrapper` with `shadowColor` matching the current flame color. On **Android**, uses `<AndroidGlowBackdrop color={flameColor} intensity={intensity} shape="circle" size={{ width: 192, height: 192 }} />` as first child of `flameWrapper`. No glow at exactly 0 cal.
 
 ---
 
@@ -726,7 +745,7 @@ These rules are absolute and must never be violated:
 
 1. **Water UI (`#2196F3` / `#E3F2FD`)** — `WaterTracker`, `WaterBottleVisual`, water bars in `WeeklyIntakeGraph`, water entry badges, water preset buttons, and the "Save as Meal" swipe action all use fixed blue. Never use `colors.primary` for any water element.
 
-2. **CalorieFlame stroke** — The `CalorieFlame` on the Activities tab is rendered as the Ionicons `flame-outline` glyph with a themed stroke (`stroke={colors.primary}`, `fill="none"`, `strokeWidth={3.5}`, `vectorEffect="non-scaling-stroke"`). The text overlay uses `colors.text` for theme-aware contrast.
+2. **CalorieFlame color** — The `CalorieFlame` on the Activities tab uses a **dynamic** stroke color from `flameColorForBurn(totalBurned)` in `utils/flameColor.ts` — it interpolates through 6 stops (yellow → orange → red → blue → purple → green) as calories rise 0 → 600. Never use `colors.primary` for the flame stroke or fill. The text overlay uses `colors.text` for theme-aware contrast.
 
 3. **Macro colors** — Protein `#3B82F6`, Carbs `#F59E0B`, Fat `#EF4444`. These are fixed across all screens (Nutrition, Settings macro section).
 
@@ -1058,8 +1077,10 @@ sectionHeaderRow: {
 | `components/settings/AppearanceModePicker.tsx` | Light/Dark/System card picker |
 | `components/profile/ProfileCard.tsx`       | Avatar + inline edit form pattern |
 | `components/profile/BadgesSection.tsx`     | XP/level bar + streak pills + achievements grid |
-| `components/activities/CalorieFlame.tsx`   | Borderless themed outline flame: Ionicons `flame-outline` path with `colors.primary` stroke, `fill="none"`, `vectorEffect="non-scaling-stroke"`; text overlay uses `colors.text` |
-| `components/weight/DigitalScale.tsx`       | Themed bathroom-scale visual: `primary` stroke + `primaryLight` fill, recessed LCD, 1500ms count-up + `primary` glow |
+| `utils/flameColor.ts`                      | `flameColorForBurn()` + `glowIntensityForBurn()` — 6-stop color lerp for CalorieFlame |
+| `components/glow/AndroidGlowBackdrop.tsx`  | Android-only colored glow halo — `null` on iOS, concentric semi-transparent Views on Android |
+| `components/activities/CalorieFlame.tsx`   | Dynamic flame: color from `flameColorForBurn()`, glow from `glowIntensityForBurn()`; iOS shadow, Android `AndroidGlowBackdrop` |
+| `components/weight/DigitalScale.tsx`       | Themed bathroom-scale visual: `primary` stroke + `primaryLight` fill, recessed LCD, 1500ms count-up + iOS `primary` glow / Android `AndroidGlowBackdrop` |
 | `components/ErrorBoundary.tsx`             | Error fallback using static LightColors |
 | `components/ToastNotification.tsx`         | Animated top-of-screen toast banner |
 | `components/GamificationWatcher.tsx`       | Invisible root-level XP/achievement watcher |

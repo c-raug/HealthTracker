@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useColors, LightColors, Spacing, Radius } from '../../constants/theme';
+import AndroidGlowBackdrop from '../glow/AndroidGlowBackdrop';
 
 const ANIMATION_DURATION = 1500;
 
@@ -12,13 +13,13 @@ const makeStyles = (colors: typeof LightColors, size: number) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    scaleOuterGlow: {
+    scaleOuterGlow: Platform.OS === 'ios' ? {
       shadowColor: colors.primary,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 0.6,
       shadowRadius: 10,
       elevation: 10,
-    },
+    } : {},
     scaleBody: {
       width: size,
       height: size,
@@ -130,6 +131,15 @@ export default function DigitalScale({ weight, unit, animateToValue, size = 280 
 
   return (
     <View style={[styles.scaleOuter, showGlow && styles.scaleOuterGlow]}>
+      {showGlow && (
+        <AndroidGlowBackdrop
+          color={colors.primary}
+          intensity={1}
+          shape="rect"
+          size={{ width: size, height: size }}
+          borderRadius={Radius.lg}
+        />
+      )}
       <View style={styles.scaleBody}>
         <View style={styles.platformBorder} />
         <View style={styles.lcdRecess}>

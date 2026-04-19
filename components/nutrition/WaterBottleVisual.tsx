@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
 import { useColors, LightColors, Typography, Spacing } from '../../constants/theme';
+import AndroidGlowBackdrop from '../glow/AndroidGlowBackdrop';
 import { useApp } from '../../context/AppContext';
 import { calculateWaterGoal } from '../../utils/waterCalculation';
 import { ageFromDob } from '../../utils/tdeeCalculation';
@@ -138,7 +139,7 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
     <TouchableOpacity style={styles.wrapper} onPress={onPress} activeOpacity={0.8}>
       <View style={[
         styles.bottleContainer,
-        rawPct >= 1 && {
+        rawPct >= 1 && Platform.OS === 'ios' && {
           shadowColor: GLOW_BLUE,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.85,
@@ -146,6 +147,15 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
           elevation: 10,
         },
       ]}>
+        {rawPct >= 1 && (
+          <AndroidGlowBackdrop
+            color={GLOW_BLUE}
+            intensity={1}
+            shape="rect"
+            size={{ width: BOTTLE_WIDTH, height: CAP_HEIGHT + NECK_HEIGHT + BOTTLE_BODY_HEIGHT }}
+            borderRadius={13}
+          />
+        )}
         <View style={styles.cap} />
         <View style={styles.neck} />
         <View style={styles.bottleBody}>
