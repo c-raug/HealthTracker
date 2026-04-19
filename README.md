@@ -37,7 +37,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Activities Tab
 - Log exercise and steps for any date with date navigation
-- **2-page swipeable pager** — Page 0: CalorieFlame visual (nested-layer SVG flame with `primaryLight` inner fill + `primary` outer stroke, total burned overlaid in the wider body), Page 1: Weekly Activity Graph (7-day bar chart with tap-to-tooltip); resets to page 0 on tab focus
+- **2-page swipeable pager** — Page 0: CalorieFlame visual (borderless themed outline flame, `colors.primary` stroke, total calories burned overlaid in center), Page 1: Weekly Activity Graph (7-day bar chart with tap-to-tooltip); resets to page 0 on tab focus
 - **Three tracking modes** — Auto (exercise is reference-only; TDEE activity level handles the burn), Manual (all logged calories add to your nutrition target), Smartwatch (only smartwatch entries add to target)
 - **Activity Tracking Mode** — configured in the Edit Profile modal (Auto/Manual/Smart Watch pills with info icons), opened from the ProfileCard on the Profile screen
 - **Exercise logging** — collapsible section with exercise type pill + hour/minute drum pickers + calorie burn preview
@@ -48,7 +48,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **"Go to Today" pill** and **"Change tracking mode →"** deep-link to Profile
 - Requires a profile + weight entry (shows a prompt otherwise)
 
-### Profile Screen (accessed via avatar button)
+### Profile Screen (accessed via … menu)
 - **ProfileCard** (always visible) — circular avatar in a `colors.primary` story-ring; tapping the avatar opens the Weekly Recap modal; a red dot badge appears when the current week's recap hasn't been viewed yet. Tap the name/level area or chevron to open Edit Profile modal
 - **Edit Profile modal** — avatar section at top with 120px avatar and "Edit" button (action sheet: Choose Photo, Remove Photo, Cancel); profile fields below (Name, DOB, Sex, Height, Activity Mode, Activity Level)
 - **Stats & Achievements →** — navigates to Stats & Achievements modal (Level, Badges, Achievements)
@@ -74,10 +74,10 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - All data stored on-device (no accounts or internet connection required)
 - Full **dark mode** support with Light / Dark / System appearance modes
 - **6 accent color themes** — Green (default), Blue, Orange, Purple, Red, Teal
-- **Global avatar button** — circular avatar button in `headerLeft` of Weight, Nutrition, and Activities tabs; taps navigate to the Profile screen
-- **Global settings button** — `settings-outline` gear icon in `headerRight` of Weight, Nutrition, Activities, and Profile tabs; taps navigate to the Settings screen (which is no longer in the bottom tab bar — the gear button is the entry point)
-- **Bottom tab bar** — shows 3 tabs only: Weight, Nutrition, Activities; Profile and Settings are hidden routes accessed via header buttons
+- **Bottom tab bar** — shows 4 tabs: Weight, Nutrition, Activities, and **… (More)**; Profile and Settings are hidden routes accessed via the "…" menu
+- **… More menu** — tapping the "…" tab opens a small popover above the tab bar with **Profile** and **Settings** rows; tapping outside the popover dismisses it
 - **XP & level system** — earn XP for daily actions (food logging, hitting calorie/water goals, logging weight/activity, streak bonuses); 10 named levels (Novice → Legend); level-up toast notification; Prestige system for indefinite progression
+- **Header XP bar** — every tab header shows a filled star icon + pill progress bar in `colors.primary`, proportionally filled based on progress toward the next level; tapping opens Stats & Achievements
 - **Achievement badges** — 8 permanently-unlockable milestones (streak and food-logged); toast notification on first unlock; persisted across restarts
 - **Error boundary** — catches unhandled JS exceptions, logs crash details to AsyncStorage, renders a "Something went wrong" fallback with Restart button; optional Sentry integration via `SENTRY_DSN`
 - **Shared date state** — changing the date on any tab instantly reflects on all others; resets to today on app restart
