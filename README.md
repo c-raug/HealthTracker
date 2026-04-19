@@ -157,6 +157,8 @@ components/
     ├── PortionSelector.tsx  # Dual drum wheels (whole + fraction) + live macro preview
     ├── AddFoodTab.tsx       # Custom food search + create/edit/pin/delete + Edit mode for pinned reordering
     ├── AddMealTab.tsx       # Saved meals list + pin to categories / edit / delete + Edit mode for pinned reordering
+    ├── FloatingPillBar.tsx  # Shared Apple Music-style floating Create/Search/Filter pills (Add Food/Meal + Food Library)
+    ├── FoodFilterModal.tsx  # Bottom-sheet modal for food-type multi-select filtering (OR logic)
     ├── CustomFoodForm.tsx   # Create or edit a custom food (qty/unit picker + auto-calories)
     ├── CreateMealFlow.tsx   # Name meal + search/add custom foods (SectionList)
     ├── EditMealFlow.tsx     # Edit an existing saved meal template

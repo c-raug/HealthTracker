@@ -20,6 +20,8 @@ import { useApp } from '../../context/AppContext';
 import { generateId } from '../../utils/generateId';
 import CreateMealFlow from './CreateMealFlow';
 import EditMealFlow from './EditMealFlow';
+import FloatingPillBar from './FloatingPillBar';
+import FoodFilterModal, { FoodFilters } from './FoodFilterModal';
 
 const CATEGORY_LABELS: Record<MealCategory, string> = {
   breakfast: 'Breakfast',
@@ -35,20 +37,8 @@ const makeStyles = (colors: typeof LightColors) =>
     container: {
       flex: 1,
     },
-    createBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: Spacing.xs,
-      padding: Spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.card,
-    },
-    createText: {
-      ...Typography.body,
-      color: colors.primary,
-      fontWeight: '600',
+    listContent: {
+      paddingBottom: 120,
     },
     sectionHeader: {
       ...Typography.small,
@@ -174,12 +164,16 @@ interface Props {
 export default function AddMealTab({ date, category, onDone }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { savedMeals, dispatch } = useApp();
+  const { savedMeals, customFoods, dispatch } = useApp();
   const [showCreate, setShowCreate] = useState(false);
   const [editingMeal, setEditingMeal] = useState<SavedMeal | null>(null);
   const [pinning, setPinning] = useState<SavedMeal | null>(null);
   const [selectedPins, setSelectedPins] = useState<MealCategory[]>([]);
   const [editingPinned, setEditingPinned] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [mealFilters, setMealFilters] = useState<FoodFilters>({ foodTypes: [] });
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const handleAddMeal = (mealId: string) => {
     const meal = savedMeals.find((m) => m.id === mealId);
@@ -241,14 +235,37 @@ export default function AddMealTab({ date, category, onDone }: Props) {
   const totalCalories = (foods: NutritionFoodItem[]) =>
     foods.reduce((sum, f) => sum + (f.calories ?? 0), 0);
 
-  const sortedPinned = savedMeals
+  const trimmed = searchQuery.trim().toLowerCase();
+  const filtersActive = mealFilters.foodTypes.length > 0;
+
+  const customFoodTypesByName: Record<string, string[]> = {};
+  customFoods.forEach((f) => {
+    if (f.foodTypes && f.foodTypes.length > 0) {
+      customFoodTypesByName[f.name.toLowerCase().trim()] = f.foodTypes;
+    }
+  });
+
+  const mealMatchesFilters = (meal: SavedMeal): boolean => {
+    if (!filtersActive) return true;
+    return meal.foods.some((f) => {
+      const types = customFoodTypesByName[f.name.toLowerCase().trim()];
+      return types && types.some((t) => mealFilters.foodTypes.includes(t));
+    });
+  };
+
+  const mealMatchesQuery = (meal: SavedMeal): boolean =>
+    trimmed.length === 0 || meal.name.toLowerCase().includes(trimmed);
+
+  const visibleMeals = savedMeals.filter((m) => mealMatchesQuery(m) && mealMatchesFilters(m));
+
+  const sortedPinned = visibleMeals
     .filter((m) => m.pinnedCategories?.includes(category))
     .sort((a, b) => {
       const aOrder = a.pinnedOrder?.[category] ?? Infinity;
       const bOrder = b.pinnedOrder?.[category] ?? Infinity;
       return aOrder - bOrder;
     });
-  const otherMeals = savedMeals.filter((m) => !m.pinnedCategories?.includes(category));
+  const otherMeals = visibleMeals.filter((m) => !m.pinnedCategories?.includes(category));
 
   const isEmpty = sortedPinned.length === 0 && otherMeals.length === 0;
 
@@ -376,15 +393,10 @@ export default function AddMealTab({ date, category, onDone }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => setShowCreate(true)}
-        >
-          <Ionicons name="add-circle" size={20} color={colors.primary} />
-          <Text style={styles.createText}>Create New Meal</Text>
-        </TouchableOpacity>
-
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.listContent}
+      >
         {sortedPinned.length > 0 && (
           <>
             <View style={styles.sectionHeaderRow}>
@@ -491,9 +503,28 @@ export default function AddMealTab({ date, category, onDone }: Props) {
         )}
 
         {isEmpty && (
-          <Text style={styles.empty}>No saved meals yet</Text>
+          <Text style={styles.empty}>
+            {searchQuery.trim() || filtersActive ? 'No meals match your search' : 'No saved meals yet'}
+          </Text>
         )}
       </ScrollView>
+
+      <FloatingPillBar
+        onCreate={() => setShowCreate(true)}
+        searchExpanded={searchExpanded}
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchToggle={setSearchExpanded}
+        onFilterPress={() => setShowFilterModal(true)}
+        hasActiveFilter={filtersActive}
+      />
+
+      <FoodFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={setMealFilters}
+        currentFilters={mealFilters}
+      />
 
       {/* Pin category modal */}
       <Modal

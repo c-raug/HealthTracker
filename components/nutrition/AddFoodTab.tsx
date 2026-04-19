@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -22,6 +21,7 @@ import { generateId } from '../../utils/generateId';
 import CustomFoodForm from './CustomFoodForm';
 import PortionSelector from './PortionSelector';
 import FoodFilterModal, { FoodFilters } from './FoodFilterModal';
+import FloatingPillBar from './FloatingPillBar';
 
 const CATEGORY_LABELS: Record<MealCategory, string> = {
   breakfast: 'Breakfast',
@@ -37,35 +37,8 @@ const makeStyles = (colors: typeof LightColors) =>
     container: {
       flex: 1,
     },
-    searchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: Spacing.md,
-      gap: Spacing.sm,
-    },
-    searchInput: {
-      flex: 1,
-      backgroundColor: colors.card,
-      borderRadius: Radius.md,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
-      ...Typography.body,
-      color: colors.text,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    filterBtn: {
-      padding: Spacing.xs,
-      position: 'relative',
-    },
-    filterBadge: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.primary,
+    listContent: {
+      paddingBottom: 120,
     },
     resultItem: {
       backgroundColor: colors.card,
@@ -179,21 +152,6 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.white,
       fontWeight: '600',
     },
-    createBtn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: Spacing.xs,
-      padding: Spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      backgroundColor: colors.card,
-    },
-    createText: {
-      ...Typography.body,
-      color: colors.primary,
-      fontWeight: '600',
-    },
     // Pin modal styles
     modalOverlay: {
       flex: 1,
@@ -277,6 +235,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const { customFoods, nutritionLog, dispatch } = useApp();
 
   const [query, setQuery] = useState('');
+  const [searchExpanded, setSearchExpanded] = useState(false);
   const [selectedItem, setSelectedItem] = useState<NutritionFoodItem | null>(null);
   const [servings, setServings] = useState<number>(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -583,38 +542,10 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchRow}>
-        <TextInput
-          style={styles.searchInput}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search foods..."
-          placeholderTextColor={colors.textSecondary}
-          returnKeyType="search"
-        />
-        <TouchableOpacity
-          style={styles.filterBtn}
-          onPress={() => setShowFilterModal(true)}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="filter-outline"
-            size={22}
-            color={filtersActive ? colors.primary : colors.textSecondary}
-          />
-          {filtersActive && <View style={styles.filterBadge} />}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <TouchableOpacity
-          style={styles.createBtn}
-          onPress={() => setShowCreateForm(true)}
-        >
-          <Ionicons name="add-circle" size={20} color={colors.primary} />
-          <Text style={styles.createText}>Create Custom Food</Text>
-        </TouchableOpacity>
-
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.listContent}
+      >
         {sortedPinned.length > 0 && (
           <>
             <View style={styles.sectionHeaderRow}>
@@ -780,6 +711,16 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           </Text>
         )}
       </ScrollView>
+
+      <FloatingPillBar
+        onCreate={() => setShowCreateForm(true)}
+        searchExpanded={searchExpanded}
+        searchValue={query}
+        onSearchChange={setQuery}
+        onSearchToggle={setSearchExpanded}
+        onFilterPress={() => setShowFilterModal(true)}
+        hasActiveFilter={filtersActive}
+      />
 
       {/* Filter modal */}
       <FoodFilterModal
