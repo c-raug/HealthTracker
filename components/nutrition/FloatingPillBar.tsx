@@ -6,11 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Keyboard,
-  Animated,
-  LayoutChangeEvent,
   Platform,
   KeyboardEvent,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
@@ -26,77 +25,57 @@ interface Props {
 }
 
 const PILL_SIZE = 48;
-const ANIM_DURATION = 200;
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
-    pillRow: {
+    outerContainer: {
       position: 'absolute',
       left: Spacing.md,
       right: Spacing.md,
+      height: PILL_SIZE,
+    },
+    blurRow: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.sm,
-      height: PILL_SIZE,
+      borderRadius: PILL_SIZE / 2,
+      overflow: 'hidden',
+      paddingHorizontal: Spacing.sm,
     },
     createPill: {
+      flex: 1,
       height: PILL_SIZE,
       borderRadius: 999,
-      paddingHorizontal: Spacing.lg,
+      paddingHorizontal: Spacing.md,
       backgroundColor: colors.primary,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    createPillCompact: {
-      width: PILL_SIZE,
-      height: PILL_SIZE,
-      borderRadius: PILL_SIZE / 2,
-      paddingHorizontal: 0,
-      backgroundColor: colors.primary,
-      alignItems: 'center',
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      gap: Spacing.xs,
     },
     createText: {
       ...Typography.body,
       color: colors.white,
       fontWeight: '600',
     },
-    searchWrapper: {
+    searchPill: {
+      flex: 1,
       height: PILL_SIZE,
       borderRadius: 999,
       backgroundColor: colors.card,
       borderWidth: 1,
       borderColor: colors.border,
-      overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    searchCircleContent: {
-      width: PILL_SIZE,
-      height: PILL_SIZE,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    searchExpandedContent: {
       flexDirection: 'row',
-      alignItems: 'center',
       paddingHorizontal: Spacing.md,
-      height: PILL_SIZE,
-      flex: 1,
+      gap: Spacing.sm,
+      overflow: 'hidden',
+    },
+    searchLabel: {
+      ...Typography.body,
+      color: colors.textSecondary,
     },
     searchInput: {
       flex: 1,
@@ -114,11 +93,6 @@ const makeStyles = (colors: typeof LightColors) =>
       alignItems: 'center',
       justifyContent: 'center',
       position: 'relative',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
     },
     filterBadge: {
       position: 'absolute',
@@ -144,20 +118,13 @@ export default function FloatingPillBar({
   const insets = useSafeAreaInsets();
   const styles = makeStyles(colors);
   const inputRef = useRef<TextInput>(null);
-  const widthAnim = useRef(new Animated.Value(searchExpanded ? 1 : 0)).current;
-  const [rowWidth, setRowWidth] = useState(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
-    Animated.timing(widthAnim, {
-      toValue: searchExpanded ? 1 : 0,
-      duration: ANIM_DURATION,
-      useNativeDriver: false,
-    }).start();
     if (searchExpanded) {
-      setTimeout(() => inputRef.current?.focus(), ANIM_DURATION);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [searchExpanded, widthAnim]);
+  }, [searchExpanded]);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -173,10 +140,6 @@ export default function FloatingPillBar({
       hideSub.remove();
     };
   }, []);
-
-  const handleRowLayout = (e: LayoutChangeEvent) => {
-    setRowWidth(e.nativeEvent.layout.width);
-  };
 
   const handleSearchPress = () => {
     if (!searchExpanded) {
@@ -200,103 +163,81 @@ export default function FloatingPillBar({
   };
 
   // On iOS the keyboard overlays the view, so lift the bar by the keyboard height.
-  // On Android Expo defaults to adjustResize, which shrinks the view so the
-  // absolutely-positioned bar already rises with it — no extra lift needed.
+  // On Android Expo defaults to adjustResize — no extra lift needed.
   const bottomOffset =
     Platform.OS === 'ios' && keyboardHeight > 0
       ? keyboardHeight + Spacing.sm
-      : insets.bottom + Spacing.sm;
+      : insets.bottom;
 
-  // In expanded mode the Create pill collapses to a 48px circle and the Filter
-  // pill becomes an X circle. Expanded width fills the remaining row space.
-  const expandedWidth = Math.max(
-    PILL_SIZE,
-    rowWidth - PILL_SIZE - PILL_SIZE - Spacing.sm * 2,
-  );
+  const isDark = colors.background === '#1C1C1E';
+  const blurTint = isDark ? 'dark' : 'light';
+  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.85)' : 'rgba(255,255,255,0.85)';
 
   return (
-    <View style={[styles.pillRow, { bottom: bottomOffset }]} onLayout={handleRowLayout}>
-      {searchExpanded ? (
-        <TouchableOpacity
-          style={styles.createPillCompact}
-          onPress={onCreate}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="add" size={26} color={colors.white} />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          style={styles.createPill}
-          onPress={onCreate}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.createText}>+ Create</Text>
-        </TouchableOpacity>
-      )}
-
-      <Animated.View
+    <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
+      <BlurView
+        intensity={50}
+        tint={blurTint}
         style={[
-          styles.searchWrapper,
-          {
-            width: widthAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [PILL_SIZE, expandedWidth],
-            }),
-          },
+          styles.blurRow,
+          Platform.OS === 'android' && { backgroundColor: androidFallbackBg },
         ]}
       >
         {!searchExpanded ? (
-          <TouchableOpacity
-            style={styles.searchCircleContent}
-            onPress={handleSearchPress}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="search" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.searchExpandedContent}>
-            <Ionicons
-              name="search"
-              size={20}
-              color={colors.textSecondary}
-              style={{ marginRight: Spacing.sm }}
-            />
-            <TextInput
-              ref={inputRef}
-              style={styles.searchInput}
-              value={searchValue}
-              onChangeText={onSearchChange}
-              placeholder="Search..."
-              placeholderTextColor={colors.textSecondary}
-              returnKeyType="search"
-              onSubmitEditing={handleSubmit}
-            />
-          </View>
-        )}
-      </Animated.View>
+          <>
+            <TouchableOpacity style={styles.createPill} onPress={onCreate} activeOpacity={0.8}>
+              <Ionicons name="add" size={20} color={colors.white} />
+              <Text style={styles.createText}>Create</Text>
+            </TouchableOpacity>
 
-      {searchExpanded ? (
-        <TouchableOpacity
-          style={styles.circlePill}
-          onPress={handleClose}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="close" size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          style={styles.circlePill}
-          onPress={onFilterPress}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name="filter-outline"
-            size={22}
-            color={hasActiveFilter ? colors.primary : colors.textSecondary}
-          />
-          {hasActiveFilter && <View style={styles.filterBadge} />}
-        </TouchableOpacity>
-      )}
+            <TouchableOpacity
+              style={styles.searchPill}
+              onPress={handleSearchPress}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="search" size={20} color={colors.textSecondary} />
+              <Text style={styles.searchLabel}>Search</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.circlePill}
+              onPress={onFilterPress}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="filter-outline"
+                size={22}
+                color={hasActiveFilter ? colors.primary : colors.textSecondary}
+              />
+              {hasActiveFilter && <View style={styles.filterBadge} />}
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.searchPill}
+              activeOpacity={1}
+              onPress={() => inputRef.current?.focus()}
+            >
+              <Ionicons name="search" size={20} color={colors.textSecondary} />
+              <TextInput
+                ref={inputRef}
+                style={styles.searchInput}
+                value={searchValue}
+                onChangeText={onSearchChange}
+                placeholder="Search..."
+                placeholderTextColor={colors.textSecondary}
+                returnKeyType="search"
+                onSubmitEditing={handleSubmit}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.circlePill} onPress={handleClose} activeOpacity={0.7}>
+              <Ionicons name="close" size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </>
+        )}
+      </BlurView>
     </View>
   );
 }

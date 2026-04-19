@@ -267,6 +267,8 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
 
   const trimmed = query.trim().toLowerCase();
   const isSearching = trimmed.length > 0;
+  // When search is expanded but nothing typed yet, keep the list blank until the user types
+  const showList = !searchExpanded || isSearching;
 
   const textFiltered = isSearching
     ? customFoods.filter((f) => f.name.toLowerCase().includes(trimmed))
@@ -546,7 +548,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}
       >
-        {sortedPinned.length > 0 && (
+        {showList && sortedPinned.length > 0 && (
           <>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeader}>Pinned</Text>
@@ -602,7 +604,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         )}
 
         {/* When not searching: show Recent section (top 7 by frequency) */}
-        {!isSearching && recentFoods.length > 0 && (
+        {showList && !isSearching && recentFoods.length > 0 && (
           <>
             <Text style={styles.sectionHeader}>Recent</Text>
             {recentFoods.map((item) => (
@@ -653,7 +655,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         )}
 
         {/* When searching: show My Foods (all matching unpinned) */}
-        {isSearching && unpinned.length > 0 && (
+        {showList && isSearching && unpinned.length > 0 && (
           <>
             <Text style={styles.sectionHeader}>My Foods</Text>
             {unpinned.map((item) => (
@@ -703,7 +705,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {isEmpty && (
+        {showList && isEmpty && (
           <Text style={styles.empty}>
             {isSearching || filtersActive
               ? 'No matching foods found'

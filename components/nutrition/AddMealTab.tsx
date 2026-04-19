@@ -237,6 +237,8 @@ export default function AddMealTab({ date, category, onDone }: Props) {
 
   const trimmed = searchQuery.trim().toLowerCase();
   const filtersActive = mealFilters.foodTypes.length > 0;
+  // When search is expanded but nothing typed yet, keep the list blank until the user types
+  const showList = !searchExpanded || trimmed.length > 0;
 
   const customFoodTypesByName: Record<string, string[]> = {};
   customFoods.forEach((f) => {
@@ -397,7 +399,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}
       >
-        {sortedPinned.length > 0 && (
+        {showList && sortedPinned.length > 0 && (
           <>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeader}>Pinned</Text>
@@ -451,7 +453,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {otherMeals.length > 0 && (
+        {showList && otherMeals.length > 0 && (
           <>
             {sortedPinned.length > 0 && (
               <Text style={styles.sectionHeader}>All Meals</Text>
@@ -502,7 +504,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
           </>
         )}
 
-        {isEmpty && (
+        {showList && isEmpty && (
           <Text style={styles.empty}>
             {searchQuery.trim() || filtersActive ? 'No meals match your search' : 'No saved meals yet'}
           </Text>
