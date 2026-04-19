@@ -37,7 +37,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Activities Tab
 - Log exercise and steps for any date with date navigation
-- **2-page swipeable pager** — Page 0: CalorieFlame visual (borderless themed outline flame, `colors.primary` stroke, total calories burned overlaid in center), Page 1: Weekly Activity Graph (7-day bar chart with tap-to-tooltip); resets to page 0 on tab focus
+- **2-page swipeable pager** — Page 0: CalorieFlame visual (borderless flame whose color and glow intensity scale with calories burned 0→600 via a 6-stop yellow→orange→red→blue→purple→green gradient), Page 1: Weekly Activity Graph (7-day bar chart with tap-to-tooltip); resets to page 0 on tab focus
 - **Three tracking modes** — Auto (exercise is reference-only; TDEE activity level handles the burn), Manual (all logged calories add to your nutrition target), Smartwatch (only smartwatch entries add to target)
 - **Activity Tracking Mode** — configured in the Edit Profile modal (Auto/Manual/Smart Watch pills with info icons), opened from the ProfileCard on the Profile screen
 - **Exercise logging** — collapsible section with exercise type pill + hour/minute drum pickers + calorie burn preview
@@ -138,7 +138,9 @@ components/
 ├── WeightEntryItem.tsx      # Single entry row with delete + confirmation
 ├── InfoModal.tsx            # Reusable info/help overlay modal
 ├── activities/
-│   └── CalorieFlame.tsx     # Nested-layer SVG flame (inner fill + outer stroke) with total burned overlay
+│   └── CalorieFlame.tsx     # Dynamic SVG flame — color + glow scale with calories burned (0–600, 6-stop gradient)
+├── glow/
+│   └── AndroidGlowBackdrop.tsx # Android-only colored glow halo (null on iOS)
 ├── profile/
 │   ├── ProfileCard.tsx      # Avatar + name + level label; tappable to open Edit Profile modal
 │   └── BadgesSection.tsx    # Tappable nav row to Stats & Achievements modal
@@ -181,6 +183,7 @@ utils/
 ├── crashReporting.ts        # CRASH_LOG_KEY, initCrashReporting(), captureCrash() — optional Sentry integration
 ├── dateUtils.ts             # getToday, formatDisplayDate, formatShortDate, addDays, getISOWeekString, getISOWeekMonday
 ├── featureFlags.ts          # Feature flag utilities
+├── flameColor.ts            # flameColorForBurn() (6-stop lerp) + glowIntensityForBurn() — used by CalorieFlame
 ├── generateId.ts            # Shared UUID v4 generator
 ├── achievementCalculation.ts # ACHIEVEMENTS constant + checkNewAchievements() — 8 milestone badges
 ├── streakCalculation.ts     # foodStreak, calorieGoalStreak, weightStreak, activityStreak
