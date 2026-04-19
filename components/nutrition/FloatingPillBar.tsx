@@ -162,21 +162,23 @@ export default function FloatingPillBar({
     }
   };
 
-  // On iOS the keyboard overlays the view, so lift the bar by the keyboard height.
-  // On Android Expo defaults to adjustResize — no extra lift needed.
+  // Parents (add-food-modal, food-library-modal) use SafeAreaView which already applies
+  // insets.bottom as bottom padding, so we must NOT add insets.bottom again. Use bottom: 0
+  // for the resting state. For the keyboard-open state, subtract insets.bottom so the bar
+  // sits flush with the keyboard top rather than floating above it.
   const bottomOffset =
     Platform.OS === 'ios' && keyboardHeight > 0
-      ? keyboardHeight + Spacing.sm
-      : insets.bottom;
+      ? Math.max(0, keyboardHeight - insets.bottom)
+      : 0;
 
   const isDark = colors.background === '#1C1C1E';
   const blurTint = isDark ? 'dark' : 'light';
-  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.85)' : 'rgba(255,255,255,0.85)';
+  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.5)' : 'rgba(255,255,255,0.5)';
 
   return (
     <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
       <BlurView
-        intensity={50}
+        intensity={20}
         tint={blurTint}
         style={[
           styles.blurRow,
