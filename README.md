@@ -57,7 +57,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 ### Settings Tab
 - **Appearance →** — navigates to Appearance modal (Light/Dark/System mode picker + 6-swatch accent color picker)
-- **App Settings →** — navigates to App Settings modal (Default Tab with Profile option, Weight Unit, Expand sections toggle, Data Backup, Debug Info with crash log viewer)
+- **App Settings →** — navigates to App Settings modal (Weight Unit, Expand sections toggle, Data Backup, Debug Info with crash log viewer)
 - **Send Feedback** — in-app feedback form
 - **Footer** — app version string
 
@@ -74,8 +74,8 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - All data stored on-device (no accounts or internet connection required)
 - Full **dark mode** support with Light / Dark / System appearance modes
 - **6 accent color themes** — Green (default), Blue, Orange, Purple, Red, Teal
-- **Bottom tab bar** — shows 4 tabs: Weight, Nutrition, Activities, and **… (More)**; Profile and Settings are hidden routes accessed via the "…" menu
-- **… More menu** — tapping the "…" tab opens a small popover above the tab bar with **Profile** and **Settings** rows; tapping outside the popover dismisses it
+- **Floating pill tab bar** — a custom `PillTabBar` with a `BlurView` (iOS) / semi-transparent (Android) frosted-glass pill and a `LinearGradient` fade behind it; shows 5 tabs: Home, Weight, Nutrition, Activities, and **… (More)**; Profile and Settings are hidden routes accessed via the "…" menu
+- **… More menu** — tapping the "…" tab opens a small popover above the pill tab bar with **Profile** and **Settings** rows; tapping outside the popover dismisses it
 - **XP & level system** — earn XP for daily actions (food logging, hitting calorie/water goals, logging weight/activity, streak bonuses); 10 named levels (Novice → Legend); level-up toast notification; Prestige system for indefinite progression
 - **Header XP bar** — every tab header shows a filled star icon + pill progress bar in `colors.primary`, proportionally filled based on progress toward the next level; tapping opens Stats & Achievements
 - **Achievement badges** — 8 permanently-unlockable milestones (streak and food-logged); toast notification on first unlock; persisted across restarts
@@ -115,18 +115,19 @@ app/
 ├── onboarding.tsx           # 5-step onboarding wizard
 ├── add-food-modal.tsx       # Full-screen modal: Add Food / Add Meal / Quick Add tabs
 ├── create-meal-modal.tsx    # Pre-populated CreateMealFlow for saving a meal category
-├── app-settings-modal.tsx   # App Settings sub-screen (Default Tab, Units, Expand toggle, Backup, Debug Info)
+├── app-settings-modal.tsx   # App Settings sub-screen (Units, Expand toggle, Backup, Debug Info)
 ├── appearance-modal.tsx     # Appearance sub-screen (Color Mode + Accent Color)
 ├── nutrition-goals-modal.tsx # Nutrition Goals sub-screen (Goals, Macros, Water Goal)
 ├── food-library-modal.tsx   # Food Library sub-screen (Foods + Meals tabs with create/edit/delete)
 ├── weekly-recap-modal.tsx   # Full-screen story-style weekly recap (4 pages: Weight, Nutrition, Streaks, Rating)
 └── (tabs)/
-    ├── _layout.tsx          # Tab bar (3 visible: Weight, Nutrition, Activities; Profile + Settings hidden) + avatar headerLeft + settings gear headerRight
+    ├── _layout.tsx          # Tab bar (PillTabBar: 5 visible: Home, Weight, Nutrition, Activities, More; Profile + Settings hidden) + HeaderXpBar headerRight
+    ├── home.tsx             # Home screen — date nav, ProfileCard, overview grid (Nutrition/Activity/Weight cards)
     ├── index.tsx            # Weight screen — entry, chart (with range selector), insights
     ├── nutrition.tsx        # Nutrition screen — 3-page pager (calorie graph / ring+bottle / water graph), macros, meals
     ├── activities.tsx       # Activities screen — 2-page pager (CalorieFlame / WeeklyActivityGraph), exercise/steps/smartwatch logging
-    ├── profile.tsx          # Profile screen (ProfileCard, Stats & Achievements, Food Library, Nutrition Goals) — hidden from bottom tab bar via href: null; reached only via the avatar button in the header
-    └── settings.tsx         # Settings tab (Appearance, App Settings, Feedback, Footer)
+    ├── profile.tsx          # Profile screen (ProfileCard, Stats & Achievements, Food Library, Nutrition Goals) — hidden from tab bar via href: null; reached via the "…" menu
+    └── settings.tsx         # Settings tab (Appearance, App Settings, Feedback, Footer) — hidden from tab bar via href: null; reached via the "…" menu
 
 components/
 ├── ErrorBoundary.tsx        # React error boundary with crash logging and Sentry integration
@@ -141,6 +142,10 @@ components/
 │   └── CalorieFlame.tsx     # Dynamic SVG flame — color + glow scale with calories burned (0–600, 6-stop gradient)
 ├── glow/
 │   └── AndroidGlowBackdrop.tsx # Android-only colored glow halo (null on iOS)
+├── navigation/
+│   ├── PillTabBar.tsx       # Custom floating pill tab bar (BlurView + LinearGradient); exports PILL_TOTAL_HEIGHT
+│   ├── HeaderXpBar.tsx      # XP progress pill in headerRight on every tab
+│   └── MoreMenuPopover.tsx  # Anchored popover above the pill tab bar (Profile + Settings rows)
 ├── profile/
 │   ├── ProfileCard.tsx      # Avatar + name + level label; tappable to open Edit Profile modal
 │   └── BadgesSection.tsx    # Tappable nav row to Stats & Achievements modal
@@ -226,7 +231,6 @@ interface UserPreferences {
   activityMode?: ActivityMode;         // 'auto' | 'manual' | 'smartwatch'
   onboardingComplete?: boolean;
   themeColor?: string;                 // hex accent color
-  defaultTab?: string;                 // 'weight' | 'nutrition' | 'activity'
   waterGoalMode?: 'auto' | 'manual';
   waterGoalOverride?: number;          // manual daily target (oz or mL)
   waterCreatineAdjustment?: boolean;   // adds +16 oz / +500 mL to auto goal

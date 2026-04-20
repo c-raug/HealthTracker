@@ -29,13 +29,7 @@ function RootNavigator() {
     const inApp = segments[0] === '(tabs)' || segments[0] === 'add-food-modal' || segments[0] === 'create-meal-modal' || segments[0] === 'app-settings-modal' || segments[0] === 'appearance-modal' || segments[0] === 'nutrition-goals-modal' || segments[0] === 'weekly-recap-modal' || segments[0] === 'food-library-modal' || segments[0] === 'profile-modal' || segments[0] === 'stats-achievements-modal' || segments[0] === 'leveling-tutorial-modal';
 
     if (onboardingComplete && !inApp) {
-      const tab = preferences.defaultTab ?? 'nutrition';
-      const route =
-        tab === 'weight' ? '/(tabs)/' :
-        tab === 'activity' ? '/(tabs)/activities' :
-        tab === 'profile' ? '/(tabs)/profile' :
-        '/(tabs)/nutrition';
-      router.replace(route);
+      router.replace('/(tabs)/home');
     } else if (!onboardingComplete && inApp) {
       router.replace('/welcome');
     }

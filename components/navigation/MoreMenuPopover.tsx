@@ -5,8 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors, Spacing, Radius, Typography } from '../../constants/theme';
 import { useMoreMenu } from '../../context/MoreMenuContext';
+import { PILL_TOTAL_HEIGHT } from './PillTabBar';
 
-const TAB_BAR_BASE_HEIGHT = 49;
 const POPOVER_WIDTH = 180;
 
 export default function MoreMenuPopover() {
@@ -29,8 +29,8 @@ export default function MoreMenuPopover() {
 
   if (!visible) return null;
 
-  const tabBarHeight = TAB_BAR_BASE_HEIGHT + insets.bottom;
-  const styles = makeStyles(colors, tabBarHeight);
+  const pillHeight = PILL_TOTAL_HEIGHT + insets.bottom;
+  const styles = makeStyles(colors, pillHeight);
 
   const navigate = (path: string) => {
     hide();

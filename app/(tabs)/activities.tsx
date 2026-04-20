@@ -20,8 +20,10 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
+import { PILL_TOTAL_HEIGHT } from '../../components/navigation/PillTabBar';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
 import { calculateExerciseCalories, calculateStepCalories } from '../../utils/activityCalculation';
 import { generateId } from '../../utils/generateId';
@@ -439,6 +441,7 @@ export default function ActivitiesScreen() {
   const { entries, preferences, activityLog, dispatch, isLoading, selectedDate } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
 
   const pagerScrollRef = useRef<ScrollView>(null);
@@ -700,7 +703,7 @@ export default function ActivitiesScreen() {
 
   if (!profile || !latestWeight) {
     return (
-      <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.flex} contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}>
         <View style={styles.promptContainer}>
           <ProfilePrompt message="Set up your profile and log a weight entry to start tracking activity calories." />
         </View>
@@ -710,7 +713,7 @@ export default function ActivitiesScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView ref={scrollViewRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollViewRef} contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]} keyboardShouldPersistTaps="handled">
         {/* Date navigation */}
         <View style={styles.dateNav}>
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
