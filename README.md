@@ -120,12 +120,16 @@ app/
 ├── nutrition-goals-modal.tsx # Nutrition Goals sub-screen (Goals, Macros, Water Goal)
 ├── food-library-modal.tsx   # Food Library sub-screen (Foods + Meals tabs with create/edit/delete)
 ├── weekly-recap-modal.tsx   # Full-screen story-style weekly recap (4 pages: Weight, Nutrition, Streaks, Rating)
+├── stats-achievements-modal.tsx # Stats & Achievements sub-screen (Level, Badges, Achievements)
+├── leveling-tutorial-modal.tsx  # Full-screen story-style leveling tutorial (3 pages: XP, Levels, Prestige)
+├── profile-modal.tsx        # Edit Profile sub-screen (avatar, name, DOB, sex, height, activity mode/level)
 └── (tabs)/
     ├── _layout.tsx          # Tab bar (PillTabBar: 5 visible: Home, Weight, Nutrition, Activities, More; Profile + Settings hidden) + HeaderXpBar headerRight
     ├── home.tsx             # Home screen — date nav, ProfileCard, overview grid (Nutrition/Activity/Weight cards)
     ├── index.tsx            # Weight screen — entry, chart (with range selector), insights
     ├── nutrition.tsx        # Nutrition screen — 3-page pager (calorie graph / ring+bottle / water graph), macros, meals
     ├── activities.tsx       # Activities screen — 2-page pager (CalorieFlame / WeeklyActivityGraph), exercise/steps/smartwatch logging
+    ├── more.tsx             # Redirect stub (never actually visited; "…" tab press is intercepted by PillTabBar)
     ├── profile.tsx          # Profile screen (ProfileCard, Stats & Achievements, Food Library, Nutrition Goals) — hidden from tab bar via href: null; reached via the "…" menu
     └── settings.tsx         # Settings tab (Appearance, App Settings, Feedback, Footer) — hidden from tab bar via href: null; reached via the "…" menu
 
@@ -175,7 +179,8 @@ components/
     ├── WeeklyIntakeGraph.tsx # WeeklyCalorieGraph, WeeklyWaterGraph, WeeklyActivityGraph (tap-to-tooltip)
     └── ProfilePrompt.tsx    # CTA card when profile or weight entry is missing
 
-context/AppContext.tsx       # Global state (38 action types) with auto-save + auto-backup
+context/AppContext.tsx       # Global state (39 action types) with auto-save + auto-backup
+context/MoreMenuContext.tsx  # More menu popover state — visible, show(), hide(), toggle()
 context/ToastContext.tsx     # Toast notification context — showToast(), dismiss(), current message
 storage/
 ├── storage.ts               # AsyncStorage read/write helpers
@@ -286,8 +291,9 @@ interface CustomFood {
   id: string; name: string;
   calories: number; protein: number; carbs: number; fat: number;
   servingSize?: string;
-  pinned?: boolean;
-  pinnedOrder?: number;     // drag-to-reorder position
+  pinnedCategories?: MealCategory[];         // which meal categories this food is pinned to
+  pinnedOrder?: Record<string, number>;      // per-category drag-to-reorder position
+  foodTypes?: string[];                      // multi-select food type categories (e.g. ['Meat', 'Snack'])
   createdAt: string;
 }
 

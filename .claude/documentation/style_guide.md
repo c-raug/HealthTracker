@@ -271,7 +271,7 @@ On **Android**, uses `<AndroidGlowBackdrop color={colors.primary} intensity={1} 
 
 ### CalorieFlame Glow (Special Case — Only for CalorieFlame)
 
-Applied proportionally based on `glowIntensityForBurn(totalBurned)` (0–1 as burn rises 0→600). On **iOS**, applies dynamic shadow to `flameWrapper` with `shadowColor` matching the current flame color. On **Android**, uses `<AndroidGlowBackdrop color={flameColor} intensity={intensity} shape="circle" size={{ width: 192, height: 192 }} />` as first child of `flameWrapper`. No glow at exactly 0 cal.
+Applied proportionally based on `glowIntensityForBurn(totalBurned)` (0–1 as burn rises 0→600). On **iOS**, applies dynamic shadow to `flameWrapper` with `shadowColor` matching the current flame color. On **Android**, uses `<AndroidGlowBackdrop color={flameColor} intensity={intensity} shape="circle" size={{ width: dim, height: dim }} />` as first child of `flameWrapper` (where `dim = size ?? 192` — reflects the optional `size` prop). No glow at exactly 0 cal.
 
 ---
 
