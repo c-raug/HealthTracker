@@ -175,7 +175,7 @@ components/
     ├── WeeklyIntakeGraph.tsx # WeeklyCalorieGraph, WeeklyWaterGraph, WeeklyActivityGraph (tap-to-tooltip)
     └── ProfilePrompt.tsx    # CTA card when profile or weight entry is missing
 
-context/AppContext.tsx       # Global state (39 action types) with auto-save + auto-backup
+context/AppContext.tsx       # Global state (38 action types) with auto-save + auto-backup
 context/ToastContext.tsx     # Toast notification context — showToast(), dismiss(), current message
 storage/
 ├── storage.ts               # AsyncStorage read/write helpers
