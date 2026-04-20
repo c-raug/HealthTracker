@@ -272,7 +272,7 @@ export default function HomeScreen() {
         >
           <Text style={styles.cardLabel}>ACTIVITY</Text>
           <View style={styles.flameContent}>
-            <CalorieFlame totalBurned={totalBurned} />
+            <CalorieFlame totalBurned={totalBurned} size={120} />
           </View>
         </TouchableOpacity>
 
@@ -288,7 +288,7 @@ export default function HomeScreen() {
               weight={latestEntryForDate ? String(convertWeight(latestEntryForDate.weight, latestEntryForDate.unit, preferences.unit)) : ''}
               unit={preferences.unit}
               animateToValue={null}
-              size={120}
+              size={80}
             />
           </View>
         </TouchableOpacity>

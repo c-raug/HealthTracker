@@ -120,7 +120,9 @@ function renderTabs(
   toggle: () => void,
   isDark: boolean,
 ) {
-  return state.routes.map((route, index) => {
+  const visibleRoutes = state.routes.filter(r => r.name !== 'profile' && r.name !== 'settings');
+  return visibleRoutes.map((route) => {
+    const index = state.routes.indexOf(route);
     const { options } = descriptors[route.key];
     const isFocused = state.index === index;
     const isMore = route.name === 'more';
