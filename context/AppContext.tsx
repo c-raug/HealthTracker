@@ -79,7 +79,6 @@ type Action =
   | { type: 'SET_ACTIVITY_MODE'; mode: ActivityMode }
   | { type: 'SET_ONBOARDING_COMPLETE' }
   | { type: 'SET_THEME_COLOR'; color: string }
-  | { type: 'SET_DEFAULT_TAB'; tab: 'weight' | 'nutrition' | 'activity' | 'profile' }
   | { type: 'ADD_WATER_ENTRY'; date: string; entry: WaterEntry }
   | { type: 'DELETE_WATER_ENTRY'; date: string; entryId: string }
   | { type: 'SET_WATER_GOAL_OVERRIDE'; amount: number | undefined }
@@ -153,10 +152,6 @@ function reducer(state: State, action: Action): State {
           ...migratedPrefs,
           foodTypeCategories: DEFAULT_FOOD_TYPE_CATEGORIES,
         };
-      }
-      // Migrate users whose default tab was Profile — Profile is no longer in the bottom bar.
-      if ((migratedPrefs.defaultTab as string | undefined) === 'profile') {
-        migratedPrefs = { ...migratedPrefs, defaultTab: 'nutrition' };
       }
       // Migrate custom foods: old pinned/pinnedOrder (number) → pinnedCategories/pinnedOrder (Record)
       // and old foodType (string) → foodTypes (string[]); drop mealTags silently
@@ -325,11 +320,6 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         preferences: { ...state.preferences, themeColor: action.color },
-      };
-    case 'SET_DEFAULT_TAB':
-      return {
-        ...state,
-        preferences: { ...state.preferences, defaultTab: action.tab },
       };
     case 'ADD_WATER_ENTRY': {
       const existing = state.waterLog.find((d) => d.date === action.date);

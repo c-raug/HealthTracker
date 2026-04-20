@@ -112,28 +112,6 @@ export default function AppSettingsModal() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView style={styles.scrollContent} ref={scrollRef} keyboardShouldPersistTaps="handled">
-          {/* Default Tab */}
-          <View style={styles.card}>
-            <Text style={styles.settingLabel}>Default Tab</Text>
-            <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
-              Choose which tab opens when you launch the app.
-            </Text>
-            <View style={styles.toggle}>
-              {(['weight', 'nutrition', 'activity'] as const).map((tab) => (
-                <TouchableOpacity
-                  key={tab}
-                  style={[styles.toggleOption, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleOptionActive]}
-                  onPress={() => dispatch({ type: 'SET_DEFAULT_TAB', tab })}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.toggleText, (preferences.defaultTab ?? 'nutrition') === tab && styles.toggleTextActive]}>
-                    {tab === 'weight' ? 'Weight' : tab === 'nutrition' ? 'Nutrition' : 'Activity'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
           {/* Weight Unit */}
           <View style={styles.card}>
             <Text style={styles.settingLabel}>Weight Unit</Text>

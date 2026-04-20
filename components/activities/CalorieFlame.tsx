@@ -12,18 +12,16 @@ const FLAME_HEIGHT = 192;
 const FLAME_OUTLINE_PATH =
   'M261.56,101.28a8,8,0,0,0-11.06,1.62C229.2,130,176.93,196,162.89,257.79a166.09,166.09,0,0,0-8.69-19.32,8,8,0,0,0-13.45-.43c-35.49,48.27-54,101.41-54,153a168,168,0,0,0,336,0C423,265.59,374.41,180.59,261.56,101.28Z';
 
-const makeStyles = (colors: typeof LightColors) =>
+const makeStyles = (colors: typeof LightColors, compact: boolean) =>
   StyleSheet.create({
     wrapper: {
       backgroundColor: 'transparent',
-      marginBottom: Spacing.md,
+      marginBottom: compact ? 0 : Spacing.md,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: Spacing.sm,
+      paddingVertical: compact ? 0 : Spacing.sm,
     },
     flameWrapper: {
-      width: FLAME_WIDTH,
-      height: FLAME_HEIGHT,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -50,16 +48,22 @@ const makeStyles = (colors: typeof LightColors) =>
 
 interface Props {
   totalBurned: number;
+  size?: number;
 }
 
-export default function CalorieFlame({ totalBurned }: Props) {
+export default function CalorieFlame({ totalBurned, size }: Props) {
   const colors = useColors();
-  const styles = makeStyles(colors);
+  const dim = size ?? FLAME_WIDTH;
+  const compact = dim < FLAME_WIDTH;
+  const styles = makeStyles(colors, compact);
   const { preferences } = useApp();
   const calUnit = preferences.unit === 'kg' ? 'kcal' : 'cal';
 
   const color = useMemo(() => flameColorForBurn(totalBurned), [totalBurned]);
   const intensity = useMemo(() => glowIntensityForBurn(totalBurned), [totalBurned]);
+
+  const calFontSize = compact ? Math.max(16, Math.round(28 * dim / FLAME_WIDTH)) : 28;
+  const labelFontSize = compact ? Math.max(9, Math.round(13 * dim / FLAME_WIDTH)) : 13;
 
   const glowStyle = Platform.OS === 'ios' ? {
     shadowColor: color,
@@ -71,14 +75,14 @@ export default function CalorieFlame({ totalBurned }: Props) {
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.flameWrapper, glowStyle]}>
+      <View style={[styles.flameWrapper, { width: dim, height: dim }, glowStyle]}>
         <AndroidGlowBackdrop
           color={color}
           intensity={intensity}
           shape="circle"
-          size={{ width: FLAME_WIDTH, height: FLAME_HEIGHT }}
+          size={{ width: dim, height: dim }}
         />
-        <Svg width={FLAME_WIDTH} height={FLAME_HEIGHT} viewBox="0 0 512 600">
+        <Svg width={dim} height={dim} viewBox="0 0 512 600">
           <Path
             d={FLAME_OUTLINE_PATH}
             stroke={color}
@@ -98,8 +102,8 @@ export default function CalorieFlame({ totalBurned }: Props) {
           </G>
         </Svg>
         <View style={styles.overlay}>
-          <Text style={styles.calories}>{totalBurned.toLocaleString()}</Text>
-          <Text style={styles.label}>{calUnit}</Text>
+          <Text style={[styles.calories, { fontSize: calFontSize }]}>{totalBurned.toLocaleString()}</Text>
+          <Text style={[styles.label, { fontSize: labelFontSize }]}>{calUnit}</Text>
         </View>
       </View>
     </View>

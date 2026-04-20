@@ -108,7 +108,6 @@ export interface UserPreferences {
   activityMode?: ActivityMode;
   onboardingComplete?: boolean;
   themeColor?: string;
-  defaultTab?: 'weight' | 'nutrition' | 'activity' | 'profile';
   waterGoalOverride?: number;
   waterGoalMode?: 'auto' | 'manual';
   waterCreatineAdjustment?: boolean;

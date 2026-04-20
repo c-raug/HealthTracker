@@ -12,12 +12,14 @@ import {
   useColorScheme,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
+import { PILL_TOTAL_HEIGHT } from '../../components/navigation/PillTabBar';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
 import { calculateDailyCalories, ageFromDob } from '../../utils/tdeeCalculation';
 import { calculateWaterGoal } from '../../utils/waterCalculation';
@@ -149,6 +151,7 @@ export default function NutritionScreen() {
   const { entries, preferences, nutritionLog, activityLog, waterLog, isLoading, selectedDate, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
   const profile = preferences.profile;
   const { width: windowWidth } = useWindowDimensions();
   const pagerWidth = windowWidth - Spacing.md * 2;
@@ -359,7 +362,7 @@ export default function NutritionScreen() {
     <View style={styles.flex}>
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Date navigation */}

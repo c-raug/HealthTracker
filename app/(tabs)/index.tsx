@@ -20,6 +20,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
@@ -29,6 +30,7 @@ import WeightInsights from '../../components/WeightInsights';
 import DigitalScale from '../../components/weight/DigitalScale';
 import { WeightEntry } from '../../types';
 import { generateId } from '../../utils/generateId';
+import { PILL_TOTAL_HEIGHT } from '../../components/navigation/PillTabBar';
 
 
 const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
@@ -212,6 +214,7 @@ export default function WeightScreen() {
   const { entries, preferences, dispatch, isLoading, selectedDate } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const insets = useSafeAreaInsets();
   const systemScheme = useColorScheme();
   const resolvedScheme: 'light' | 'dark' = preferences.appearanceMode === 'light' ? 'light' : preferences.appearanceMode === 'dark' ? 'dark' : (systemScheme ?? 'light');
   const { width: windowWidth } = useWindowDimensions();
@@ -337,7 +340,7 @@ export default function WeightScreen() {
     >
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Date navigation bar */}
