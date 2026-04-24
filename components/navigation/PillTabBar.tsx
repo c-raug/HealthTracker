@@ -10,7 +10,6 @@ import { useColorScheme } from 'react-native';
 import { useApp } from '../../context/AppContext';
 
 const PILL_HEIGHT = 56;
-const FADE_HEIGHT = 80;
 
 // Exported so MoreMenuPopover can anchor above the pill
 export const PILL_TOTAL_HEIGHT = PILL_HEIGHT + Spacing.sm;
@@ -76,12 +75,13 @@ export default function PillTabBar({ state, descriptors, navigation }: BottomTab
     systemScheme === 'dark';
 
   const pillBottom = insets.bottom + Spacing.sm;
-  const containerHeight = PILL_HEIGHT + pillBottom + FADE_HEIGHT;
+  const containerHeight = PILL_HEIGHT + pillBottom;
 
   const androidBg = isDark ? 'rgba(44,44,46,0.92)' : 'rgba(255,255,255,0.92)';
-  const gradientColors: [string, string] = [
+  const gradientColors: [string, string, string] = [
     'transparent',
-    isDark ? 'rgba(28,28,30,0.95)' : 'rgba(247,248,250,0.95)',
+    isDark ? 'rgba(28,28,30,0.35)' : 'rgba(247,248,250,0.35)',
+    isDark ? 'rgba(28,28,30,0.75)' : 'rgba(247,248,250,0.75)',
   ];
 
   return (
