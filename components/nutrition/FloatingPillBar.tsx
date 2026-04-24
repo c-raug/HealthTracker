@@ -10,6 +10,7 @@ import {
   KeyboardEvent,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
@@ -105,6 +106,12 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       borderRadius: 4,
       backgroundColor: colors.primary,
     },
+    gradientBackdrop: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
   });
 
 export default function FloatingPillBar({
@@ -176,9 +183,20 @@ export default function FloatingPillBar({
 
   const blurTint = isDark ? 'dark' : 'light';
   const androidFallbackBg = isDark ? 'rgba(44,44,46,0.75)' : 'rgba(255,255,255,0.75)';
+  const gradientColors: [string, string, string] = [
+    'transparent',
+    isDark ? 'rgba(28,28,30,0.35)' : 'rgba(247,248,250,0.35)',
+    isDark ? 'rgba(28,28,30,0.75)' : 'rgba(247,248,250,0.75)',
+  ];
 
   return (
-    <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
+    <>
+      <LinearGradient
+        colors={gradientColors}
+        style={[styles.gradientBackdrop, { height: PILL_SIZE + insets.bottom }]}
+        pointerEvents="none"
+      />
+      <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
       <BlurView
         intensity={60}
         tint={blurTint}
@@ -243,5 +261,6 @@ export default function FloatingPillBar({
         )}
       </BlurView>
     </View>
+    </>
   );
 }
