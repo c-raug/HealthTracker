@@ -26,7 +26,7 @@ interface Props {
 
 const PILL_SIZE = 48;
 
-const makeStyles = (colors: typeof LightColors) =>
+const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
   StyleSheet.create({
     outerContainer: {
       position: 'absolute',
@@ -48,7 +48,9 @@ const makeStyles = (colors: typeof LightColors) =>
       height: PILL_SIZE,
       borderRadius: 999,
       paddingHorizontal: Spacing.md,
-      backgroundColor: colors.primary,
+      backgroundColor: (colors.primary + '33') as any,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
@@ -56,14 +58,14 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     createText: {
       ...Typography.body,
-      color: colors.white,
+      color: colors.primary,
       fontWeight: '600',
     },
     searchPill: {
       flex: 1,
       height: PILL_SIZE,
       borderRadius: 999,
-      backgroundColor: colors.card,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
       borderWidth: 1,
       borderColor: colors.border,
       alignItems: 'center',
@@ -87,7 +89,7 @@ const makeStyles = (colors: typeof LightColors) =>
       width: PILL_SIZE,
       height: PILL_SIZE,
       borderRadius: PILL_SIZE / 2,
-      backgroundColor: colors.card,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
       borderWidth: 1,
       borderColor: colors.border,
       alignItems: 'center',
@@ -116,7 +118,8 @@ export default function FloatingPillBar({
 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const styles = makeStyles(colors);
+  const isDark = colors.background === '#1C1C1E';
+  const styles = makeStyles(colors, isDark);
   const inputRef = useRef<TextInput>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -171,14 +174,13 @@ export default function FloatingPillBar({
       ? Math.max(0, keyboardHeight - insets.bottom) + Spacing.xs
       : 0;
 
-  const isDark = colors.background === '#1C1C1E';
   const blurTint = isDark ? 'dark' : 'light';
-  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.2)' : 'rgba(255,255,255,0.2)';
+  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.75)' : 'rgba(255,255,255,0.75)';
 
   return (
     <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
       <BlurView
-        intensity={20}
+        intensity={60}
         tint={blurTint}
         style={[
           styles.blurRow,
@@ -188,7 +190,7 @@ export default function FloatingPillBar({
         {!searchExpanded ? (
           <>
             <TouchableOpacity style={styles.createPill} onPress={onCreate} activeOpacity={0.8}>
-              <Ionicons name="add" size={20} color={colors.white} />
+              <Ionicons name="add" size={20} color={colors.primary} />
               <Text style={styles.createText}>Create</Text>
             </TouchableOpacity>
 
