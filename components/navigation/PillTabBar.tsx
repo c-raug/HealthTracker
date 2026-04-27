@@ -71,7 +71,7 @@ export default function PillTabBar({ state, descriptors, navigation }: BottomTab
   const containerHeight = PILL_HEIGHT + pillBottom;
 
   const androidBg = isDark ? 'rgba(44,44,46,0.97)' : 'rgba(235,236,240,0.97)';
-  const iosTint = isDark ? 'rgba(44,44,46,0.65)' : 'rgba(220,221,226,0.65)';
+  const iosTint = isDark ? 'rgba(44,44,46,0.22)' : 'rgba(220,221,226,0.18)';
 
   return (
     <View style={[styles.container, { height: containerHeight }]} pointerEvents="box-none">
@@ -82,7 +82,7 @@ export default function PillTabBar({ state, descriptors, navigation }: BottomTab
             {renderTabs(state, descriptors, navigation, colors, styles, toggle, isDark)}
           </View>
         ) : (
-          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, borderRadius: PILL_HEIGHT / 2, overflow: 'hidden' }}>
+          <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, borderRadius: PILL_HEIGHT / 2, overflow: 'hidden' }}>
             <View style={[styles.pillInner, { backgroundColor: iosTint }]}>
               {renderTabs(state, descriptors, navigation, colors, styles, toggle, isDark)}
             </View>

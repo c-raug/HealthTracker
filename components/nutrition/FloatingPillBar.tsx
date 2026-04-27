@@ -33,27 +33,27 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       left: Spacing.md,
       right: Spacing.md,
       height: PILL_SIZE,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: PILL_SIZE / 2,
     },
-    blurRow: {
+    pillRow: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: Spacing.sm,
-      borderRadius: PILL_SIZE / 2,
-      overflow: 'hidden',
-      paddingHorizontal: Spacing.sm,
     },
-    createPill: {
+    // Create pill — per-pill BlurView wrapper
+    createBlur: {
       flex: 1,
       height: PILL_SIZE,
       borderRadius: 999,
-      paddingHorizontal: Spacing.md,
-      backgroundColor: (colors.primary + '33') as any,
+      overflow: 'hidden',
       borderWidth: 1.5,
       borderColor: colors.primary,
+    },
+    createInner: {
+      flex: 1,
+      height: PILL_SIZE,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: (colors.primary + '22') as any,
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
@@ -64,17 +64,23 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       color: colors.primary,
       fontWeight: '600',
     },
-    searchPill: {
+    // Search / expanded oval pill — per-pill BlurView wrapper
+    ovalBlur: {
       flex: 1,
       height: PILL_SIZE,
       borderRadius: 999,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+      overflow: 'hidden',
       borderWidth: 1,
       borderColor: colors.border,
+    },
+    searchInner: {
+      flex: 1,
+      height: PILL_SIZE,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'row',
-      paddingHorizontal: Spacing.md,
       gap: Spacing.sm,
       overflow: 'hidden',
     },
@@ -88,16 +94,21 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       color: colors.text,
       paddingVertical: 0,
     },
-    circlePill: {
+    // Filter / close circle pill — per-pill BlurView wrapper
+    circleBlur: {
       width: PILL_SIZE,
       height: PILL_SIZE,
       borderRadius: PILL_SIZE / 2,
-      backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+      overflow: 'hidden',
       borderWidth: 1,
       borderColor: colors.border,
+    },
+    circleInner: {
+      width: PILL_SIZE,
+      height: PILL_SIZE,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
       alignItems: 'center',
       justifyContent: 'center',
-      position: 'relative',
     },
     filterBadge: {
       position: 'absolute',
@@ -178,75 +189,88 @@ export default function FloatingPillBar({
       : 0;
 
   const blurTint = isDark ? 'dark' : 'light';
-  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.97)' : 'rgba(235,236,240,0.97)';
-  const iosTint = isDark ? 'rgba(44,44,46,0.65)' : 'rgba(220,221,226,0.65)';
+  const androidNeutralBg = isDark ? 'rgba(44,44,46,0.97)' : 'rgba(235,236,240,0.97)';
 
   return (
-    <>
-      <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
-      <BlurView
-        intensity={60}
-        tint={blurTint}
-        style={{ flex: 1, borderRadius: PILL_SIZE / 2, overflow: 'hidden' }}
-      >
-        <View style={[styles.blurRow, { backgroundColor: Platform.OS === 'android' ? androidFallbackBg : iosTint }]}>
+    <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
+      <View style={styles.pillRow}>
         {!searchExpanded ? (
           <>
-            <TouchableOpacity style={styles.createPill} onPress={onCreate} activeOpacity={0.8}>
-              <Ionicons name="add" size={20} color={colors.primary} />
-              <Text style={styles.createText}>Create</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.searchPill}
-              onPress={handleSearchPress}
-              activeOpacity={0.7}
+            <BlurView
+              intensity={80}
+              tint={blurTint}
+              style={[styles.createBlur, Platform.OS === 'android' && { backgroundColor: colors.primary + '33' }]}
             >
-              <Ionicons name="search" size={20} color={colors.textSecondary} />
-              <Text style={styles.searchLabel}>Search</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.createInner} onPress={onCreate} activeOpacity={0.8}>
+                <Ionicons name="add" size={20} color={colors.primary} />
+                <Text style={styles.createText}>Create</Text>
+              </TouchableOpacity>
+            </BlurView>
 
-            <TouchableOpacity
-              style={styles.circlePill}
-              onPress={onFilterPress}
-              activeOpacity={0.7}
+            <BlurView
+              intensity={80}
+              tint={blurTint}
+              style={[styles.ovalBlur, Platform.OS === 'android' && { backgroundColor: androidNeutralBg }]}
             >
-              <Ionicons
-                name="filter-outline"
-                size={22}
-                color={hasActiveFilter ? colors.primary : colors.textSecondary}
-              />
-              {hasActiveFilter && <View style={styles.filterBadge} />}
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.searchInner} onPress={handleSearchPress} activeOpacity={0.7}>
+                <Ionicons name="search" size={20} color={colors.textSecondary} />
+                <Text style={styles.searchLabel}>Search</Text>
+              </TouchableOpacity>
+            </BlurView>
+
+            <BlurView
+              intensity={80}
+              tint={blurTint}
+              style={[styles.circleBlur, Platform.OS === 'android' && { backgroundColor: androidNeutralBg }]}
+            >
+              <TouchableOpacity style={styles.circleInner} onPress={onFilterPress} activeOpacity={0.7}>
+                <Ionicons
+                  name="filter-outline"
+                  size={22}
+                  color={hasActiveFilter ? colors.primary : colors.textSecondary}
+                />
+                {hasActiveFilter && <View style={styles.filterBadge} />}
+              </TouchableOpacity>
+            </BlurView>
           </>
         ) : (
           <>
-            <TouchableOpacity
-              style={styles.searchPill}
-              activeOpacity={1}
-              onPress={() => inputRef.current?.focus()}
+            <BlurView
+              intensity={80}
+              tint={blurTint}
+              style={[styles.ovalBlur, Platform.OS === 'android' && { backgroundColor: androidNeutralBg }]}
             >
-              <Ionicons name="search" size={20} color={colors.textSecondary} />
-              <TextInput
-                ref={inputRef}
-                style={styles.searchInput}
-                value={searchValue}
-                onChangeText={onSearchChange}
-                placeholder="Search..."
-                placeholderTextColor={colors.textSecondary}
-                returnKeyType="search"
-                onSubmitEditing={handleSubmit}
-              />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.searchInner}
+                activeOpacity={1}
+                onPress={() => inputRef.current?.focus()}
+              >
+                <Ionicons name="search" size={20} color={colors.textSecondary} />
+                <TextInput
+                  ref={inputRef}
+                  style={styles.searchInput}
+                  value={searchValue}
+                  onChangeText={onSearchChange}
+                  placeholder="Search..."
+                  placeholderTextColor={colors.textSecondary}
+                  returnKeyType="search"
+                  onSubmitEditing={handleSubmit}
+                />
+              </TouchableOpacity>
+            </BlurView>
 
-            <TouchableOpacity style={styles.circlePill} onPress={handleClose} activeOpacity={0.7}>
-              <Ionicons name="close" size={24} color={colors.textSecondary} />
-            </TouchableOpacity>
+            <BlurView
+              intensity={80}
+              tint={blurTint}
+              style={[styles.circleBlur, Platform.OS === 'android' && { backgroundColor: androidNeutralBg }]}
+            >
+              <TouchableOpacity style={styles.circleInner} onPress={handleClose} activeOpacity={0.7}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </BlurView>
           </>
         )}
-        </View>
-      </BlurView>
+      </View>
     </View>
-    </>
   );
 }
