@@ -10,7 +10,6 @@ import {
   KeyboardEvent,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
@@ -34,6 +33,9 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       left: Spacing.md,
       right: Spacing.md,
       height: PILL_SIZE,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: PILL_SIZE / 2,
     },
     blurRow: {
       flex: 1,
@@ -106,12 +108,6 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       borderRadius: 4,
       backgroundColor: colors.primary,
     },
-    gradientBackdrop: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-    },
   });
 
 export default function FloatingPillBar({
@@ -182,29 +178,18 @@ export default function FloatingPillBar({
       : 0;
 
   const blurTint = isDark ? 'dark' : 'light';
-  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.75)' : 'rgba(255,255,255,0.75)';
-  const gradientColors: [string, string, string] = [
-    'transparent',
-    isDark ? 'rgba(28,28,30,0.35)' : 'rgba(247,248,250,0.35)',
-    isDark ? 'rgba(28,28,30,0.75)' : 'rgba(247,248,250,0.75)',
-  ];
+  const androidFallbackBg = isDark ? 'rgba(44,44,46,0.97)' : 'rgba(235,236,240,0.97)';
+  const iosTint = isDark ? 'rgba(44,44,46,0.65)' : 'rgba(220,221,226,0.65)';
 
   return (
     <>
-      <LinearGradient
-        colors={gradientColors}
-        style={[styles.gradientBackdrop, { height: PILL_SIZE + insets.bottom }]}
-        pointerEvents="none"
-      />
       <View style={[styles.outerContainer, { bottom: bottomOffset }]}>
       <BlurView
         intensity={60}
         tint={blurTint}
-        style={[
-          styles.blurRow,
-          Platform.OS === 'android' && { backgroundColor: androidFallbackBg },
-        ]}
+        style={{ flex: 1, borderRadius: PILL_SIZE / 2, overflow: 'hidden' }}
       >
+        <View style={[styles.blurRow, { backgroundColor: Platform.OS === 'android' ? androidFallbackBg : iosTint }]}>
         {!searchExpanded ? (
           <>
             <TouchableOpacity style={styles.createPill} onPress={onCreate} activeOpacity={0.8}>
@@ -259,6 +244,7 @@ export default function FloatingPillBar({
             </TouchableOpacity>
           </>
         )}
+        </View>
       </BlurView>
     </View>
     </>
