@@ -70,19 +70,20 @@ export default function PillTabBar({ state, descriptors, navigation }: BottomTab
   const pillBottom = insets.bottom + Spacing.sm;
   const containerHeight = PILL_HEIGHT + pillBottom;
 
-  const androidBg = isDark ? 'rgba(44,44,46,0.92)' : 'rgba(255,255,255,0.92)';
+  const androidBg = isDark ? 'rgba(44,44,46,0.97)' : 'rgba(235,236,240,0.97)';
+  const iosTint = isDark ? 'rgba(44,44,46,0.65)' : 'rgba(220,221,226,0.65)';
 
   return (
     <View style={[styles.container, { height: containerHeight }]} pointerEvents="box-none">
       {/* Pill */}
-      <View style={[styles.pillWrapper, { bottom: pillBottom, position: 'absolute', left: Spacing.md, right: Spacing.md }]}>
+      <View style={[styles.pillWrapper, { bottom: pillBottom, position: 'absolute', left: Spacing.md, right: Spacing.md, borderWidth: 1, borderColor: colors.border }]}>
         {Platform.OS === 'android' ? (
           <View style={[styles.pillInner, { backgroundColor: androidBg, borderRadius: PILL_HEIGHT / 2 }]}>
             {renderTabs(state, descriptors, navigation, colors, styles, toggle, isDark)}
           </View>
         ) : (
-          <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, borderRadius: PILL_HEIGHT / 2, overflow: 'hidden' }}>
-            <View style={styles.pillInner}>
+          <BlurView intensity={60} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, borderRadius: PILL_HEIGHT / 2, overflow: 'hidden' }}>
+            <View style={[styles.pillInner, { backgroundColor: iosTint }]}>
               {renderTabs(state, descriptors, navigation, colors, styles, toggle, isDark)}
             </View>
           </BlurView>
