@@ -17,6 +17,7 @@ export default function HeaderXpBar() {
   const badgeOpacity = useRef(new Animated.Value(1)).current;
   const labelOpacity = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(progressPct)).current;
+  const wrapperWidthAnim = useRef(new Animated.Value(22)).current;
   const prevXpRef = useRef(totalXp);
   const [xpDelta, setXpDelta] = useState(0);
 
@@ -36,14 +37,20 @@ export default function HeaderXpBar() {
     const newProgress = im ? 1 : (totalXp - clx) / (nlx - clx);
 
     Animated.sequence([
-      Animated.timing(badgeOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(badgeOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(wrapperWidthAnim, { toValue: 64, duration: 200, useNativeDriver: false }),
+      ]),
       Animated.timing(labelOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
       Animated.delay(600),
       Animated.parallel([
         Animated.timing(labelOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
         Animated.spring(progressAnim, { toValue: newProgress, useNativeDriver: false }),
       ]),
-      Animated.timing(badgeOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(badgeOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.timing(wrapperWidthAnim, { toValue: 22, duration: 200, useNativeDriver: false }),
+      ]),
     ]).start();
   }, [totalXp]);
 
@@ -53,14 +60,17 @@ export default function HeaderXpBar() {
       style={styles.container}
       activeOpacity={0.7}
     >
-      <View style={styles.badgeWrapper}>
+      <Animated.View style={[styles.badgeWrapper, { width: wrapperWidthAnim }]}>
         <Animated.View style={[styles.xpBadge, { opacity: badgeOpacity }]}>
           <Text style={styles.xpBadgeText}>XP</Text>
         </Animated.View>
-        <Animated.Text style={[styles.xpLabel, { opacity: labelOpacity }]}>
+        <Animated.Text
+          style={[styles.xpLabel, { opacity: labelOpacity }]}
+          numberOfLines={1}
+        >
           +{xpDelta} xp
         </Animated.Text>
-      </View>
+      </Animated.View>
       <View style={styles.pill}>
         <Animated.View style={[styles.fill, {
           width: progressAnim.interpolate({
@@ -82,7 +92,6 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
       marginRight: Spacing.md,
     },
     badgeWrapper: {
-      width: 22,
       height: 22,
       marginRight: Spacing.xs,
       alignItems: 'center',
@@ -103,6 +112,8 @@ function makeStyles(colors: ReturnType<typeof useColors>) {
     },
     xpLabel: {
       position: 'absolute',
+      left: 0,
+      right: 0,
       ...Typography.small,
       fontWeight: '700',
       color: colors.primary,
