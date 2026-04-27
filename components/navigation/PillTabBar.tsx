@@ -1,7 +1,6 @@
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors, LightColors, Spacing } from '../../constants/theme';
@@ -32,12 +31,6 @@ const makeStyles = (colors: typeof LightColors) =>
       right: 0,
       bottom: 0,
       backgroundColor: 'transparent',
-    },
-    fade: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
     },
     pillWrapper: {
       flexDirection: 'row',
@@ -77,31 +70,20 @@ export default function PillTabBar({ state, descriptors, navigation }: BottomTab
   const pillBottom = insets.bottom + Spacing.sm;
   const containerHeight = PILL_HEIGHT + pillBottom;
 
-  const androidBg = isDark ? 'rgba(44,44,46,0.92)' : 'rgba(255,255,255,0.92)';
-  const gradientColors: [string, string, string] = [
-    'transparent',
-    isDark ? 'rgba(28,28,30,0.35)' : 'rgba(247,248,250,0.35)',
-    isDark ? 'rgba(28,28,30,0.75)' : 'rgba(247,248,250,0.75)',
-  ];
+  const androidBg = isDark ? 'rgba(44,44,46,0.97)' : 'rgba(235,236,240,0.97)';
+  const iosTint = isDark ? 'rgba(44,44,46,0.22)' : 'rgba(220,221,226,0.18)';
 
   return (
     <View style={[styles.container, { height: containerHeight }]} pointerEvents="box-none">
-      {/* Gradient fade sitting behind the pill */}
-      <LinearGradient
-        colors={gradientColors}
-        style={[styles.fade, { height: containerHeight }]}
-        pointerEvents="none"
-      />
-
       {/* Pill */}
-      <View style={[styles.pillWrapper, { bottom: pillBottom, position: 'absolute', left: Spacing.md, right: Spacing.md }]}>
+      <View style={[styles.pillWrapper, { bottom: pillBottom, position: 'absolute', left: Spacing.md, right: Spacing.md, borderWidth: 1, borderColor: colors.border }]}>
         {Platform.OS === 'android' ? (
           <View style={[styles.pillInner, { backgroundColor: androidBg, borderRadius: PILL_HEIGHT / 2 }]}>
             {renderTabs(state, descriptors, navigation, colors, styles, toggle, isDark)}
           </View>
         ) : (
-          <BlurView intensity={50} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, borderRadius: PILL_HEIGHT / 2, overflow: 'hidden' }}>
-            <View style={styles.pillInner}>
+          <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flex: 1, borderRadius: PILL_HEIGHT / 2, overflow: 'hidden' }}>
+            <View style={[styles.pillInner, { backgroundColor: iosTint }]}>
               {renderTabs(state, descriptors, navigation, colors, styles, toggle, isDark)}
             </View>
           </BlurView>

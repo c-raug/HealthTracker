@@ -77,7 +77,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 - **Floating pill tab bar** — a custom `PillTabBar` with a `BlurView` (iOS) / semi-transparent (Android) frosted-glass pill and a `LinearGradient` fade behind it; shows 5 tabs: Home, Weight, Nutrition, Activities, and **… (More)**; Profile and Settings are hidden routes accessed via the "…" menu
 - **… More menu** — tapping the "…" tab opens a small popover above the pill tab bar with **Profile** and **Settings** rows; tapping outside the popover dismisses it
 - **XP & level system** — earn XP for daily actions (food logging, hitting calorie/water goals, logging weight/activity, streak bonuses); 10 named levels (Novice → Legend); level-up toast notification; Prestige system for indefinite progression
-- **Header XP bar** — every tab header shows a filled star icon + pill progress bar in `colors.primary`, proportionally filled based on progress toward the next level; tapping opens Stats & Achievements
+- **Header XP bar** — every tab header shows a rounded-square "XP" badge + animated pill progress bar in `colors.primary`; earning XP triggers a badge fade-out → `+N xp` label → bar spring-animation sequence; tapping opens Stats & Achievements
 - **Achievement badges** — 8 permanently-unlockable milestones (streak and food-logged); toast notification on first unlock; persisted across restarts
 - **Error boundary** — catches unhandled JS exceptions, logs crash details to AsyncStorage, renders a "Something went wrong" fallback with Restart button; optional Sentry integration via `SENTRY_DSN`
 - **Shared date state** — changing the date on any tab instantly reflects on all others; resets to today on app restart
