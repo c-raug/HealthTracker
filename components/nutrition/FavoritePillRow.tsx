@@ -24,7 +24,8 @@ const makeStyles = (colors: typeof LightColors) =>
     row: {
       flexDirection: 'row',
       paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
+      paddingTop: 0,
+      paddingBottom: Spacing.sm,
     },
     pill: {
       flex: 1,
