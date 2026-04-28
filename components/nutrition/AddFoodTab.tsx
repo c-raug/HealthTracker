@@ -705,10 +705,15 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
           </>
         )}
 
+        {/* Empty state: search expanded with no text yet, or searching with no results */}
+        {searchExpanded && !isSearching && (
+          <Text style={styles.empty}>No results found</Text>
+        )}
+
         {showList && isEmpty && (
           <Text style={styles.empty}>
             {isSearching || filtersActive
-              ? 'No matching foods found'
+              ? 'No results found'
               : 'No custom foods yet. Tap "Create Custom Food" to add one.'}
           </Text>
         )}
@@ -722,6 +727,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         onSearchToggle={setSearchExpanded}
         onFilterPress={() => setShowFilterModal(true)}
         hasActiveFilter={filtersActive}
+        onCreateSearch={() => setShowCreateForm(true)}
       />
 
       {/* Filter modal */}

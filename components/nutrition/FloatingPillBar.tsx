@@ -22,6 +22,7 @@ interface Props {
   onSearchToggle: (expanded: boolean) => void;
   onFilterPress: () => void;
   hasActiveFilter: boolean;
+  onCreateSearch?: () => void;
 }
 
 const PILL_SIZE = 48;
@@ -110,6 +111,22 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    // Blue create circle — shown left of search input when expanded
+    createCircleBlur: {
+      width: PILL_SIZE,
+      height: PILL_SIZE,
+      borderRadius: PILL_SIZE / 2,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    createCircleInner: {
+      width: PILL_SIZE,
+      height: PILL_SIZE,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     filterBadge: {
       position: 'absolute',
       top: 6,
@@ -129,6 +146,7 @@ export default function FloatingPillBar({
   onSearchToggle,
   onFilterPress,
   hasActiveFilter,
+  onCreateSearch,
 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -235,6 +253,18 @@ export default function FloatingPillBar({
           </>
         ) : (
           <>
+            {onCreateSearch && (
+              <BlurView
+                intensity={80}
+                tint={blurTint}
+                style={[styles.createCircleBlur, Platform.OS === 'android' && { backgroundColor: colors.primary }]}
+              >
+                <TouchableOpacity style={styles.createCircleInner} onPress={onCreateSearch} activeOpacity={0.8}>
+                  <Ionicons name="add" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+              </BlurView>
+            )}
+
             <BlurView
               intensity={80}
               tint={blurTint}
