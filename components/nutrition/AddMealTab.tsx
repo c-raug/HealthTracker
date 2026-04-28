@@ -166,6 +166,7 @@ export default function AddMealTab({ date, category, onDone }: Props) {
   const styles = makeStyles(colors);
   const { savedMeals, customFoods, dispatch } = useApp();
   const [showCreate, setShowCreate] = useState(false);
+  const [createInitialName, setCreateInitialName] = useState('');
   const [editingMeal, setEditingMeal] = useState<SavedMeal | null>(null);
   const [pinning, setPinning] = useState<SavedMeal | null>(null);
   const [selectedPins, setSelectedPins] = useState<MealCategory[]>([]);
@@ -225,7 +226,12 @@ export default function AddMealTab({ date, category, onDone }: Props) {
   };
 
   if (showCreate) {
-    return <CreateMealFlow onDone={() => setShowCreate(false)} />;
+    return (
+      <CreateMealFlow
+        onDone={() => { setShowCreate(false); setCreateInitialName(''); }}
+        initialName={createInitialName || undefined}
+      />
+    );
   }
 
   if (editingMeal) {
@@ -504,21 +510,27 @@ export default function AddMealTab({ date, category, onDone }: Props) {
           </>
         )}
 
+        {/* Empty state: search expanded with no text yet, or searching with no results */}
+        {searchExpanded && trimmed.length === 0 && (
+          <Text style={styles.empty}>No results found</Text>
+        )}
+
         {showList && isEmpty && (
           <Text style={styles.empty}>
-            {searchQuery.trim() || filtersActive ? 'No meals match your search' : 'No saved meals yet'}
+            {searchQuery.trim() || filtersActive ? 'No results found' : 'No saved meals yet'}
           </Text>
         )}
       </ScrollView>
 
       <FloatingPillBar
-        onCreate={() => setShowCreate(true)}
+        onCreate={() => { setCreateInitialName(''); setShowCreate(true); }}
         searchExpanded={searchExpanded}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         onSearchToggle={setSearchExpanded}
         onFilterPress={() => setShowFilterModal(true)}
         hasActiveFilter={filtersActive}
+        onCreateSearch={() => { setCreateInitialName(searchQuery.trim()); setShowCreate(true); }}
       />
 
       <FoodFilterModal
