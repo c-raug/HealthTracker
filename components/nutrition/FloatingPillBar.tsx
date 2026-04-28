@@ -111,19 +111,19 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    // Blue create circle — shown left of search input when expanded
+    // Frosted-glass create circle — shown left of search input when expanded
     createCircleBlur: {
       width: PILL_SIZE,
       height: PILL_SIZE,
       borderRadius: PILL_SIZE / 2,
       overflow: 'hidden',
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: colors.primary,
     },
     createCircleInner: {
       width: PILL_SIZE,
       height: PILL_SIZE,
-      backgroundColor: colors.primary,
+      backgroundColor: (colors.primary + '22') as any,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -257,10 +257,10 @@ export default function FloatingPillBar({
               <BlurView
                 intensity={80}
                 tint={blurTint}
-                style={[styles.createCircleBlur, Platform.OS === 'android' && { backgroundColor: colors.primary }]}
+                style={[styles.createCircleBlur, Platform.OS === 'android' && { backgroundColor: colors.primary + '33' }]}
               >
                 <TouchableOpacity style={styles.createCircleInner} onPress={onCreateSearch} activeOpacity={0.8}>
-                  <Ionicons name="add" size={22} color="#FFFFFF" />
+                  <Ionicons name="add" size={22} color={colors.primary} />
                 </TouchableOpacity>
               </BlurView>
             )}
