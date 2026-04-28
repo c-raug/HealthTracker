@@ -622,7 +622,7 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
         {/* When not searching: show Recent section (top 7 by frequency) */}
         {showList && !isSearching && recentFoods.length > 0 && (
           <>
-            <Text style={styles.sectionHeader}>Recent</Text>
+            <Text style={[styles.sectionHeader, { marginTop: Spacing.sm }]}>Recent</Text>
             {recentFoods.map((item) => (
               <TouchableOpacity
                 key={item.id}

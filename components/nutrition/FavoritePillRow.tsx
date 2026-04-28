@@ -15,8 +15,11 @@ const makeStyles = (colors: typeof LightColors) =>
     label: {
       ...Typography.small,
       color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
       paddingHorizontal: Spacing.md,
-      paddingTop: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      backgroundColor: colors.background,
     },
     row: {
       flexDirection: 'row',
