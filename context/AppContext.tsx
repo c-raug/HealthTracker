@@ -95,7 +95,8 @@ type Action =
   | { type: 'ADD_XP'; amount: number; date: string; source: 'food' | 'calorieGoal' | 'waterGoal' | 'weight' | 'activity' | 'streak7' | 'streak30' }
   | { type: 'PRESTIGE' }
   | { type: 'SET_LAST_RECAP_WEEK'; week: string }
-  | { type: 'SET_FOOD_TYPE_CATEGORIES'; categories: string[] };
+  | { type: 'SET_FOOD_TYPE_CATEGORIES'; categories: string[] }
+  | { type: 'SET_FAVORITE_FILTER_TYPES'; types: string[] };
 
 const DEFAULT_FOOD_TYPE_CATEGORIES = ['Meat', 'Fruit', 'Vegetable', 'Grain', 'Dairy', 'Snack', 'Beverage', 'Other'];
 
@@ -152,6 +153,10 @@ function reducer(state: State, action: Action): State {
           ...migratedPrefs,
           foodTypeCategories: DEFAULT_FOOD_TYPE_CATEGORIES,
         };
+      }
+      // Initialize favorite filter types if not yet set
+      if (!migratedPrefs.favoriteFilterTypes) {
+        migratedPrefs = { ...migratedPrefs, favoriteFilterTypes: [] };
       }
       // Migrate custom foods: old pinned/pinnedOrder (number) → pinnedCategories/pinnedOrder (Record)
       // and old foodType (string) → foodTypes (string[]); drop mealTags silently
@@ -484,6 +489,11 @@ function reducer(state: State, action: Action): State {
         preferences: { ...state.preferences, foodTypeCategories: newCats },
       };
     }
+    case 'SET_FAVORITE_FILTER_TYPES':
+      return {
+        ...state,
+        preferences: { ...state.preferences, favoriteFilterTypes: action.types },
+      };
     default:
       return state;
   }

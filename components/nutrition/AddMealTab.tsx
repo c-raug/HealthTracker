@@ -22,6 +22,7 @@ import CreateMealFlow from './CreateMealFlow';
 import EditMealFlow from './EditMealFlow';
 import FloatingPillBar from './FloatingPillBar';
 import FoodFilterModal, { FoodFilters } from './FoodFilterModal';
+import FavoritePillRow from './FavoritePillRow';
 
 const CATEGORY_LABELS: Record<MealCategory, string> = {
   breakfast: 'Breakfast',
@@ -164,7 +165,7 @@ interface Props {
 export default function AddMealTab({ date, category, onDone }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { savedMeals, customFoods, dispatch } = useApp();
+  const { savedMeals, customFoods, preferences, dispatch } = useApp();
   const [showCreate, setShowCreate] = useState(false);
   const [createInitialName, setCreateInitialName] = useState('');
   const [editingMeal, setEditingMeal] = useState<SavedMeal | null>(null);
@@ -175,6 +176,14 @@ export default function AddMealTab({ date, category, onDone }: Props) {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [mealFilters, setMealFilters] = useState<FoodFilters>({ foodTypes: [] });
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  const handleToggleFavoriteFilter = (type: string) => {
+    setMealFilters((prev) => ({
+      foodTypes: prev.foodTypes.includes(type)
+        ? prev.foodTypes.filter((t) => t !== type)
+        : [...prev.foodTypes, type],
+    }));
+  };
 
   const handleAddMeal = (mealId: string) => {
     const meal = savedMeals.find((m) => m.id === mealId);
@@ -401,6 +410,13 @@ export default function AddMealTab({ date, category, onDone }: Props) {
 
   return (
     <View style={styles.container}>
+      {!(searchExpanded && trimmed.length === 0) && (
+        <FavoritePillRow
+          favorites={preferences.favoriteFilterTypes ?? []}
+          activeFilters={mealFilters.foodTypes}
+          onToggle={handleToggleFavoriteFilter}
+        />
+      )}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}

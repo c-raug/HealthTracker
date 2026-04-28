@@ -18,6 +18,7 @@ import CreateMealFlow from '../components/nutrition/CreateMealFlow';
 import EditMealFlow from '../components/nutrition/EditMealFlow';
 import FoodFilterModal, { FoodFilters } from '../components/nutrition/FoodFilterModal';
 import FloatingPillBar from '../components/nutrition/FloatingPillBar';
+import FavoritePillRow from '../components/nutrition/FavoritePillRow';
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
@@ -127,7 +128,7 @@ export default function FoodLibraryModal() {
   const colors = useColors();
   const styles = makeStyles(colors);
   const router = useRouter();
-  const { customFoods, savedMeals, dispatch } = useApp();
+  const { customFoods, savedMeals, preferences, dispatch } = useApp();
 
   const [activeTab, setActiveTab] = useState<Tab>('foods');
   const [foodQuery, setFoodQuery] = useState('');
@@ -239,6 +240,22 @@ export default function FoodLibraryModal() {
 
   const filtersActive = hasActiveFilters(foodFilters);
 
+  const handleToggleFoodFavoriteFilter = (type: string) => {
+    setFoodFilters((prev) => ({
+      foodTypes: prev.foodTypes.includes(type)
+        ? prev.foodTypes.filter((t) => t !== type)
+        : [...prev.foodTypes, type],
+    }));
+  };
+
+  const handleToggleMealFavoriteFilter = (type: string) => {
+    setMealFilters((prev) => ({
+      foodTypes: prev.foodTypes.includes(type)
+        ? prev.foodTypes.filter((t) => t !== type)
+        : [...prev.foodTypes, type],
+    }));
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
@@ -273,6 +290,22 @@ export default function FoodLibraryModal() {
             </Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {/* Favorite filter pills — hidden while in sub-panels */}
+      {!showingSubPanel && activeTab === 'foods' && (
+        <FavoritePillRow
+          favorites={preferences.favoriteFilterTypes ?? []}
+          activeFilters={foodFilters.foodTypes}
+          onToggle={handleToggleFoodFavoriteFilter}
+        />
+      )}
+      {!showingSubPanel && activeTab === 'meals' && (
+        <FavoritePillRow
+          favorites={preferences.favoriteFilterTypes ?? []}
+          activeFilters={mealFilters.foodTypes}
+          onToggle={handleToggleMealFavoriteFilter}
+        />
       )}
 
       {/* Foods tab */}

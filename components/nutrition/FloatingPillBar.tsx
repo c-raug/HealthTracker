@@ -119,6 +119,8 @@ const makeStyles = (colors: typeof LightColors, isDark: boolean) =>
       overflow: 'hidden',
       borderWidth: 1.5,
       borderColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     createCircleInner: {
       width: PILL_SIZE,
