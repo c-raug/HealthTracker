@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useColors, LightColors, Spacing } from '../../constants/theme';
+import { useColors, LightColors, Spacing, Typography } from '../../constants/theme';
 
 interface Props {
   favorites: string[];
@@ -9,6 +9,15 @@ interface Props {
 
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
+    container: {
+      paddingBottom: Spacing.xs,
+    },
+    label: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      paddingHorizontal: Spacing.md,
+      paddingTop: Spacing.sm,
+    },
     row: {
       flexDirection: 'row',
       paddingHorizontal: Spacing.md,
@@ -46,25 +55,28 @@ export default function FavoritePillRow({ favorites, activeFilters, onToggle }: 
   if (favorites.length === 0) return null;
 
   return (
-    <View style={styles.row}>
-      {favorites.slice(0, 4).map((type) => {
-        const active = activeFilters.includes(type);
-        return (
-          <TouchableOpacity
-            key={type}
-            style={[styles.pill, active && styles.pillActive]}
-            onPress={() => onToggle(type)}
-            activeOpacity={0.7}
-          >
-            <Text
-              style={[styles.pillText, active && styles.pillTextActive]}
-              numberOfLines={1}
+    <View style={styles.container}>
+      <Text style={styles.label}>Quick Filters</Text>
+      <View style={styles.row}>
+        {favorites.slice(0, 4).map((type) => {
+          const active = activeFilters.includes(type);
+          return (
+            <TouchableOpacity
+              key={type}
+              style={[styles.pill, active && styles.pillActive]}
+              onPress={() => onToggle(type)}
+              activeOpacity={0.7}
             >
-              {type}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+              <Text
+                style={[styles.pillText, active && styles.pillTextActive]}
+                numberOfLines={1}
+              >
+                {type}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
