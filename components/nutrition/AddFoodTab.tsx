@@ -22,6 +22,7 @@ import CustomFoodForm from './CustomFoodForm';
 import PortionSelector from './PortionSelector';
 import FoodFilterModal, { FoodFilters } from './FoodFilterModal';
 import FloatingPillBar from './FloatingPillBar';
+import FavoritePillRow from './FavoritePillRow';
 
 const CATEGORY_LABELS: Record<MealCategory, string> = {
   breakfast: 'Breakfast',
@@ -232,7 +233,7 @@ interface Props {
 export default function AddFoodTab({ date, category, onDone }: Props) {
   const colors = useColors();
   const styles = makeStyles(colors);
-  const { customFoods, nutritionLog, dispatch } = useApp();
+  const { customFoods, nutritionLog, preferences, dispatch } = useApp();
 
   const [query, setQuery] = useState('');
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -250,6 +251,14 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   const [foodFilters, setFoodFilters] = useState<FoodFilters>({ foodTypes: [] });
   const [showFilterModal, setShowFilterModal] = useState(false);
   const filtersActive = hasActiveFilters(foodFilters);
+
+  const handleToggleFavoriteFilter = (type: string) => {
+    setFoodFilters((prev) => ({
+      foodTypes: prev.foodTypes.includes(type)
+        ? prev.foodTypes.filter((t) => t !== type)
+        : [...prev.foodTypes, type],
+    }));
+  };
 
   // Compute food frequency map from all logged entries (by name)
   const foodFrequencyMap = useMemo(() => {
@@ -544,6 +553,13 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
 
   return (
     <View style={styles.container}>
+      {!(searchExpanded && !isSearching) && (
+        <FavoritePillRow
+          favorites={preferences.favoriteFilterTypes ?? []}
+          activeFilters={foodFilters.foodTypes}
+          onToggle={handleToggleFavoriteFilter}
+        />
+      )}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}

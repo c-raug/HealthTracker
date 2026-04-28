@@ -124,6 +124,7 @@ export interface UserPreferences {
   lastRecapShownWeek?: string; // ISO week string e.g. "2026-W15"
   // Food categorization
   foodTypeCategories?: string[];
+  favoriteFilterTypes?: string[];
 }
 
 export type ExerciseType = 'weight_lifting';
