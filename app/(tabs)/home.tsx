@@ -65,10 +65,10 @@ const makeStyles = (colors: typeof LightColors) =>
       borderRadius: Radius.lg,
       marginBottom: Spacing.sm,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
       overflow: 'hidden',
     },
     cardLabel: {
@@ -92,26 +92,26 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     halfCard: {
       flex: 1,
+      minHeight: 160,
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
       overflow: 'hidden',
       alignItems: 'center',
     },
     flameContent: {
+      flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingBottom: Spacing.sm,
     },
     scaleContent: {
+      flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: Spacing.sm,
-      paddingBottom: Spacing.md,
     },
 
     // iOS date picker modal
@@ -288,7 +288,8 @@ export default function HomeScreen() {
               weight={latestEntryForDate ? String(convertWeight(latestEntryForDate.weight, latestEntryForDate.unit, preferences.unit)) : ''}
               unit={preferences.unit}
               animateToValue={null}
-              size={80}
+              size={100}
+              hideUnit={true}
             />
           </View>
         </TouchableOpacity>
