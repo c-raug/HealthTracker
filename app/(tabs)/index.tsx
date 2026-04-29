@@ -10,17 +10,20 @@ import {
   Keyboard,
   Platform,
   ScrollView,
+  Animated,
   Modal,
   ActivityIndicator,
   useColorScheme,
   useWindowDimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CollapsibleTabHeader, { COLLAPSIBLE_HEADER_HEIGHT } from '../../components/navigation/CollapsibleTabHeader';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { getToday, formatDisplayDate, addDays } from '../../utils/dateUtils';
@@ -63,11 +66,16 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
   dateNav: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: Radius.md,
+    borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: Spacing.sm,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   arrowBtn: {
     padding: Spacing.sm,
@@ -220,6 +228,9 @@ export default function WeightScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const pagerWidth = windowWidth - Spacing.md * 2;
 
+  const isDark = resolvedScheme === 'dark';
+  const scrollY = useRef(new Animated.Value(0)).current;
+
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
@@ -338,13 +349,38 @@ export default function WeightScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
+      <Stack.Screen options={{ headerShown: false }} />
+      <CollapsibleTabHeader title="Weight" scrollY={scrollY} />
+
+      {/* Top edge fade */}
+      <LinearGradient
+        colors={[colors.background, 'transparent']}
+        style={{ position: 'absolute', top: insets.top, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+      {/* Bottom edge fade */}
+      <LinearGradient
+        colors={['transparent', colors.background]}
+        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+
+      <Animated.ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + COLLAPSIBLE_HEADER_HEIGHT, paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
       >
         {/* Date navigation bar */}
         <View style={styles.dateNav}>
+          <LinearGradient
+            colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+            style={StyleSheet.absoluteFill}
+          />
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
             <Ionicons name="chevron-back" size={22} color={colors.primary} />
           </TouchableOpacity>
@@ -463,7 +499,7 @@ export default function WeightScreen() {
 
         {/* Insights — always visible below input card */}
         <WeightInsights />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Date picker — Android renders inline, iOS uses a modal */}
       {Platform.OS === 'android' && showDatePicker && (

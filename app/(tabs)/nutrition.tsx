@@ -8,11 +8,14 @@ import {
   Modal,
   ActivityIndicator,
   ScrollView,
+  Animated,
   useWindowDimensions,
   useColorScheme,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CollapsibleTabHeader, { COLLAPSIBLE_HEADER_HEIGHT } from '../../components/navigation/CollapsibleTabHeader';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -60,11 +63,16 @@ const makeStyles = (colors: typeof LightColors) =>
     dateNav: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.card,
-      borderRadius: Radius.md,
+      borderRadius: Radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
       marginBottom: Spacing.md,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 3,
     },
     arrowBtn: {
       padding: Spacing.sm,
@@ -157,12 +165,15 @@ export default function NutritionScreen() {
   const pagerWidth = windowWidth - Spacing.md * 2;
   const systemScheme = useColorScheme();
   const resolvedScheme: 'light' | 'dark' = preferences.appearanceMode === 'light' ? 'light' : preferences.appearanceMode === 'dark' ? 'dark' : (systemScheme ?? 'light');
+  const isDark = resolvedScheme === 'dark';
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
   const [sectionKey, setSectionKey] = useState(0);
   const [activePagerPage, setActivePagerPage] = useState(1);
-  const scrollRef = useRef<ScrollView>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const scrollRef = useRef<any>(null);
   const pagerScrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
@@ -360,13 +371,38 @@ export default function NutritionScreen() {
 
   return (
     <View style={styles.flex}>
-      <ScrollView
+      <Stack.Screen options={{ headerShown: false }} />
+      <CollapsibleTabHeader title="Nutrition" scrollY={scrollY} />
+
+      {/* Top edge fade */}
+      <LinearGradient
+        colors={[colors.background, 'transparent']}
+        style={{ position: 'absolute', top: insets.top, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+      {/* Bottom edge fade */}
+      <LinearGradient
+        colors={['transparent', colors.background]}
+        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+
+      <Animated.ScrollView
         ref={scrollRef}
-        contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + COLLAPSIBLE_HEADER_HEIGHT, paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
         keyboardShouldPersistTaps="handled"
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
       >
         {/* Date navigation */}
         <View style={styles.dateNav}>
+          <LinearGradient
+            colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+            style={StyleSheet.absoluteFill}
+          />
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
             <Ionicons name="chevron-back" size={22} color={colors.primary} />
           </TouchableOpacity>
@@ -497,7 +533,7 @@ export default function NutritionScreen() {
             ))}
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Date picker */}
       {Platform.OS === 'android' && showDatePicker && (

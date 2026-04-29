@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Animated,
   Platform,
   Modal,
   ActivityIndicator,
@@ -12,8 +13,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CollapsibleTabHeader, { COLLAPSIBLE_HEADER_HEIGHT } from '../../components/navigation/CollapsibleTabHeader';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -38,11 +40,16 @@ const makeStyles = (colors: typeof LightColors) =>
     dateNav: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.card,
-      borderRadius: Radius.md,
+      borderRadius: Radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
       marginBottom: Spacing.sm,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 3,
     },
     arrowBtn: { padding: Spacing.sm },
     dateCenter: {
@@ -163,6 +170,7 @@ export default function HomeScreen() {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const today = getToday();
   const isForwardDisabled = selectedDate >= today;
@@ -234,9 +242,39 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView style={styles.flex} contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]} keyboardShouldPersistTaps="handled">
+    <View style={styles.flex}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <CollapsibleTabHeader title="Home" scrollY={scrollY} />
+
+      {/* Top edge fade */}
+      <LinearGradient
+        colors={[colors.background, 'transparent']}
+        style={{ position: 'absolute', top: insets.top, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+      {/* Bottom edge fade */}
+      <LinearGradient
+        colors={['transparent', colors.background]}
+        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+
+      <Animated.ScrollView
+        style={styles.flex}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + COLLAPSIBLE_HEADER_HEIGHT, paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
+        keyboardShouldPersistTaps="handled"
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
       {/* Date navigation */}
       <View style={styles.dateNav}>
+        <LinearGradient
+          colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+          style={StyleSheet.absoluteFill}
+        />
         <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
           <Ionicons name="chevron-back" size={22} color={colors.primary} />
         </TouchableOpacity>
@@ -348,6 +386,7 @@ export default function HomeScreen() {
           </View>
         </Modal>
       )}
-    </ScrollView>
+      </Animated.ScrollView>
+    </View>
   );
 }

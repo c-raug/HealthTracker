@@ -13,14 +13,18 @@ import {
   ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
+  Animated,
+  useColorScheme,
   useWindowDimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import CollapsibleTabHeader, { COLLAPSIBLE_HEADER_HEIGHT } from '../../components/navigation/CollapsibleTabHeader';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { PILL_TOTAL_HEIGHT } from '../../components/navigation/PillTabBar';
@@ -70,11 +74,16 @@ const makeStyles = (colors: typeof LightColors) =>
     dateNav: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.card,
-      borderRadius: Radius.md,
+      borderRadius: Radius.lg,
       borderWidth: 1,
       borderColor: colors.border,
       marginBottom: Spacing.md,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
+      elevation: 3,
     },
     arrowBtn: { padding: Spacing.sm },
     dateCenter: {
@@ -442,6 +451,10 @@ export default function ActivitiesScreen() {
   const colors = useColors();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
+  const systemScheme = useColorScheme();
+  const resolvedScheme: 'light' | 'dark' = preferences.appearanceMode === 'light' ? 'light' : preferences.appearanceMode === 'dark' ? 'dark' : (systemScheme ?? 'light');
+  const isDark = resolvedScheme === 'dark';
+  const scrollY = useRef(new Animated.Value(0)).current;
   const { width: windowWidth } = useWindowDimensions();
 
   const pagerScrollRef = useRef<ScrollView>(null);
@@ -478,7 +491,8 @@ export default function ActivitiesScreen() {
   const savedConfirmationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Scroll-into-view refs for smartwatch input
-  const scrollViewRef = useRef<ScrollView>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const scrollViewRef = useRef<any>(null);
   const smartwatchInputWrapperRef = useRef<View>(null);
   const smartwatchInputRef = useRef<TextInput>(null);
   const smartwatchFocusedRef = useRef(false);
@@ -704,6 +718,7 @@ export default function ActivitiesScreen() {
   if (!profile || !latestWeight) {
     return (
       <ScrollView style={styles.flex} contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}>
+        <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.promptContainer}>
           <ProfilePrompt message="Set up your profile and log a weight entry to start tracking activity calories." />
         </View>
@@ -713,9 +728,38 @@ export default function ActivitiesScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView ref={scrollViewRef} contentContainerStyle={[styles.content, { paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]} keyboardShouldPersistTaps="handled">
+      <Stack.Screen options={{ headerShown: false }} />
+      <CollapsibleTabHeader title="Activities" scrollY={scrollY} />
+
+      {/* Top edge fade */}
+      <LinearGradient
+        colors={[colors.background, 'transparent']}
+        style={{ position: 'absolute', top: insets.top, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+      {/* Bottom edge fade */}
+      <LinearGradient
+        colors={['transparent', colors.background]}
+        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 60, zIndex: 9 }}
+        pointerEvents="none"
+      />
+
+      <Animated.ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + COLLAPSIBLE_HEADER_HEIGHT, paddingBottom: PILL_TOTAL_HEIGHT + insets.bottom + Spacing.md }]}
+        keyboardShouldPersistTaps="handled"
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
         {/* Date navigation */}
         <View style={styles.dateNav}>
+          <LinearGradient
+            colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+            style={StyleSheet.absoluteFill}
+          />
           <TouchableOpacity onPress={goBack} style={styles.arrowBtn}>
             <Ionicons name="chevron-back" size={22} color={colors.primary} />
           </TouchableOpacity>
@@ -1054,7 +1098,7 @@ export default function ActivitiesScreen() {
             )}
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Date picker — Android */}
       {Platform.OS === 'android' && showDatePicker && (
