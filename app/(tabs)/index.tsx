@@ -352,18 +352,6 @@ export default function WeightScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <CollapsibleTabHeader title="Weight" scrollY={scrollY} />
 
-      {/* Top edge fade */}
-      <LinearGradient
-        colors={[colors.background, 'transparent']}
-        style={{ position: 'absolute', top: insets.top, left: 0, right: 0, height: 60, zIndex: 9 }}
-        pointerEvents="none"
-      />
-      {/* Bottom edge fade */}
-      <LinearGradient
-        colors={['transparent', colors.background]}
-        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 60, zIndex: 9 }}
-        pointerEvents="none"
-      />
 
       <Animated.ScrollView
         style={styles.container}

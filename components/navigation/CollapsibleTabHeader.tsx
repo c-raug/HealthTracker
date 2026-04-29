@@ -1,4 +1,5 @@
-import { Animated, Text, StyleSheet, View } from 'react-native';
+import { Animated, Text, StyleSheet, View, useColorScheme } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors, Typography, Spacing } from '../../constants/theme';
 import HeaderXpBar from './HeaderXpBar';
@@ -13,6 +14,7 @@ interface Props {
 export default function CollapsibleTabHeader({ title, scrollY }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const isDark = useColorScheme() === 'dark';
 
   const totalHeight = insets.top + COLLAPSIBLE_HEADER_HEIGHT;
 
@@ -28,16 +30,18 @@ export default function CollapsibleTabHeader({ title, scrollY }: Props) {
         styles.header,
         {
           height: totalHeight,
-          paddingTop: insets.top,
-          backgroundColor: colors.background,
           transform: [{ translateY: headerTranslateY }],
         },
       ]}
     >
-      <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-        {title}
-      </Text>
-      <HeaderXpBar />
+      <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flex: 1 }}>
+        <View style={[styles.titleRow, { paddingTop: insets.top }]}>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+            {title}
+          </Text>
+          <HeaderXpBar />
+        </View>
+      </BlurView>
     </Animated.View>
   );
 }
@@ -48,11 +52,15 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+    overflow: 'hidden',
+    zIndex: 10,
+    elevation: 10,
+  },
+  titleRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    zIndex: 10,
-    elevation: 10,
   },
   title: {
     ...Typography.h2,
