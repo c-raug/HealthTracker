@@ -24,6 +24,13 @@ export default function CollapsibleTabHeader({ title, scrollY }: Props) {
     extrapolate: 'clamp',
   });
 
+  // Blur fades in as soon as scrolling starts
+  const blurOpacity = scrollY.interpolate({
+    inputRange: [0, 20],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
     <Animated.View
       style={[
@@ -34,14 +41,15 @@ export default function CollapsibleTabHeader({ title, scrollY }: Props) {
         },
       ]}
     >
-      <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={{ flex: 1 }}>
-        <View style={[styles.titleRow, { paddingTop: insets.top }]}>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-            {title}
-          </Text>
-          <HeaderXpBar />
-        </View>
-      </BlurView>
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity: blurOpacity }]}>
+        <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+      <View style={[styles.titleRow, { paddingTop: insets.top }]}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+          {title}
+        </Text>
+        <HeaderXpBar />
+      </View>
     </Animated.View>
   );
 }
