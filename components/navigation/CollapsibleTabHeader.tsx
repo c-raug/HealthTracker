@@ -24,10 +24,12 @@ export default function CollapsibleTabHeader({ title, scrollY }: Props) {
     extrapolate: 'clamp',
   });
 
-  // Blur fades in as soon as scrolling starts
-  const blurOpacity = scrollY.interpolate({
+  // Solid background fades out as you start scrolling, revealing the BlurView beneath.
+  // iOS cannot animate opacity on a UIVisualEffectView (BlurView) directly — animating
+  // a plain solid overlay that fades out is the correct workaround.
+  const solidOpacity = scrollY.interpolate({
     inputRange: [0, 20],
-    outputRange: [0, 1],
+    outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
@@ -41,9 +43,12 @@ export default function CollapsibleTabHeader({ title, scrollY }: Props) {
         },
       ]}
     >
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity: blurOpacity }]}>
-        <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-      </Animated.View>
+      {/* Always-on blur — visible once solid overlay fades out */}
+      <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      {/* Solid overlay — fades out on scroll to reveal blur */}
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, opacity: solidOpacity }]}
+      />
       <View style={[styles.titleRow, { paddingTop: insets.top }]}>
         <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
           {title}

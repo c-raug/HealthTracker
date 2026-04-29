@@ -249,14 +249,14 @@ export default function HomeScreen() {
 
       {/* Header region blur — blurs content that scrolls behind the header */}
       <BlurView
-        intensity={12}
+        intensity={6}
         tint={isDark ? 'dark' : 'light'}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, height: Math.round((insets.top + COLLAPSIBLE_HEADER_HEIGHT) / 2), zIndex: 5, overflow: 'hidden' }}
         pointerEvents="none"
       />
       {/* Footer region blur — blurs content that scrolls behind the tab bar */}
       <BlurView
-        intensity={12}
+        intensity={6}
         tint={isDark ? 'dark' : 'light'}
         style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: Math.round((PILL_TOTAL_HEIGHT + insets.bottom) / 2), zIndex: 5, overflow: 'hidden' }}
         pointerEvents="none"
