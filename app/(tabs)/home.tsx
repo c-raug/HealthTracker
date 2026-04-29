@@ -11,6 +11,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -64,11 +65,13 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
       marginBottom: Spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
       overflow: 'hidden',
     },
     cardLabel: {
@@ -92,26 +95,30 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     halfCard: {
       flex: 1,
+      minHeight: 160,
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
       overflow: 'hidden',
       alignItems: 'center',
     },
     flameContent: {
+      flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       paddingBottom: Spacing.sm,
     },
     scaleContent: {
+      flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: Spacing.sm,
-      paddingBottom: Spacing.md,
+      paddingBottom: Spacing.lg,
     },
 
     // iOS date picker modal
@@ -152,6 +159,7 @@ export default function HomeScreen() {
     preferences.appearanceMode === 'light' ? 'light' :
     preferences.appearanceMode === 'dark' ? 'dark' :
     (systemScheme ?? 'light');
+  const isDark = resolvedScheme === 'dark';
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [waterExpandKey, setWaterExpandKey] = useState(0);
@@ -255,6 +263,10 @@ export default function HomeScreen() {
         onPress={() => router.push('/(tabs)/nutrition')}
         activeOpacity={0.85}
       >
+        <LinearGradient
+          colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+          style={StyleSheet.absoluteFill}
+        />
         <Text style={styles.cardLabel}>NUTRITION</Text>
         <View style={styles.nutritionContent}>
           <CalorieRing consumed={consumed} target={calorieTarget} />
@@ -270,6 +282,10 @@ export default function HomeScreen() {
           onPress={() => router.push('/(tabs)/activities')}
           activeOpacity={0.85}
         >
+          <LinearGradient
+            colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+            style={StyleSheet.absoluteFill}
+          />
           <Text style={styles.cardLabel}>ACTIVITY</Text>
           <View style={styles.flameContent}>
             <CalorieFlame totalBurned={totalBurned} size={120} />
@@ -282,13 +298,18 @@ export default function HomeScreen() {
           onPress={() => router.push('/(tabs)/')}
           activeOpacity={0.85}
         >
+          <LinearGradient
+            colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+            style={StyleSheet.absoluteFill}
+          />
           <Text style={styles.cardLabel}>WEIGHT</Text>
           <View style={styles.scaleContent}>
             <DigitalScale
               weight={latestEntryForDate ? String(convertWeight(latestEntryForDate.weight, latestEntryForDate.unit, preferences.unit)) : ''}
               unit={preferences.unit}
               animateToValue={null}
-              size={80}
+              size={100}
+              hideUnit={true}
             />
           </View>
         </TouchableOpacity>

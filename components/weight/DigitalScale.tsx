@@ -5,7 +5,7 @@ import AndroidGlowBackdrop from '../glow/AndroidGlowBackdrop';
 
 const ANIMATION_DURATION = 1500;
 
-const makeStyles = (colors: typeof LightColors, size: number) =>
+const makeStyles = (colors: typeof LightColors, size: number, hideUnit: boolean) =>
   StyleSheet.create({
     scaleOuter: {
       width: size,
@@ -42,17 +42,17 @@ const makeStyles = (colors: typeof LightColors, size: number) =>
     lcdRecess: {
       position: 'absolute',
       top: size * 0.08,
-      left: size * 0.225,
-      width: size * 0.55,
-      height: size * 0.22,
+      left: hideUnit ? (size * 0.25 - 3) : size * 0.225,
+      width: hideUnit ? size * 0.50 : size * 0.55,
+      height: hideUnit ? size * 0.20 : size * 0.22,
       backgroundColor: colors.background,
       borderRadius: Radius.md,
       borderWidth: 1,
       borderColor: colors.border,
-      flexDirection: 'row',
+      flexDirection: hideUnit ? 'column' : 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: Spacing.xs,
+      gap: hideUnit ? 0 : Spacing.xs,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.12,
@@ -60,10 +60,10 @@ const makeStyles = (colors: typeof LightColors, size: number) =>
       elevation: 2,
     },
     lcdValue: {
-      fontSize: Math.round(size * 0.13),
+      fontSize: Math.round(size * (hideUnit ? 0.15 : 0.13)),
       fontWeight: '700',
       fontVariant: ['tabular-nums'],
-      letterSpacing: 1,
+      textAlign: 'center',
     },
     lcdUnit: {
       fontSize: Math.round(size * 0.065),
@@ -76,11 +76,12 @@ interface Props {
   unit: string;
   animateToValue: number | null;
   size?: number;
+  hideUnit?: boolean;
 }
 
-export default function DigitalScale({ weight, unit, animateToValue, size = 280 }: Props) {
+export default function DigitalScale({ weight, unit, animateToValue, size = 280, hideUnit = false }: Props) {
   const colors = useColors();
-  const styles = makeStyles(colors, size);
+  const styles = makeStyles(colors, size, hideUnit);
 
   const [displayNumber, setDisplayNumber] = useState<string | null>(null);
   const [animationDone, setAnimationDone] = useState<boolean>(false);
@@ -146,9 +147,11 @@ export default function DigitalScale({ weight, unit, animateToValue, size = 280 
           <Text style={[styles.lcdValue, { color: valueColor }]}>
             {displayValue}
           </Text>
-          <Text style={[styles.lcdUnit, { color: valueColor }]}>
-            {unit}
-          </Text>
+          {!hideUnit && (
+            <Text style={[styles.lcdUnit, { color: valueColor }]}>
+              {unit}
+            </Text>
+          )}
         </View>
       </View>
     </View>
