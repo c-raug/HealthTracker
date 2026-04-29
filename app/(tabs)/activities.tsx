@@ -732,18 +732,18 @@ export default function ActivitiesScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <CollapsibleTabHeader title="Activities" scrollY={scrollY} />
 
-      {/* Top content blur */}
+      {/* Header region blur — blurs content that scrolls behind the header */}
       <BlurView
-        intensity={60}
+        intensity={25}
         tint={isDark ? 'dark' : 'light'}
-        style={{ position: 'absolute', top: insets.top + COLLAPSIBLE_HEADER_HEIGHT, left: 0, right: 0, height: 64, zIndex: 8, overflow: 'hidden' }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: insets.top + COLLAPSIBLE_HEADER_HEIGHT, zIndex: 5, overflow: 'hidden' }}
         pointerEvents="none"
       />
-      {/* Bottom content blur */}
+      {/* Footer region blur — blurs content that scrolls behind the tab bar */}
       <BlurView
-        intensity={60}
+        intensity={25}
         tint={isDark ? 'dark' : 'light'}
-        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 64, zIndex: 8, overflow: 'hidden' }}
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: PILL_TOTAL_HEIGHT + insets.bottom, zIndex: 5, overflow: 'hidden' }}
         pointerEvents="none"
       />
 
