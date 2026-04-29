@@ -17,6 +17,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -352,6 +353,20 @@ export default function WeightScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <CollapsibleTabHeader title="Weight" scrollY={scrollY} />
 
+      {/* Top content blur */}
+      <BlurView
+        intensity={60}
+        tint={isDark ? 'dark' : 'light'}
+        style={{ position: 'absolute', top: insets.top + COLLAPSIBLE_HEADER_HEIGHT, left: 0, right: 0, height: 64, zIndex: 8, overflow: 'hidden' }}
+        pointerEvents="none"
+      />
+      {/* Bottom content blur */}
+      <BlurView
+        intensity={60}
+        tint={isDark ? 'dark' : 'light'}
+        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 64, zIndex: 8, overflow: 'hidden' }}
+        pointerEvents="none"
+      />
 
       <Animated.ScrollView
         style={styles.container}

@@ -18,6 +18,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -731,6 +732,20 @@ export default function ActivitiesScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <CollapsibleTabHeader title="Activities" scrollY={scrollY} />
 
+      {/* Top content blur */}
+      <BlurView
+        intensity={60}
+        tint={isDark ? 'dark' : 'light'}
+        style={{ position: 'absolute', top: insets.top + COLLAPSIBLE_HEADER_HEIGHT, left: 0, right: 0, height: 64, zIndex: 8, overflow: 'hidden' }}
+        pointerEvents="none"
+      />
+      {/* Bottom content blur */}
+      <BlurView
+        intensity={60}
+        tint={isDark ? 'dark' : 'light'}
+        style={{ position: 'absolute', bottom: PILL_TOTAL_HEIGHT + insets.bottom, left: 0, right: 0, height: 64, zIndex: 8, overflow: 'hidden' }}
+        pointerEvents="none"
+      />
 
       <Animated.ScrollView
         ref={scrollViewRef}
