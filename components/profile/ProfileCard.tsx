@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '../../context/AppContext';
@@ -19,11 +20,13 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
       marginBottom: Spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
       overflow: 'hidden',
     },
     summaryRow: {
@@ -117,8 +120,14 @@ export default function ProfileCard() {
   const currentISOWeek = getISOWeekString(getToday());
   const showRecapBadge = preferences.lastRecapShownWeek !== currentISOWeek;
 
+  const isDark = colors.card === '#2C2C2E';
+
   return (
     <View style={styles.card}>
+      <LinearGradient
+        colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.summaryRow}>
         <TouchableOpacity
           onPress={() => router.push('/weekly-recap-modal')}

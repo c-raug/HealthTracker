@@ -60,10 +60,9 @@ const makeStyles = (colors: typeof LightColors, size: number, hideUnit: boolean)
       elevation: 2,
     },
     lcdValue: {
-      fontSize: Math.round(size * (hideUnit ? 0.18 : 0.13)),
+      fontSize: Math.round(size * (hideUnit ? 0.15 : 0.13)),
       fontWeight: '700',
       fontVariant: ['tabular-nums'],
-      letterSpacing: 1,
     },
     lcdUnit: {
       fontSize: Math.round(size * 0.065),

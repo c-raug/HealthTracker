@@ -27,7 +27,7 @@ const makeStyles = (colors: typeof LightColors, compact: boolean) =>
     },
     overlay: {
       position: 'absolute',
-      top: '40%',
+      top: '28%',
       left: 0,
       right: 0,
       bottom: 0,
