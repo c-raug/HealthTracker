@@ -18,7 +18,9 @@
 10. [Icons](#10-icons)
 11. [Fixed Color Rules](#11-fixed-color-rules)
 12. [Modal Sub-Screen Header](#12-modal-sub-screen-header)
-13. [Drag-to-Reorder Pattern](#13-drag-to-reorder-pattern)
+13. [Story-Style Full-Screen Modal](#13-story-style-full-screen-modal)
+14. [Drag-to-Reorder Pattern](#14-drag-to-reorder-pattern)
+15. [iOS 26 Feature Cards](#15-ios-26-feature-cards)
 
 ---
 
@@ -225,9 +227,9 @@ borderRadius: 4,
 
 ## 7. Shadows & Elevation
 
-### Standard Card Shadow (One Pattern for All Cards)
+### Standard Card Shadow
 
-Every card/container in the app uses this exact shadow. Do not modify or create variations.
+Used on most cards: `MealCategory`, `MacroProgressBars`, `WaterTracker`, `WeightChart`, `WeightEntryList`, settings cards, and general content containers.
 
 ```typescript
 shadowColor: '#000',
@@ -237,7 +239,19 @@ shadowRadius: 4,
 elevation: 2,
 ```
 
-Used on: `MealCategory`, `MacroProgressBars`, `WaterTracker`, `WeightChart`, `WeightEntryList`, summary cards, and all card-style containers.
+### iOS 26 Feature Card Shadow
+
+Used on prominent dashboard cards (Home screen: Profile, Nutrition, Activity, Weight). Deeper and softer — creates a "floating" appearance.
+
+```typescript
+shadowColor: '#000',
+shadowOffset: { width: 0, height: 4 },
+shadowOpacity: 0.12,
+shadowRadius: 12,
+elevation: 5,
+```
+
+These cards also require a thin border and a `LinearGradient` background layer — see **Section 15**.
 
 ### Water Bottle Glow (Special Case — Only for WaterBottleVisual)
 
@@ -753,7 +767,7 @@ These rules are absolute and must never be violated:
 
 5. **Modal overlay** — Always `rgba(0,0,0,0.35)`. Never change opacity.
 
-6. **Card shadows** — Always the standard shadow values. Never create custom shadow variations.
+6. **Card shadows** — Standard content cards always use the standard shadow values. Home screen feature cards (Profile, Nutrition, Activity, Weight dashboard) use the iOS 26 shadow + gradient pattern from Section 15. Never create other custom shadow variations.
 
 7. **Accent color** — `colors.primary` and `colors.primaryLight` reflect the user's chosen accent. Use these for all interactive accent elements except water, macros, and calorie proximity indicators.
 
@@ -1057,6 +1071,93 @@ sectionHeaderRow: {
 
 ---
 
+## 15. iOS 26 Feature Cards
+
+Used for prominent dashboard cards on the Home screen (Profile, Nutrition, Activity, Weight). This pattern combines a deeper shadow, a thin border, and a subtle top-to-bottom `LinearGradient` for a "floating surface" appearance inspired by iOS 26 (as seen in Apple Music Radio).
+
+### When to Use
+
+- Full-width or half-width summary cards on the Home screen
+- Any card that should visually "pop" off the background with depth
+- **Do NOT use** for standard content cards (`MealCategory`, `WaterTracker`, settings cards, etc.) — those use the standard shadow from Section 7
+
+### Three Changes vs a Standard Card
+
+**1. Deeper shadow:**
+```typescript
+shadowColor: '#000',
+shadowOffset: { width: 0, height: 4 },
+shadowOpacity: 0.12,
+shadowRadius: 12,
+elevation: 5,
+```
+
+**2. Thin border for edge definition:**
+```typescript
+borderWidth: 1,
+borderColor: colors.border,
+```
+
+**3. `LinearGradient` as first child** (subtle top-to-bottom tint that creates the 3D raised look):
+```tsx
+import { LinearGradient } from 'expo-linear-gradient';
+
+<TouchableOpacity style={styles.featureCard}>
+  <LinearGradient
+    colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+    style={StyleSheet.absoluteFill}
+  />
+  {/* other card children */}
+</TouchableOpacity>
+```
+
+`overflow: 'hidden'` on the card clips the gradient to `borderRadius`. iOS shadows are composited at the OS layer and are **not** affected by `overflow: 'hidden'`.
+
+### Complete Style Example
+
+```typescript
+featureCard: {
+  backgroundColor: colors.card,   // fallback before gradient renders
+  borderRadius: Radius.lg,
+  marginBottom: Spacing.sm,
+  borderWidth: 1,
+  borderColor: colors.border,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.12,
+  shadowRadius: 12,
+  elevation: 5,
+  overflow: 'hidden',
+},
+```
+
+### Gradient Values
+
+| Mode  | Top       | Bottom    | Effect                                      |
+|-------|-----------|-----------|---------------------------------------------|
+| Light | `#FFFFFF` | `#F4F4F8` | White → very slightly cool gray             |
+| Dark  | `#3A3A3C` | `#2C2C2E` | Slightly lighter than card → base card color |
+
+### Dark Mode Detection
+
+```typescript
+// When resolvedScheme is already computed (e.g. home.tsx):
+const isDark = resolvedScheme === 'dark';
+
+// In components that only have colors (e.g. ProfileCard):
+const isDark = colors.card === '#2C2C2E';
+// Reliable because colors.card is always '#FFFFFF' (light) or '#2C2C2E' (dark)
+```
+
+### Components Using This Pattern
+
+| File | Cards |
+|------|-------|
+| `app/(tabs)/home.tsx` | Nutrition (full-width), Activity (half), Weight (half) |
+| `components/profile/ProfileCard.tsx` | Profile summary card |
+
+---
+
 ## File Reference
 
 | File                          | Contains                                   |
@@ -1080,7 +1181,8 @@ sectionHeaderRow: {
 | `utils/flameColor.ts`                      | `flameColorForBurn()` + `glowIntensityForBurn()` — 6-stop color lerp for CalorieFlame |
 | `components/glow/AndroidGlowBackdrop.tsx`  | Android-only colored glow halo — `null` on iOS, concentric semi-transparent Views on Android |
 | `components/activities/CalorieFlame.tsx`   | Dynamic flame: color from `flameColorForBurn()`, glow from `glowIntensityForBurn()`; iOS shadow, Android `AndroidGlowBackdrop` |
-| `components/weight/DigitalScale.tsx`       | Themed bathroom-scale visual: `primary` stroke + `primaryLight` fill, recessed LCD, 1500ms count-up + iOS `primary` glow / Android `AndroidGlowBackdrop` |
+| `components/weight/DigitalScale.tsx`       | Themed bathroom-scale visual: `primary` stroke + `primaryLight` fill, recessed LCD, 1500ms count-up + iOS `primary` glow / Android `AndroidGlowBackdrop`. `hideUnit?: boolean` prop — when true, suppresses the unit label and increases LCD font coefficient (0.13 → 0.15) for better fill |
+| `app/(tabs)/home.tsx`                      | Home screen dashboard — iOS 26 feature card pattern (Section 15) applied to all four cards |
 | `components/ErrorBoundary.tsx`             | Error fallback using static LightColors |
 | `components/ToastNotification.tsx`         | Animated top-of-screen toast banner |
 | `components/GamificationWatcher.tsx`       | Invisible root-level XP/achievement watcher |
