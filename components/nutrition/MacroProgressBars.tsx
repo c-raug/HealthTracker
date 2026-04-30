@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { MacroSplit } from '../../types';
 
@@ -16,10 +17,20 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.md,
       marginBottom: Spacing.md,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    sectionLabel: {
+      ...Typography.small,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: Spacing.sm,
     },
     row: {
       flexDirection: 'row',
@@ -33,7 +44,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     barContainer: {
       flex: 1,
-      height: 8,
+      height: 10,
       backgroundColor: colors.border,
       borderRadius: 4,
       marginHorizontal: Spacing.sm,
@@ -74,8 +85,15 @@ export default function MacroProgressBars({ consumed, goalCalories, macroSplit }
     { key: 'fat', label: 'Fat', color: FAT_COLOR },
   ];
 
+  const isDark = colors.card === '#2C2C2E';
+
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+        style={StyleSheet.absoluteFill}
+      />
+      <Text style={styles.sectionLabel}>Macros</Text>
       {macros.map(({ key, label, color }) => {
         const target = targets[key];
         const current = Math.round(consumed[key]);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Rect, G, Text as SvgText, Line } from 'react-native-svg';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { ringColorForProximity } from '../../utils/calorieColor';
@@ -30,10 +31,13 @@ const makeStyles = (colors: typeof LightColors) =>
       borderRadius: Radius.lg,
       padding: Spacing.md,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     titleRow: {
       marginBottom: Spacing.sm,
@@ -296,6 +300,7 @@ interface CalorieGraphProps {
 export function WeeklyCalorieGraph({ width, calorieData, macroData, calorieGoal, activePageIndex }: CalorieGraphProps) {
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
   const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
   useEffect(() => {
@@ -328,6 +333,10 @@ export function WeeklyCalorieGraph({ width, calorieData, macroData, calorieGoal,
 
   return (
     <View style={styles.card}>
+      <LinearGradient
+        colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.titleRow}>
         <Text style={styles.title}>Calories — 7 Days</Text>
       </View>
@@ -381,6 +390,7 @@ interface WaterGraphProps {
 export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit, activePageIndex }: WaterGraphProps) {
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
   const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
   useEffect(() => {
@@ -411,6 +421,10 @@ export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit, activ
 
   return (
     <View style={styles.card}>
+      <LinearGradient
+        colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.titleRow}>
         <Text style={styles.title}>Water — 7 Days</Text>
       </View>
@@ -456,6 +470,7 @@ interface ActivityGraphProps {
 export function WeeklyActivityGraph({ width, activityData, dailyBurnGoal, activePageIndex }: ActivityGraphProps) {
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
   const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
   useEffect(() => {
@@ -486,6 +501,10 @@ export function WeeklyActivityGraph({ width, activityData, dailyBurnGoal, active
 
   return (
     <View style={styles.card}>
+      <LinearGradient
+        colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+        style={StyleSheet.absoluteFill}
+      />
       <View style={styles.titleRow}>
         <Text style={styles.title}>Calories Burned — 7 Days</Text>
       </View>

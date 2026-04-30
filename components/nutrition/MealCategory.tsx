@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Swipeable, TouchableOpacity as GHTouchableOpacity } from 'react-native-gesture-handler';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,10 +38,12 @@ const makeStyles = (colors: typeof LightColors) =>
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     contentArea: {
       overflow: 'hidden',
@@ -53,7 +56,6 @@ const makeStyles = (colors: typeof LightColors) =>
       justifyContent: 'space-between',
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
-      backgroundColor: colors.card,
       borderTopLeftRadius: Radius.lg,
       borderTopRightRadius: Radius.lg,
     },
@@ -86,11 +88,26 @@ const makeStyles = (colors: typeof LightColors) =>
       borderTopRightRadius: Radius.lg,
       borderBottomRightRadius: Radius.lg,
     },
+    addPill: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.md,
+      paddingVertical: Spacing.xs,
+      paddingHorizontal: Spacing.sm,
+    },
+    addPillText: {
+      ...Typography.small,
+      color: colors.white,
+      fontWeight: '700',
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: Spacing.lg,
+      gap: Spacing.xs,
+    },
     emptyText: {
       ...Typography.small,
       color: colors.textSecondary,
       textAlign: 'center',
-      paddingVertical: Spacing.md,
     },
     groupHeader: {
       flexDirection: 'row',
@@ -264,8 +281,14 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
     );
   };
 
+  const isDark = colors.card === '#2C2C2E';
+
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+        style={[StyleSheet.absoluteFill, { borderRadius: Radius.lg }]}
+      />
       <Swipeable
         ref={swipeableRef}
         renderRightActions={renderSaveAsAction}
@@ -297,10 +320,11 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
               <Ionicons name="copy-outline" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.actionBtn}
+              style={styles.addPill}
               onPress={handleAdd}
+              activeOpacity={0.8}
             >
-              <Ionicons name="add-circle-outline" size={24} color={colors.primary} />
+              <Text style={styles.addPillText}>+ Add</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -309,7 +333,10 @@ export default function MealCategoryComponent({ category, foods, date }: Props) 
       {!collapsed && (
         <View style={styles.contentArea}>
           {foods.length === 0 && (
-            <Text style={styles.emptyText}>No foods logged</Text>
+            <View style={styles.emptyState}>
+              <Ionicons name="nutrition-outline" size={28} color={colors.border} />
+              <Text style={styles.emptyText}>Tap + Add to log food</Text>
+            </View>
           )}
 
           {/* Ungrouped foods */}

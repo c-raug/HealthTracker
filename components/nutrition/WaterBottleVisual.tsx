@@ -30,20 +30,20 @@ const makeStyles = (colors: typeof LightColors) =>
     cap: {
       width: CAP_WIDTH,
       height: CAP_HEIGHT,
-      backgroundColor: colors.border,
+      backgroundColor: WATER_BLUE + '99',
       borderTopLeftRadius: 4,
       borderTopRightRadius: 4,
     },
     neck: {
       width: CAP_WIDTH + 8,
       height: NECK_HEIGHT,
-      backgroundColor: colors.border,
+      backgroundColor: WATER_BLUE + '99',
     },
     bottleBody: {
       width: BOTTLE_WIDTH,
       height: BOTTLE_BODY_HEIGHT,
       borderWidth: 2,
-      borderColor: colors.border,
+      borderColor: WATER_BLUE + '66',
       borderRadius: 13,
       overflow: 'hidden',
       backgroundColor: colors.background,
@@ -160,7 +160,7 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
         <View style={styles.neck} />
         <View style={styles.bottleBody}>
           <Animated.View
-            style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
+            style={[styles.fill, { height: fillAnim, backgroundColor: WATER_BLUE + '88' }]}
           />
           <View style={styles.pctLabel}>
             <Text style={styles.pctText}>{pctDisplay}%</Text>

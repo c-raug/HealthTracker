@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
@@ -33,11 +34,13 @@ const makeStyles = (colors: typeof LightColors) =>
       borderRadius: Radius.lg,
       marginBottom: Spacing.md,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     header: {
       flexDirection: 'row',
@@ -45,7 +48,6 @@ const makeStyles = (colors: typeof LightColors) =>
       justifyContent: 'space-between',
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
-      backgroundColor: colors.card,
     },
     headerLeft: {
       flexDirection: 'row',
@@ -340,9 +342,15 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
     setEditValue('');
   };
 
+  const isDark = colors.card === '#2C2C2E';
+
   return (
     <>
       <View style={styles.container}>
+        <LinearGradient
+          colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+          style={StyleSheet.absoluteFill}
+        />
         <TouchableOpacity
           style={styles.header}
           onPress={() => setCollapsed((v) => !v)}
