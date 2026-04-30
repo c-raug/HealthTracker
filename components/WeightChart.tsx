@@ -26,7 +26,7 @@ function getDaysForRange(range: TimeRange): number | null {
   }
 }
 
-const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
+const makeStyles = (colors: typeof LightColors, isDark: boolean) => StyleSheet.create({
   container: {
     marginVertical: Spacing.sm,
     borderRadius: Radius.lg,
@@ -67,8 +67,17 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  chart: {
+  chartWrapper: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
     borderRadius: Radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: isDark ? '#2C2C2E' : '#F8F9FB',
+  },
+  chart: {
+    borderRadius: 0,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -139,7 +148,7 @@ export default function WeightChart() {
     appearanceMode === 'dark' ||
     (appearanceMode === 'system' && (deviceScheme ?? 'light') === 'dark');
   const gradientColors: [string, string] = isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8'];
-  const styles = makeStyles(colors);
+  const styles = makeStyles(colors, isDark);
   const [selectedRange, setSelectedRange] = useState<TimeRange>('1M');
 
   // Sort ascending by date (all entries)
@@ -194,12 +203,19 @@ export default function WeightChart() {
     ],
   };
 
+  const chartBg = isDark ? '#2C2C2E' : '#F8F9FB';
+  // Parse colors.primary hex → rgb for use in rgba()
+  const hex = colors.primary.replace('#', '');
+  const pr = parseInt(hex.substring(0, 2), 16);
+  const pg = parseInt(hex.substring(2, 4), 16);
+  const pb = parseInt(hex.substring(4, 6), 16);
+
   const chartConfig = {
-    backgroundColor: gradientColors[0],
-    backgroundGradientFrom: gradientColors[0],
-    backgroundGradientTo: gradientColors[1],
+    backgroundColor: chartBg,
+    backgroundGradientFrom: chartBg,
+    backgroundGradientTo: chartBg,
     decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
+    color: (opacity = 1) => `rgba(${pr}, ${pg}, ${pb}, ${opacity * 0.25})`,
     labelColor: () => colors.textSecondary,
     propsForDots: {
       r: '3',
@@ -207,7 +223,7 @@ export default function WeightChart() {
       stroke: colors.primary,
     },
     propsForBackgroundLines: {
-      stroke: colors.border,
+      stroke: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
       strokeDasharray: '4',
     },
   };
@@ -232,16 +248,18 @@ export default function WeightChart() {
           <Ionicons name="chevron-down" size={12} color={colors.primary} />
         </TouchableOpacity>
       </View>
-      <LineChart
-        data={chartData}
-        width={CHART_WIDTH}
-        height={200}
-        chartConfig={chartConfig}
-        style={styles.chart}
-        withInnerLines
-        withOuterLines={false}
-        fromZero={false}
-      />
+      <View style={styles.chartWrapper}>
+        <LineChart
+          data={chartData}
+          width={CHART_WIDTH - Spacing.md * 2}
+          height={200}
+          chartConfig={chartConfig}
+          style={styles.chart}
+          withInnerLines
+          withOuterLines={false}
+          fromZero={false}
+        />
+      </View>
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Start</Text>
