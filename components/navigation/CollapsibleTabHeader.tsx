@@ -2,6 +2,7 @@ import { Animated, Text, StyleSheet, View, useColorScheme } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors, Typography, Spacing } from '../../constants/theme';
+import { useApp } from '../../context/AppContext';
 import HeaderXpBar from './HeaderXpBar';
 
 export const COLLAPSIBLE_HEADER_HEIGHT = 52;
@@ -14,7 +15,16 @@ interface Props {
 export default function CollapsibleTabHeader({ title, scrollY }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const isDark = useColorScheme() === 'dark';
+  const { preferences } = useApp();
+  const deviceScheme = useColorScheme();
+  const appearanceMode = preferences.appearanceMode ?? 'system';
+  const resolvedScheme =
+    appearanceMode === 'light'
+      ? 'light'
+      : appearanceMode === 'dark'
+        ? 'dark'
+        : (deviceScheme ?? 'light');
+  const isDark = resolvedScheme === 'dark';
 
   const totalHeight = insets.top + COLLAPSIBLE_HEADER_HEIGHT;
 
