@@ -198,7 +198,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
             y2={TOP_PAD + CHART_HEIGHT}
             stroke={colors.textSecondary}
             strokeWidth={1.5}
-            strokeOpacity={0.5}
+            strokeOpacity={0.2}
             strokeDasharray="4 4"
           />
           {/* Y-axis line */}
@@ -209,7 +209,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
             y2={TOP_PAD + CHART_HEIGHT}
             stroke={colors.textSecondary}
             strokeWidth={1.5}
-            strokeOpacity={0.5}
+            strokeOpacity={0.2}
             strokeDasharray="4 4"
           />
           {/* Y-axis grid lines and labels */}
