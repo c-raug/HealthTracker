@@ -28,13 +28,8 @@ export default function CollapsibleTabHeader({ title, scrollY }: Props) {
 
   const totalHeight = insets.top + COLLAPSIBLE_HEADER_HEIGHT;
 
-  const headerTranslateY = scrollY.interpolate({
-    inputRange: [0, totalHeight],
-    outputRange: [0, -totalHeight],
-    extrapolate: 'clamp',
-  });
-
-  // Solid background fades out as you start scrolling, revealing the BlurView beneath.
+  // Solid background fades out as you start scrolling, revealing the BlurView beneath
+  // so the title and XP bar sit over a frosted-glass blur of the scrolling content.
   // iOS cannot animate opacity on a UIVisualEffectView (BlurView) directly — animating
   // a plain solid overlay that fades out is the correct workaround.
   const solidOpacity = scrollY.interpolate({
@@ -49,7 +44,6 @@ export default function CollapsibleTabHeader({ title, scrollY }: Props) {
         styles.header,
         {
           height: totalHeight,
-          transform: [{ translateY: headerTranslateY }],
         },
       ]}
     >
