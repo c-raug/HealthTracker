@@ -7,8 +7,7 @@ import { ringColorForProximity } from '../../utils/calorieColor';
 
 const WATER_BLUE = '#2196F3';
 
-const TOOLTIP_WIDTH_CALORIE = 160;
-const TOOLTIP_WIDTH_WATER = 120;
+const TOOLTIP_WIDTH_ACTIVITY = 130;
 const TOOLTIP_CLAMP_BUFFER = 4;
 
 const CHART_HEIGHT = 160;
@@ -16,10 +15,6 @@ const LABEL_HEIGHT = 20;
 const TOP_PAD = 12;
 const SIDE_PAD = 6;
 const Y_AXIS_WIDTH = 36;
-
-const MACRO_PROTEIN = '#3B82F6';
-const MACRO_CARBS = '#F59E0B';
-const MACRO_FAT = '#EF4444';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -29,7 +24,7 @@ const makeStyles = (colors: typeof LightColors) =>
     card: {
       backgroundColor: colors.card,
       borderRadius: Radius.lg,
-      padding: Spacing.md,
+      paddingVertical: Spacing.md,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.12,
@@ -39,12 +34,25 @@ const makeStyles = (colors: typeof LightColors) =>
       borderWidth: 1,
       borderColor: colors.border,
     },
-    titleRow: {
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.md,
       marginBottom: Spacing.sm,
     },
     title: {
-      ...Typography.h3,
-      color: colors.text,
+      ...Typography.small,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+    },
+    chartWrapper: {
+      marginHorizontal: Spacing.md,
+      borderRadius: Radius.md,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     tooltipOverlay: {
       position: 'absolute',
@@ -130,12 +138,13 @@ interface BarChartProps {
   useProximityColors?: boolean;
   fixedBarColor?: string;
   goalLine?: number | null;
-  selectedBar: number | null;
-  onBarPress: (index: number) => void;
-  onOutsidePress: () => void;
+  chartBg?: string;
+  selectedBar?: number | null;
+  onBarPress?: (index: number) => void;
+  onOutsidePress?: () => void;
 }
 
-function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, selectedBar, onBarPress, onOutsidePress }: BarChartProps) {
+function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, chartBg, selectedBar, onBarPress, onOutsidePress }: BarChartProps) {
   const colors = useColors();
   const chartWidth = width - Y_AXIS_WIDTH - SIDE_PAD;
   const usableWidth = chartWidth - SIDE_PAD;
@@ -166,15 +175,21 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
   return (
     <View>
       <Svg width={svgWidth} height={svgHeight}>
+          {/* Chart background */}
+          {chartBg && (
+            <Rect x={0} y={0} width={svgWidth} height={svgHeight} fill={chartBg} />
+          )}
           {/* Background tap area for outside-bar dismiss */}
-          <Rect
-            x={0}
-            y={0}
-            width={svgWidth}
-            height={svgHeight}
-            fill="rgba(0,0,0,0.001)"
-            onPress={onOutsidePress}
-          />
+          {onOutsidePress && (
+            <Rect
+              x={0}
+              y={0}
+              width={svgWidth}
+              height={svgHeight}
+              fill="rgba(0,0,0,0.001)"
+              onPress={onOutsidePress}
+            />
+          )}
           {/* Y-axis grid lines and labels */}
           {ticks.map((tick) => {
             const y = TOP_PAD + CHART_HEIGHT - (tick / maxValue) * CHART_HEIGHT;
@@ -223,15 +238,17 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, se
             const isSelected = selectedBar === i;
 
             return (
-              <G key={day.date} onPress={() => onBarPress(i)}>
+              <G key={day.date} onPress={onBarPress ? () => onBarPress(i) : undefined}>
                 {/* Tap area */}
-                <Rect
-                  x={x - (slotWidth - barWidth) / 2}
-                  y={TOP_PAD}
-                  width={slotWidth}
-                  height={CHART_HEIGHT}
-                  fill="rgba(0,0,0,0.001)"
-                />
+                {onBarPress && (
+                  <Rect
+                    x={x - (slotWidth - barWidth) / 2}
+                    y={TOP_PAD}
+                    width={slotWidth}
+                    height={CHART_HEIGHT}
+                    fill="rgba(0,0,0,0.001)"
+                  />
+                )}
                 {/* Consumed bar */}
                 {day.consumed > 0 && (
                   <Rect
@@ -297,39 +314,15 @@ interface CalorieGraphProps {
   activePageIndex?: number;
 }
 
-export function WeeklyCalorieGraph({ width, calorieData, macroData, calorieGoal, activePageIndex }: CalorieGraphProps) {
+export function WeeklyCalorieGraph({ width, calorieData, calorieGoal }: CalorieGraphProps) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const isDark = colors.card === '#2C2C2E';
-  const [selectedBar, setSelectedBar] = useState<number | null>(null);
-
-  useEffect(() => {
-    setSelectedBar(null);
-  }, [activePageIndex]);
+  const chartBg = isDark ? '#2C2C2E' : '#F8F9FB';
 
   if (width === 0) return null;
 
   const innerWidth = width - Spacing.md * 2;
-  const chartWidth = innerWidth - Y_AXIS_WIDTH - SIDE_PAD;
-  const usableWidth = chartWidth - SIDE_PAD;
-  const slotWidth = usableWidth / 7;
-  const barWidth = slotWidth * 0.55;
-
-  const selectedDay = selectedBar !== null ? calorieData[selectedBar] : null;
-  const selectedMacro = selectedBar !== null && macroData ? macroData[selectedBar] : null;
-
-  // Compute tooltip x position — clamp to stay within card with buffer for border/padding
-  let tooltipLeft: number | null = null;
-  let tooltipTop: number | null = null;
-  if (selectedBar !== null && selectedDay) {
-    const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * selectedBar + (slotWidth - barWidth) / 2;
-    const dataMax = Math.max(...calorieData.map((d) => Math.max(d.goal, d.consumed)), 1);
-    const resolvedGoal = calorieGoal != null && calorieGoal > 0 ? calorieGoal : (calorieData.find((d) => d.goal > 0)?.goal ?? 0);
-    const maxVal = Math.max(dataMax, resolvedGoal > 0 ? resolvedGoal * 1.15 : dataMax);
-    const consumedH = Math.min((selectedDay.consumed / maxVal) * CHART_HEIGHT, CHART_HEIGHT);
-    tooltipLeft = Math.min(Math.max(x - TOOLTIP_WIDTH_CALORIE / 2, 0), innerWidth - TOOLTIP_WIDTH_CALORIE - TOOLTIP_CLAMP_BUFFER);
-    tooltipTop = Math.max(TOP_PAD + CHART_HEIGHT - consumedH - 90, 4);
-  }
 
   return (
     <View style={styles.card}>
@@ -337,41 +330,17 @@ export function WeeklyCalorieGraph({ width, calorieData, macroData, calorieGoal,
         colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.titleRow}>
+      <View style={styles.headerRow}>
         <Text style={styles.title}>Calories — 7 Days</Text>
       </View>
-      <View>
+      <View style={[styles.chartWrapper, { backgroundColor: chartBg }]}>
         <BarChart
           data={calorieData}
           width={innerWidth}
           useProximityColors
           goalLine={calorieGoal}
-          selectedBar={selectedBar}
-          onBarPress={(i) => setSelectedBar(selectedBar === i ? null : i)}
-          onOutsidePress={() => setSelectedBar(null)}
+          chartBg={chartBg}
         />
-        {selectedBar !== null && selectedDay && tooltipLeft !== null && tooltipTop !== null && (
-          <View style={[styles.tooltip, { left: tooltipLeft, top: tooltipTop, width: TOOLTIP_WIDTH_CALORIE }]}>
-            <TouchableOpacity style={styles.tooltipClose} onPress={() => setSelectedBar(null)}>
-              <Text style={styles.tooltipCloseText}>×</Text>
-            </TouchableOpacity>
-            <Text style={styles.tooltipDate}>{formatTooltipDate(selectedDay.date)}</Text>
-            {selectedDay.consumed > 0 ? (
-              <>
-                <Text style={styles.tooltipCalories}>{Math.round(selectedDay.consumed)} cal</Text>
-                {selectedMacro && (
-                  <View style={styles.tooltipMacroRow}>
-                    <Text style={[styles.tooltipMacro, { color: MACRO_PROTEIN }]}>■ P: {Math.round(selectedMacro.protein)}g</Text>
-                    <Text style={[styles.tooltipMacro, { color: MACRO_CARBS }]}>■ C: {Math.round(selectedMacro.carbs)}g</Text>
-                    <Text style={[styles.tooltipMacro, { color: MACRO_FAT }]}>■ F: {Math.round(selectedMacro.fat)}g</Text>
-                  </View>
-                )}
-              </>
-            ) : (
-              <Text style={styles.tooltipNoData}>No data logged</Text>
-            )}
-          </View>
-        )}
       </View>
     </View>
   );
@@ -387,37 +356,15 @@ interface WaterGraphProps {
   activePageIndex?: number;
 }
 
-export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit, activePageIndex }: WaterGraphProps) {
+export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit }: WaterGraphProps) {
   const colors = useColors();
   const styles = makeStyles(colors);
   const isDark = colors.card === '#2C2C2E';
-  const [selectedBar, setSelectedBar] = useState<number | null>(null);
-
-  useEffect(() => {
-    setSelectedBar(null);
-  }, [activePageIndex]);
+  const chartBg = isDark ? '#2C2C2E' : '#F8F9FB';
 
   if (width === 0) return null;
 
   const innerWidth = width - Spacing.md * 2;
-  const chartWidth = innerWidth - Y_AXIS_WIDTH - SIDE_PAD;
-  const usableWidth = chartWidth - SIDE_PAD;
-  const slotWidth = usableWidth / 7;
-  const barWidth = slotWidth * 0.55;
-
-  const selectedDay = selectedBar !== null ? waterData[selectedBar] : null;
-
-  let tooltipLeft: number | null = null;
-  let tooltipTop: number | null = null;
-  if (selectedBar !== null && selectedDay) {
-    const x = Y_AXIS_WIDTH + SIDE_PAD + slotWidth * selectedBar + (slotWidth - barWidth) / 2;
-    const dataMax = Math.max(...waterData.map((d) => Math.max(d.goal, d.consumed)), 1);
-    const resolvedGoal = waterGoal != null && waterGoal > 0 ? waterGoal : (waterData.find((d) => d.goal > 0)?.goal ?? 0);
-    const maxVal = Math.max(dataMax, resolvedGoal > 0 ? resolvedGoal * 1.15 : dataMax);
-    const consumedH = Math.min((selectedDay.consumed / maxVal) * CHART_HEIGHT, CHART_HEIGHT);
-    tooltipLeft = Math.min(Math.max(x - TOOLTIP_WIDTH_WATER / 2, 0), innerWidth - TOOLTIP_WIDTH_WATER - TOOLTIP_CLAMP_BUFFER);
-    tooltipTop = Math.max(TOP_PAD + CHART_HEIGHT - consumedH - 75, 4);
-  }
 
   return (
     <View style={styles.card}>
@@ -425,32 +372,17 @@ export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit, activ
         colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.titleRow}>
+      <View style={styles.headerRow}>
         <Text style={styles.title}>Water — 7 Days</Text>
       </View>
-      <View>
+      <View style={[styles.chartWrapper, { backgroundColor: chartBg }]}>
         <BarChart
           data={waterData}
           width={innerWidth}
           fixedBarColor={WATER_BLUE}
           goalLine={waterGoal}
-          selectedBar={selectedBar}
-          onBarPress={(i) => setSelectedBar(selectedBar === i ? null : i)}
-          onOutsidePress={() => setSelectedBar(null)}
+          chartBg={chartBg}
         />
-        {selectedBar !== null && selectedDay && tooltipLeft !== null && tooltipTop !== null && (
-          <View style={[styles.tooltip, { left: tooltipLeft, top: tooltipTop, width: TOOLTIP_WIDTH_WATER }]}>
-            <TouchableOpacity style={styles.tooltipClose} onPress={() => setSelectedBar(null)}>
-              <Text style={styles.tooltipCloseText}>×</Text>
-            </TouchableOpacity>
-            <Text style={styles.tooltipDate}>{formatTooltipDate(selectedDay.date)}</Text>
-            {selectedDay.consumed > 0 ? (
-              <Text style={styles.tooltipCalories}>{Math.round(selectedDay.consumed)} {waterUnit ?? 'oz'}</Text>
-            ) : (
-              <Text style={styles.tooltipNoData}>No data logged</Text>
-            )}
-          </View>
-        )}
       </View>
     </View>
   );
@@ -458,7 +390,6 @@ export function WeeklyWaterGraph({ width, waterData, waterGoal, waterUnit, activ
 
 // ---- WeeklyActivityGraph ----
 
-const TOOLTIP_WIDTH_ACTIVITY = 130;
 
 interface ActivityGraphProps {
   width: number;
@@ -505,7 +436,7 @@ export function WeeklyActivityGraph({ width, activityData, dailyBurnGoal, active
         colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.titleRow}>
+      <View style={styles.headerRow}>
         <Text style={styles.title}>Calories Burned — 7 Days</Text>
       </View>
       <View>
