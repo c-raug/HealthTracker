@@ -1,6 +1,11 @@
+import { View, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 
-const STRIP_INTENSITIES = [6, 4, 2, 1];
+// 8 strips, all at the same blur intensity. Opacity steps from 1.0 (outer edge)
+// to ~0.125 (inner edge). Keeping intensity constant means no kernel-radius jump
+// between strips, so the only transition is in alpha — smooth and imperceptible.
+const STRIP_COUNT = 8;
+const MAX_INTENSITY = 6;
 
 interface Props {
   edge: 'top' | 'bottom';
@@ -9,33 +14,41 @@ interface Props {
 }
 
 export default function EdgeBlurFade({ edge, totalHeight, tint }: Props) {
-  const stripCount = STRIP_INTENSITIES.length;
-  const stripHeight = totalHeight / stripCount;
+  const stripHeight = totalHeight / STRIP_COUNT;
 
   return (
     <>
-      {STRIP_INTENSITIES.map((intensity, i) => {
+      {Array.from({ length: STRIP_COUNT }, (_, i) => {
+        // Strip 0 = outer edge (full opacity), strip N-1 = inner edge (min opacity)
+        const opacity = 1 - (i / STRIP_COUNT);
         const offset = i * stripHeight;
         const positionStyle = edge === 'top' ? { top: offset } : { bottom: offset };
+
         return (
-          <BlurView
+          <View
             key={i}
-            intensity={intensity}
-            tint={tint}
-            experimentalBlurMethod="dimezisBlurView"
             pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              height: stripHeight,
-              zIndex: 5,
-              overflow: 'hidden',
-              ...positionStyle,
-            }}
-          />
+            style={[styles.strip, positionStyle, { height: stripHeight, opacity }]}
+          >
+            <BlurView
+              intensity={MAX_INTENSITY}
+              tint={tint}
+              experimentalBlurMethod="dimezisBlurView"
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
         );
       })}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  strip: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 5,
+    overflow: 'hidden',
+  },
+});
