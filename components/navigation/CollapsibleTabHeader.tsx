@@ -93,6 +93,8 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.h2,
+    fontSize: 26,
+    fontWeight: '700',
     flex: 1,
   },
 });
