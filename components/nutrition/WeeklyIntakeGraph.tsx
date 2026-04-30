@@ -202,14 +202,14 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
                   y2={y}
                   stroke={colors.border}
                   strokeWidth={1}
-                  strokeOpacity={0.3}
+                  strokeOpacity={0.6}
                   strokeDasharray="4 4"
                 />
                 <SvgText
                   x={Y_AXIS_WIDTH - 4}
                   y={y + 4}
                   textAnchor="end"
-                  fontSize={9}
+                  fontSize={10}
                   fill={colors.textSecondary}
                 >
                   {tick >= 1000 ? `${(tick / 1000).toFixed(1)}k` : tick}
@@ -266,7 +266,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
                   x={x + barWidth / 2}
                   y={svgHeight - 4}
                   textAnchor="middle"
-                  fontSize={10}
+                  fontSize={11}
                   fill={colors.textSecondary}
                 >
                   {dayLabel}
@@ -284,16 +284,16 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
                 x2={svgWidth - SIDE_PAD - 44}
                 y2={goalLineY}
                 stroke={colors.textSecondary}
-                strokeWidth={1.5}
+                strokeWidth={2}
                 strokeDasharray="4,3"
-                strokeOpacity={0.7}
+                strokeOpacity={0.9}
               />
               <SvgText
                 x={svgWidth - SIDE_PAD - 42}
                 y={goalLineY + 4}
-                fontSize={8}
+                fontSize={9}
                 fill={colors.textSecondary}
-                opacity={0.7}
+                opacity={0.9}
               >
                 {`Goal: ${resolvedGoal >= 1000 ? `${(resolvedGoal / 1000).toFixed(1)}k` : resolvedGoal}`}
               </SvgText>
