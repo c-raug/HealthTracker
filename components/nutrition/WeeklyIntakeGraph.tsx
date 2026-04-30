@@ -190,6 +190,26 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
               onPress={onOutsidePress}
             />
           )}
+          {/* X-axis baseline */}
+          <Line
+            x1={Y_AXIS_WIDTH}
+            y1={TOP_PAD + CHART_HEIGHT}
+            x2={svgWidth - SIDE_PAD}
+            y2={TOP_PAD + CHART_HEIGHT}
+            stroke={colors.textSecondary}
+            strokeWidth={1.5}
+            strokeOpacity={0.5}
+          />
+          {/* Y-axis line */}
+          <Line
+            x1={Y_AXIS_WIDTH}
+            y1={TOP_PAD}
+            x2={Y_AXIS_WIDTH}
+            y2={TOP_PAD + CHART_HEIGHT}
+            stroke={colors.textSecondary}
+            strokeWidth={1.5}
+            strokeOpacity={0.5}
+          />
           {/* Y-axis grid lines and labels */}
           {ticks.map((tick) => {
             const y = TOP_PAD + CHART_HEIGHT - (tick / maxValue) * CHART_HEIGHT;
@@ -200,9 +220,9 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
                   y1={y}
                   x2={svgWidth - SIDE_PAD}
                   y2={y}
-                  stroke={colors.border}
+                  stroke={colors.textSecondary}
                   strokeWidth={1}
-                  strokeOpacity={0.6}
+                  strokeOpacity={0.2}
                   strokeDasharray="4 4"
                 />
                 <SvgText
