@@ -199,6 +199,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
             stroke={colors.textSecondary}
             strokeWidth={1.5}
             strokeOpacity={0.5}
+            strokeDasharray="4 4"
           />
           {/* Y-axis line */}
           <Line
@@ -209,6 +210,7 @@ function BarChart({ data, width, useProximityColors, fixedBarColor, goalLine, ch
             stroke={colors.textSecondary}
             strokeWidth={1.5}
             strokeOpacity={0.5}
+            strokeDasharray="4 4"
           />
           {/* Y-axis grid lines and labels */}
           {ticks.map((tick) => {
