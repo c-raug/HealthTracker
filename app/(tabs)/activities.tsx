@@ -18,7 +18,6 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -26,6 +25,7 @@ import DateTimePicker, {
 import { useFocusEffect, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CollapsibleTabHeader, { COLLAPSIBLE_HEADER_HEIGHT } from '../../components/navigation/CollapsibleTabHeader';
+import EdgeBlurFade from '../../components/navigation/EdgeBlurFade';
 import { useApp } from '../../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { PILL_TOTAL_HEIGHT } from '../../components/navigation/PillTabBar';
@@ -732,19 +732,17 @@ export default function ActivitiesScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <CollapsibleTabHeader title="Activities" scrollY={scrollY} />
 
-      {/* Header region blur — blurs content that scrolls behind the header */}
-      <BlurView
-        intensity={6}
+      {/* Header region blur — fades smoothly from edge to interior */}
+      <EdgeBlurFade
+        edge="top"
+        totalHeight={Math.round((insets.top + COLLAPSIBLE_HEADER_HEIGHT) / 2)}
         tint={isDark ? 'dark' : 'light'}
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: Math.round((insets.top + COLLAPSIBLE_HEADER_HEIGHT) / 2), zIndex: 5, overflow: 'hidden' }}
-        pointerEvents="none"
       />
-      {/* Footer region blur — blurs content that scrolls behind the tab bar */}
-      <BlurView
-        intensity={6}
+      {/* Footer region blur — fades smoothly from edge to interior */}
+      <EdgeBlurFade
+        edge="bottom"
+        totalHeight={Math.round((PILL_TOTAL_HEIGHT + insets.bottom) / 2)}
         tint={isDark ? 'dark' : 'light'}
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: Math.round((PILL_TOTAL_HEIGHT + insets.bottom) / 2), zIndex: 5, overflow: 'hidden' }}
-        pointerEvents="none"
       />
 
       <Animated.ScrollView
