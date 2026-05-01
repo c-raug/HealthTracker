@@ -15,9 +15,11 @@ Invoke this skill automatically whenever the user:
 
 Also invoked explicitly via `/cp`.
 
-## Step 1 — Fetch Prioritized issues
+## Step 1 — Fetch Prioritized issues (two-pass)
 
-Use the GitHub GraphQL API to get all items with Status = "Prioritized" from the HealthTracker Project:
+To avoid pulling all 50 issue bodies just to filter, run two queries:
+
+**Pass 1** — fetch only IDs + Status field (small response):
 
 ```
 gh api graphql -f query='
@@ -35,14 +37,7 @@ gh api graphql -f query='
               }
             }
           }
-          content {
-            ... on Issue {
-              number
-              title
-              body
-              url
-            }
-          }
+          content { ... on Issue { number } }
         }
       }
     }
@@ -50,15 +45,23 @@ gh api graphql -f query='
 }'
 ```
 
-Filter the results to items where the Status field value name = **"Prioritized"**. For each, extract: issue number, title, body (contains Goal, Details, Technical Notes), and URL.
+Locally filter to items whose Status = **"Prioritized"** and collect their issue numbers.
+
+**Pass 2** — fetch bodies only for the Prioritized issue numbers via `gh issue view <number> --json number,title,body,url` (parallelize across all Prioritized numbers in a single tool-call batch).
 
 If there are no Prioritized issues, report this to the user and stop.
 
-## Step 2 — Orient
+## Step 2 — Implement each ticket
 
-Read `CLAUDE.md` silently before touching any code. Understand the app architecture, design patterns, existing components, and conventions that must be followed.
+CLAUDE.md is already in context (injected every turn) — do NOT re-read it. The `/cp` skill should rely on the in-context project instructions for architecture, patterns, and conventions.
 
-## Step 3 — Implement each ticket
+For component-specific detail (props, layout specs, dispatched actions), the file `.claude/documentation/component-notes.md` is structured as `### ComponentName` sections. Load on demand — only when a ticket touches a component in the CLAUDE.md index. Workflow:
+
+1. `grep -n "^### " .claude/documentation/component-notes.md` to find heading line numbers (one cheap call lists everything).
+2. `Read` with `offset` set to the target heading's line and `limit` ~20–40 to pull just that section.
+3. Never read the whole file.
+
+For UI tickets, prefer reading style-guide sections (`grep -n "^## " style_guide.md` then targeted `Read`) over full-file reads — design tokens and the iOS 26 pattern (§15) live there, not in component-notes.
 
 Work through each Prioritized issue **one at a time**:
 
@@ -76,9 +79,9 @@ Work through each Prioritized issue **one at a time**:
 
 3. **Read before writing.** Read all files listed in Technical Implementation before editing any of them.
 
-4. **Check the style guide for UI changes.** If the ticket involves any UI change (colors, spacing, typography, shadows, icons, buttons, modals, cards, or component styling), read `.claude/documentation/style_guide.md` before implementing. Follow every design token, component pattern, and fixed color rule documented there. After implementing, if the change introduces a new UI element, pattern, or token usage that is not yet covered by the style guide, add it to the appropriate section in `.claude/documentation/style_guide.md`.
+4. **Check the style guide ONLY for UI changes.** If — and only if — the ticket involves a UI change (colors, spacing, typography, shadows, icons, buttons, modals, cards, or component styling), read `.claude/documentation/style_guide.md`. Skip this read for pure logic, state, data, or non-visual tickets. After implementing a UI change that introduces a new pattern not yet documented, add it to the style guide.
 
-5. **Implement the change** following all patterns in `CLAUDE.md` (design tokens, date strings, makeStyles, etc.).
+5. **Implement the change** following the patterns already in your context (design tokens, date strings, makeStyles, etc. from CLAUDE.md).
 
 6. **Verify against Acceptance Criteria.** After implementing, walk through every acceptance criterion in the issue checklist. For each criterion:
    - Confirm the code change directly satisfies it

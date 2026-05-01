@@ -16,44 +16,38 @@ Invoke this skill automatically whenever the user:
 
 Also invoked explicitly via `/update-docs`.
 
-## Step 1 — Audit the codebase (read-only)
+## Step 1 — Cheap pre-audit (grep-first)
 
-Gather the current ground truth from the codebase. Run all of the following in parallel:
+CLAUDE.md is already in the system-reminder context — do NOT read it again. Other docs should not be read wholesale until a gap is suspected.
 
-### 1a — Recent changes
-- `git log --oneline -50` to see recent commits
-- `git tag` to see version tags
-- `app.json` → current `expo.version`
+Run these cheap, parallel commands first to detect what *might* be stale:
 
-### 1b — Current file structure
-- `ls -R app/ components/ utils/ storage/ context/ constants/ types/` to see all source files
-- Note any new files not present in documentation
+- `git log --oneline -50` and `git diff --stat HEAD~20..HEAD -- app/ components/ utils/ context/ types/` — what has actually changed recently
+- `git tag` and `app.json` (`expo.version`) — version status
+- `grep -E "type: '[A-Z_]+'" context/AppContext.tsx | sort -u` — current action list
+- `ls app/ app/(tabs)/ components/ utils/ storage/ context/ constants/ types/` — files that may be new
 
-### 1c — State management
-- Read `context/AppContext.tsx` — extract all action type strings from the reducer
-- Read `types/index.ts` — extract all interface definitions and their fields
+For each candidate gap, grep the doc files for the relevant symbol BEFORE reading them:
+- `grep -nE "ACTION_NAME|ComponentName|new-modal" CLAUDE.md README.md .claude/documentation/style_guide.md`
+- Only read the surrounding section (with `Read` + `offset`/`limit`) if the grep shows a stale or missing reference.
 
-### 1d — Navigation and tabs
-- Read `app/(tabs)/_layout.tsx` — current tab names, icons, and configuration
-- Read `app/_layout.tsx` — all modal routes and root layout wrappers
+Skip docs entirely when grep + git diff show no relevant changes since last update.
 
-### 1e — Current documentation
-- Read `CLAUDE.md` (full file)
-- Read `README.md` (full file)
-- Read `.claude/documentation/style_guide.md` (full file)
-- Read all `.claude/skills/*/SKILL.md` files
+## Step 2 — Targeted reads + diff
 
-## Step 2 — Diff documentation against codebase
-
-Compare each documentation file against the ground truth gathered in Step 1. Build a list of gaps for each file:
+For each suspected gap, read only the affected section (use `Read` with `offset`/`limit`, not full-file reads). Compare against codebase ground truth and build a gaps list per file:
 
 ### CLAUDE.md — check for:
 - **Actions list**: every action type in the reducer must appear in the `Actions` bullet
 - **Architecture section**: tab names, modal routes, state shape, persistence details
-- **Component Notes**: every component in `components/` should have a note if it has non-trivial behavior
+- **Component Notes index**: every component with non-trivial behavior must appear as a one-line index entry (full detail lives in `.claude/documentation/component-notes.md`)
 - **Key Patterns**: any new patterns introduced since last update
 - **Runtime Requirements**: any new wrappers, providers, or compatibility rules
 - **Skills section**: must list every skill in `.claude/skills/`
+
+### .claude/documentation/component-notes.md — check for:
+- Any component in the CLAUDE.md index must have a corresponding detailed entry here
+- Detailed entries must reflect current props, behavior, and dispatched actions
 
 ### README.md — check for:
 - **Features section**: each tab's description must match current behavior (not stale from an older version)

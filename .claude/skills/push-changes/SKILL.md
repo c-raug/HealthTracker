@@ -16,20 +16,17 @@ Invoke this skill automatically after completing:
 
 Also invoked explicitly via `/push-changes`.
 
-## Step 1 — Update documentation
+## Step 1 — Update documentation (skip if already done)
 
-Review what was changed and update docs as needed. Do **not** update files that were not affected.
+If `/update-docs` was just invoked in this session (e.g. by `/cp`), skip this step entirely — docs are already current.
 
-- **`CLAUDE.md`**: Add or update entries in Component Notes, Key Patterns, Architecture, or Runtime Requirements if:
-  - A new component was created
-  - A new pattern was introduced
-  - A new reducer action was added
-  - A new utility or helper was added
-  - An existing component's props, behavior, or usage changed significantly
+Otherwise, update only the docs whose content the change directly invalidates:
+- `CLAUDE.md` — only if a component index entry, pattern, action, or runtime requirement changed
+- `.claude/documentation/component-notes.md` — only if a component's detailed behavior, props, or dispatched actions changed
+- `.claude/skills/*/SKILL.md` — only if a skill's referenced behavior changed
+- `README.md` — only if public-facing setup or behavior changed
 
-- **`.claude/skills/*/SKILL.md`** (skill files): Update any skill whose instructions reference changed behavior (e.g., if dependency-check constraints changed).
-
-- **`README.md`**: Update only if it exists and public-facing behavior or setup instructions changed.
+Do not re-read docs already in your context (CLAUDE.md is injected every turn).
 
 ## Step 2 — Determine current branch
 
