@@ -713,6 +713,15 @@ export default function ActivitiesScreen() {
     return 'Calories from wearable';
   };
 
+  const smartwatchExisting = activityLog
+    .find((d) => d.date === selectedDate)
+    ?.activities.find((a) => a.type === 'smartwatch');
+  const smartwatchUnchanged = smartwatchExisting
+    ? smartwatchInput === String(smartwatchExisting.caloriesBurned)
+    : false;
+  const smartwatchSaveDisabled =
+    !smartwatchInput || isNaN(parseInt(smartwatchInput, 10)) || smartwatchUnchanged;
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -861,9 +870,6 @@ export default function ActivitiesScreen() {
               <Text style={styles.sectionTitle}>Calories Burned</Text>
             </View>
             <View style={styles.sectionBody}>
-              <Text style={styles.smartwatchInstruction}>
-                Enter your total calories burned from your smart watch
-              </Text>
               <View ref={smartwatchInputWrapperRef} style={styles.inputRow}>
                 <TextInput
                   ref={smartwatchInputRef}
@@ -880,9 +886,9 @@ export default function ActivitiesScreen() {
                   placeholderTextColor={colors.textSecondary}
                 />
                 <TouchableOpacity
-                  style={[styles.addButtonFixed, (!smartwatchInput || parseInt(smartwatchInput, 10) < 0) && { opacity: 0.5 }]}
+                  style={[styles.addButtonFixed, smartwatchSaveDisabled && { opacity: 0.5 }]}
                   onPress={handleSaveSmartwatch}
-                  disabled={!smartwatchInput || isNaN(parseInt(smartwatchInput, 10))}
+                  disabled={smartwatchSaveDisabled}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.addButtonText}>Save</Text>

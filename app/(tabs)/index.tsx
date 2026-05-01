@@ -350,6 +350,12 @@ export default function WeightScreen() {
   const [selYear, selMonth, selDay] = selectedDate.split('-').map(Number);
   const pickerValue = new Date(selYear, selMonth - 1, selDay);
 
+  const weightExistingDisplay = existingEntry
+    ? String(convertWeight(existingEntry.weight, existingEntry.unit, preferences.unit))
+    : '';
+  const weightSaveDisabled =
+    !weightInput || isNaN(parseFloat(weightInput)) || weightInput === weightExistingDisplay;
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -501,8 +507,9 @@ export default function WeightScreen() {
                 onSubmitEditing={handleSave}
               />
               <TouchableOpacity
-                style={styles.saveButton}
+                style={[styles.saveButton, weightSaveDisabled && { opacity: 0.5 }]}
                 onPress={handleSave}
+                disabled={weightSaveDisabled}
                 activeOpacity={0.8}
               >
                 <Text style={styles.saveButtonText}>Save</Text>
