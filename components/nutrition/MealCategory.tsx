@@ -89,14 +89,16 @@ const makeStyles = (colors: typeof LightColors) =>
       borderBottomRightRadius: Radius.lg,
     },
     addPill: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primaryLight,
       borderRadius: Radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
       paddingVertical: Spacing.xs,
       paddingHorizontal: Spacing.sm,
     },
     addPillText: {
       ...Typography.small,
-      color: colors.white,
+      color: colors.primary,
       fontWeight: '700',
     },
     emptyState: {

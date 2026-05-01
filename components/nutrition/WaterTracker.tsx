@@ -67,14 +67,16 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.xs,
     },
     quickAddBtn: {
-      backgroundColor: WATER_BLUE,
+      backgroundColor: WATER_BLUE_LIGHT,
       borderRadius: Radius.md,
+      borderWidth: 1.5,
+      borderColor: WATER_BLUE,
       paddingVertical: Spacing.xs,
       paddingHorizontal: Spacing.sm,
     },
     quickAddBtnText: {
       ...Typography.small,
-      color: colors.white,
+      color: WATER_BLUE,
       fontWeight: '700',
     },
     body: {
@@ -92,15 +94,19 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     presetBtn: {
       width: '100%',
-      backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
       height: 56,
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    presetBtnGradient: {
+      ...StyleSheet.absoluteFillObject,
+      borderRadius: Radius.md,
     },
     presetBtnDefault: {
       borderWidth: 2,
-      borderColor: '#FFFFFF',
+      borderColor: '#FFFFFF55',
     },
     presetBtnText: {
       ...Typography.small,
@@ -400,6 +406,10 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
                         activeOpacity={0.8}
                         delayLongPress={500}
                       >
+                        <LinearGradient
+                          colors={['#42A5F5', '#1565C0']}
+                          style={styles.presetBtnGradient}
+                        />
                         <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
                         {idx === 1 && (
                           <Text style={styles.quickAddLabel}>Quick Add</Text>
