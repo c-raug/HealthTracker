@@ -40,10 +40,14 @@ For each suspected gap, read only the affected section (use `Read` with `offset`
 ### CLAUDE.md — check for:
 - **Actions list**: every action type in the reducer must appear in the `Actions` bullet
 - **Architecture section**: tab names, modal routes, state shape, persistence details
-- **Component Notes**: every component in `components/` should have a note if it has non-trivial behavior
+- **Component Notes index**: every component with non-trivial behavior must appear as a one-line index entry (full detail lives in `.claude/documentation/component-notes.md`)
 - **Key Patterns**: any new patterns introduced since last update
 - **Runtime Requirements**: any new wrappers, providers, or compatibility rules
 - **Skills section**: must list every skill in `.claude/skills/`
+
+### .claude/documentation/component-notes.md — check for:
+- Any component in the CLAUDE.md index must have a corresponding detailed entry here
+- Detailed entries must reflect current props, behavior, and dispatched actions
 
 ### README.md — check for:
 - **Features section**: each tab's description must match current behavior (not stale from an older version)

@@ -21,7 +21,8 @@ Also invoked explicitly via `/push-changes`.
 If `/update-docs` was just invoked in this session (e.g. by `/cp`), skip this step entirely — docs are already current.
 
 Otherwise, update only the docs whose content the change directly invalidates:
-- `CLAUDE.md` — only if a component, pattern, action, or runtime requirement changed
+- `CLAUDE.md` — only if a component index entry, pattern, action, or runtime requirement changed
+- `.claude/documentation/component-notes.md` — only if a component's detailed behavior, props, or dispatched actions changed
 - `.claude/skills/*/SKILL.md` — only if a skill's referenced behavior changed
 - `README.md` — only if public-facing setup or behavior changed
 

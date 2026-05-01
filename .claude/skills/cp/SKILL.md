@@ -55,6 +55,8 @@ If there are no Prioritized issues, report this to the user and stop.
 
 CLAUDE.md is already in context (injected every turn) — do NOT re-read it. The `/cp` skill should rely on the in-context project instructions for architecture, patterns, and conventions.
 
+For component-specific detail (props, layout specs, dispatched actions), read `.claude/documentation/component-notes.md` on demand — only when a ticket touches a component listed in the CLAUDE.md Component Notes index. Use grep + targeted offset/limit reads, not a full-file read.
+
 Work through each Prioritized issue **one at a time**:
 
 1. **Parse the issue body** to extract:
