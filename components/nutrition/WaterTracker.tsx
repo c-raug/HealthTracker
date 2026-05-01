@@ -95,7 +95,7 @@ const makeStyles = (colors: typeof LightColors) =>
     presetBtn: {
       width: '100%',
       borderRadius: Radius.md,
-      height: 56,
+      height: 44,
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
@@ -154,15 +154,17 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.text,
     },
     addBtn: {
-      backgroundColor: WATER_BLUE,
+      backgroundColor: WATER_BLUE_LIGHT,
       borderRadius: Radius.md,
+      borderWidth: 1.5,
+      borderColor: WATER_BLUE,
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
       alignItems: 'center',
     },
     addBtnText: {
       ...Typography.body,
-      color: colors.white,
+      color: WATER_BLUE,
       fontWeight: '600',
     },
     entryList: {
