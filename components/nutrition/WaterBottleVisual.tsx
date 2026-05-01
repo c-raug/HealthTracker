@@ -30,20 +30,20 @@ const makeStyles = (colors: typeof LightColors) =>
     cap: {
       width: CAP_WIDTH,
       height: CAP_HEIGHT,
-      backgroundColor: WATER_BLUE + '99',
+      backgroundColor: colors.border,
       borderTopLeftRadius: 4,
       borderTopRightRadius: 4,
     },
     neck: {
       width: CAP_WIDTH + 8,
       height: NECK_HEIGHT,
-      backgroundColor: WATER_BLUE + '99',
+      backgroundColor: colors.border,
     },
     bottleBody: {
       width: BOTTLE_WIDTH,
       height: BOTTLE_BODY_HEIGHT,
       borderWidth: 2,
-      borderColor: WATER_BLUE + '66',
+      borderColor: colors.border,
       borderRadius: 13,
       overflow: 'hidden',
       backgroundColor: colors.background,
