@@ -199,14 +199,14 @@ export default function FloatingPillBar({
     }
   };
 
-  // Parents (add-food-modal, food-library-modal) use SafeAreaView which already applies
-  // insets.bottom as bottom padding, so we must NOT add insets.bottom again. Use bottom: 0
-  // for the resting state. For the keyboard-open state, subtract insets.bottom so the bar
-  // sits flush with the keyboard top rather than floating above it.
+  // add-food-modal uses SafeAreaView with edges={['top']} only, so insets.bottom is NOT
+  // applied by the parent — we must add it ourselves for the resting state.
+  // For the keyboard-open state on iOS, use keyboardHeight directly (keyboard frame
+  // already sits above the home indicator, so no need to subtract insets.bottom).
   const bottomOffset =
     Platform.OS === 'ios' && keyboardHeight > 0
-      ? Math.max(0, keyboardHeight - insets.bottom) + Spacing.xs
-      : 0;
+      ? keyboardHeight + Spacing.xs
+      : insets.bottom;
 
   const blurTint = isDark ? 'dark' : 'light';
   const androidNeutralBg = isDark ? 'rgba(44,44,46,0.97)' : 'rgba(235,236,240,0.97)';
