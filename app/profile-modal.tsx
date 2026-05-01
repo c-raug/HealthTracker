@@ -126,14 +126,13 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       alignItems: 'center',
       borderRadius: Radius.sm - 2,
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     toggleOptionActive: {
-      backgroundColor: colors.primary,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
     },
     toggleText: {
       ...Typography.small,
@@ -141,7 +140,7 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '600',
     },
     toggleTextActive: {
-      color: colors.white,
+      color: colors.primary,
     },
     dobBtn: {
       flex: 1,
@@ -169,9 +168,13 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     activityBtnActive: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
     },
     activityBtnText: {
       ...Typography.small,
@@ -179,7 +182,7 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '500',
     },
     activityBtnTextActive: {
-      color: colors.white,
+      color: colors.primary,
     },
     modeRow: {
       gap: Spacing.xs,
@@ -198,9 +201,13 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     modePillActive: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
     },
     modePillText: {
       ...Typography.small,
@@ -208,14 +215,16 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '600',
     },
     modePillTextActive: {
-      color: colors.white,
+      color: colors.primary,
     },
     modeInfoIcon: {
       padding: Spacing.xs,
     },
     saveBtn: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primaryLight,
       borderRadius: Radius.sm,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
     },
@@ -224,7 +233,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     saveBtnText: {
       ...Typography.body,
-      color: colors.white,
+      color: colors.primary,
       fontWeight: '600',
     },
     pickerOverlay: {

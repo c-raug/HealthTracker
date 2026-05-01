@@ -70,14 +70,13 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     paddingVertical: Spacing.sm,
     alignItems: 'center',
     borderRadius: Radius.sm - 2,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   toggleOptionActive: {
-    backgroundColor: colors.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
   },
   toggleText: {
     ...Typography.body,
@@ -85,7 +84,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     fontWeight: '600',
   },
   toggleTextActive: {
-    color: colors.white,
+    color: colors.primary,
   },
 });
 
