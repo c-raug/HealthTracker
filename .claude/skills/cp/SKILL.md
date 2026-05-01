@@ -55,7 +55,13 @@ If there are no Prioritized issues, report this to the user and stop.
 
 CLAUDE.md is already in context (injected every turn) — do NOT re-read it. The `/cp` skill should rely on the in-context project instructions for architecture, patterns, and conventions.
 
-For component-specific detail (props, layout specs, dispatched actions), read `.claude/documentation/component-notes.md` on demand — only when a ticket touches a component listed in the CLAUDE.md Component Notes index. Use grep + targeted offset/limit reads, not a full-file read.
+For component-specific detail (props, layout specs, dispatched actions), the file `.claude/documentation/component-notes.md` is structured as `### ComponentName` sections. Load on demand — only when a ticket touches a component in the CLAUDE.md index. Workflow:
+
+1. `grep -n "^### " .claude/documentation/component-notes.md` to find heading line numbers (one cheap call lists everything).
+2. `Read` with `offset` set to the target heading's line and `limit` ~20–40 to pull just that section.
+3. Never read the whole file.
+
+For UI tickets, prefer reading style-guide sections (`grep -n "^## " style_guide.md` then targeted `Read`) over full-file reads — design tokens and the iOS 26 pattern (§15) live there, not in component-notes.
 
 Work through each Prioritized issue **one at a time**:
 
