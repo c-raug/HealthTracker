@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Clipboard } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,10 +38,13 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     padding: Spacing.md,
     marginBottom: Spacing.sm,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   settingLabel: {
     ...Typography.body,
@@ -89,6 +93,7 @@ export default function AppSettingsModal() {
   const { preferences, entries, nutritionLog, customFoods, savedMeals, activityLog, waterLog, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [crashLog, setCrashLog] = useState<string | null>(null);
@@ -114,6 +119,7 @@ export default function AppSettingsModal() {
         <ScrollView style={styles.scrollContent} ref={scrollRef} keyboardShouldPersistTaps="handled">
           {/* Weight Unit */}
           <View style={styles.card}>
+            <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
             <Text style={styles.settingLabel}>Weight Unit</Text>
             <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
               Applies to new entries and the history chart. Existing entries keep their original unit.
@@ -138,6 +144,7 @@ export default function AppSettingsModal() {
 
           {/* Expand sections by default */}
           <View style={styles.card}>
+            <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flex: 1, marginRight: Spacing.md }}>
                 <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Expand sections by default</Text>
@@ -164,6 +171,7 @@ export default function AppSettingsModal() {
 
           {/* Data Backup */}
           <View style={styles.card}>
+            <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
             <Text style={styles.settingLabel}>Data Backup</Text>
             <Text style={styles.settingDescription}>
               Save all app data to a file that persists across reinstalls.
@@ -186,6 +194,7 @@ export default function AppSettingsModal() {
 
           {/* Debug Info */}
           <View style={styles.card}>
+            <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
             <Text style={styles.settingLabel}>Debug Info</Text>
             <Text style={styles.settingDescription}>
               Last recorded crash log. Share this when reporting a bug.

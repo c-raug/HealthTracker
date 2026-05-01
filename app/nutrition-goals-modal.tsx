@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,11 +38,13 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     borderRadius: Radius.lg,
     marginBottom: Spacing.sm,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   settingLabel: {
     ...Typography.body,
@@ -96,6 +99,7 @@ export default function NutritionGoalsModal() {
   const { preferences, entries, activityLog, dispatch } = useApp();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -185,16 +189,19 @@ export default function NutritionGoalsModal() {
         <ScrollView style={styles.scrollContent} ref={scrollRef} keyboardShouldPersistTaps="handled">
           {/* Goals & Calorie Target */}
           <View style={styles.card}>
+            <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
             <GoalsSection />
           </View>
 
           {/* Macros */}
           <View style={styles.card}>
+            <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
             <MacroSection goalCalories={adjustedGoalCalories} activityAdjusted={activityAdjusted} />
           </View>
 
           {/* Daily Water Goal */}
           <View style={styles.card}>
+            <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
             <View style={{ padding: Spacing.md }}>
               <Text style={[styles.settingLabel, { marginBottom: Spacing.xs }]}>Daily Water Goal</Text>
               <Text style={[styles.settingDescription, { marginBottom: Spacing.sm }]}>
