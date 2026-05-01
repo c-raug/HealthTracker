@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
@@ -33,11 +34,13 @@ const makeStyles = (colors: typeof LightColors) =>
       borderRadius: Radius.lg,
       marginBottom: Spacing.md,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     header: {
       flexDirection: 'row',
@@ -45,7 +48,6 @@ const makeStyles = (colors: typeof LightColors) =>
       justifyContent: 'space-between',
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
-      backgroundColor: colors.card,
     },
     headerLeft: {
       flexDirection: 'row',
@@ -65,14 +67,16 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.xs,
     },
     quickAddBtn: {
-      backgroundColor: WATER_BLUE,
+      backgroundColor: WATER_BLUE_LIGHT,
       borderRadius: Radius.md,
+      borderWidth: 1.5,
+      borderColor: WATER_BLUE,
       paddingVertical: Spacing.xs,
       paddingHorizontal: Spacing.sm,
     },
     quickAddBtnText: {
       ...Typography.small,
-      color: colors.white,
+      color: WATER_BLUE,
       fontWeight: '700',
     },
     body: {
@@ -90,15 +94,19 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     presetBtn: {
       width: '100%',
-      backgroundColor: WATER_BLUE,
       borderRadius: Radius.md,
-      height: 56,
+      height: 44,
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    presetBtnGradient: {
+      ...StyleSheet.absoluteFillObject,
+      borderRadius: Radius.md,
     },
     presetBtnDefault: {
       borderWidth: 2,
-      borderColor: '#FFFFFF',
+      borderColor: '#FFFFFF55',
     },
     presetBtnText: {
       ...Typography.small,
@@ -146,15 +154,17 @@ const makeStyles = (colors: typeof LightColors) =>
       color: colors.text,
     },
     addBtn: {
-      backgroundColor: WATER_BLUE,
+      backgroundColor: WATER_BLUE_LIGHT,
       borderRadius: Radius.md,
+      borderWidth: 1.5,
+      borderColor: WATER_BLUE,
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
       alignItems: 'center',
     },
     addBtnText: {
       ...Typography.body,
-      color: colors.white,
+      color: WATER_BLUE,
       fontWeight: '600',
     },
     entryList: {
@@ -340,9 +350,15 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
     setEditValue('');
   };
 
+  const isDark = colors.card === '#2C2C2E';
+
   return (
     <>
       <View style={styles.container}>
+        <LinearGradient
+          colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+          style={StyleSheet.absoluteFill}
+        />
         <TouchableOpacity
           style={styles.header}
           onPress={() => setCollapsed((v) => !v)}
@@ -392,6 +408,10 @@ export default function WaterTracker({ date, expandKey, onFocusInput }: Props) {
                         activeOpacity={0.8}
                         delayLongPress={500}
                       >
+                        <LinearGradient
+                          colors={['#42A5F5', '#1565C0']}
+                          style={styles.presetBtnGradient}
+                        />
                         <Text style={styles.presetBtnText}>+{presets[idx]} {unit}</Text>
                         {idx === 1 && (
                           <Text style={styles.quickAddLabel}>Quick Add</Text>

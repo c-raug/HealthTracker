@@ -4,7 +4,7 @@ import { useColors, LightColors, Spacing, Typography } from '../../constants/the
 import { ringColorForProximity } from '../../utils/calorieColor';
 
 const SIZE = 160;
-const STROKE_WIDTH = 14;
+const STROKE_WIDTH = 16;
 const RADIUS = (SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -29,7 +29,8 @@ const makeStyles = (colors: typeof LightColors) =>
       alignItems: 'center',
     },
     consumed: {
-      ...Typography.h2,
+      fontSize: 28,
+      fontWeight: '700',
       color: colors.text,
     },
     label: {
@@ -60,6 +61,13 @@ export default function CalorieRing({ consumed, target }: Props) {
     <View style={styles.container}>
       <View style={styles.svgContainer}>
         <Svg width={SIZE} height={SIZE}>
+          {/* Inner card background fill */}
+          <Circle
+            cx={SIZE / 2}
+            cy={SIZE / 2}
+            r={RADIUS - STROKE_WIDTH / 2}
+            fill={colors.card}
+          />
           {/* Background ring */}
           <Circle
             cx={SIZE / 2}

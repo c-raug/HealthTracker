@@ -123,17 +123,18 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Log Weight card (smartwatch-style)
+  // Log Weight card (iOS 26 style)
   sectionCard: {
-    backgroundColor: colors.card,
     borderRadius: Radius.lg,
     marginBottom: Spacing.md,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 3,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -181,13 +182,22 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Saved confirmation message
-  savedMessage: {
+  // Saved confirmation pill (activities-style)
+  savedConfirmation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    backgroundColor: colors.primaryLight,
+    borderRadius: Radius.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    marginTop: Spacing.sm,
+    alignSelf: 'flex-start',
+  },
+  savedConfirmationText: {
     ...Typography.small,
+    fontWeight: '600',
     color: colors.primary,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-    fontStyle: 'italic',
   },
 
   // iOS date picker modal
@@ -234,7 +244,8 @@ export default function WeightScreen() {
 
   const [weightInput, setWeightInput] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
-  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [showSavedConfirmation, setShowSavedConfirmation] = useState(false);
+  const savedConfirmationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [animateToValue, setAnimateToValue] = useState<number | null>(null);
   const [activePagerPage, setActivePagerPage] = useState(0);
   const [chartHeight, setChartHeight] = useState(280);
@@ -256,6 +267,12 @@ export default function WeightScreen() {
   useEffect(() => {
     setAnimateToValue(null);
   }, [selectedDate]);
+
+  useEffect(() => {
+    return () => {
+      if (savedConfirmationTimeout.current) clearTimeout(savedConfirmationTimeout.current);
+    };
+  }, []);
 
   // Pre-fill input when date or entries change
   useEffect(() => {
@@ -320,13 +337,9 @@ export default function WeightScreen() {
     Keyboard.dismiss();
     setAnimateToValue(parsed);
 
-    const now = new Date();
-    const [y, m, d] = selectedDate.split('-').map(Number);
-    const dateObj = new Date(y, m - 1, d);
-    const datePart = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    const timePart = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    setSavedMessage(`Weight saved on ${datePart} at ${timePart}`);
-    setTimeout(() => setSavedMessage(null), 3500);
+    if (savedConfirmationTimeout.current) clearTimeout(savedConfirmationTimeout.current);
+    setShowSavedConfirmation(true);
+    savedConfirmationTimeout.current = setTimeout(() => setShowSavedConfirmation(false), 3000);
   };
 
   // Build maximumDate from today string to avoid UTC offset issues
@@ -336,6 +349,12 @@ export default function WeightScreen() {
   // Build the picker value from selectedDate
   const [selYear, selMonth, selDay] = selectedDate.split('-').map(Number);
   const pickerValue = new Date(selYear, selMonth - 1, selDay);
+
+  const weightExistingDisplay = existingEntry
+    ? String(convertWeight(existingEntry.weight, existingEntry.unit, preferences.unit))
+    : '';
+  const weightSaveDisabled =
+    !weightInput || isNaN(parseFloat(weightInput)) || weightInput === weightExistingDisplay;
 
   if (isLoading) {
     return (
@@ -466,8 +485,12 @@ export default function WeightScreen() {
           </View>
         </View>
 
-        {/* Log Weight card (smartwatch-style) */}
+        {/* Log Weight card (iOS 26 style) */}
         <View style={styles.sectionCard}>
+          <LinearGradient
+            colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Log Weight ({preferences.unit})</Text>
           </View>
@@ -476,7 +499,7 @@ export default function WeightScreen() {
               <TextInput
                 style={styles.input}
                 value={weightInput}
-                onChangeText={(val) => { setWeightInput(val); setSavedMessage(null); }}
+                onChangeText={(val) => { setWeightInput(val); setShowSavedConfirmation(false); }}
                 keyboardType="decimal-pad"
                 placeholder={`e.g. ${preferences.unit === 'lbs' ? '175.5' : '80.0'}`}
                 placeholderTextColor={colors.textSecondary}
@@ -484,19 +507,22 @@ export default function WeightScreen() {
                 onSubmitEditing={handleSave}
               />
               <TouchableOpacity
-                style={styles.saveButton}
+                style={[styles.saveButton, weightSaveDisabled && { opacity: 0.5 }]}
                 onPress={handleSave}
+                disabled={weightSaveDisabled}
                 activeOpacity={0.8}
               >
                 <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
+            {showSavedConfirmation && (
+              <View style={styles.savedConfirmation}>
+                <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                <Text style={styles.savedConfirmationText}>Weight saved</Text>
+              </View>
+            )}
           </View>
         </View>
-
-        {savedMessage && (
-          <Text style={styles.savedMessage}>{savedMessage}</Text>
-        )}
 
         {/* Insights — always visible below input card */}
         <WeightInsights />

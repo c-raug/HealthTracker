@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../../constants/theme';
@@ -16,21 +17,26 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     borderRadius: Radius.lg,
     marginBottom: Spacing.sm,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   navRow: {
     backgroundColor: colors.card,
     borderRadius: Radius.lg,
     marginBottom: Spacing.sm,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 5,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -52,6 +58,7 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
 export default function SettingsScreen() {
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
 
   const { focusFeedback } = useLocalSearchParams<{ focusFeedback?: string }>();
   const router = useRouter();
@@ -83,6 +90,7 @@ export default function SettingsScreen() {
           onPress={() => router.push('/appearance-modal')}
           activeOpacity={0.7}
         >
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.navRowText}>Appearance</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -93,6 +101,7 @@ export default function SettingsScreen() {
           onPress={() => router.push('/app-settings-modal')}
           activeOpacity={0.7}
         >
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.navRowText}>App Settings</Text>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -102,6 +111,7 @@ export default function SettingsScreen() {
           style={styles.collapsibleCard}
           onLayout={(e) => setFeedbackSectionY(e.nativeEvent.layout.y)}
         >
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <View style={{ padding: Spacing.md }}>
             <FeedbackSection ref={feedbackRef} onFocusInput={() => {
               setTimeout(() => {

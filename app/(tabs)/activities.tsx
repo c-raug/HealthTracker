@@ -109,10 +109,13 @@ const makeStyles = (colors: typeof LightColors) =>
       alignItems: 'center',
       marginBottom: Spacing.md,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     summaryRow: {
       flexDirection: 'row',
@@ -135,10 +138,12 @@ const makeStyles = (colors: typeof LightColors) =>
       marginBottom: Spacing.md,
       overflow: 'hidden',
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     sectionHeader: {
       flexDirection: 'row',
@@ -708,6 +713,15 @@ export default function ActivitiesScreen() {
     return 'Calories from wearable';
   };
 
+  const smartwatchExisting = activityLog
+    .find((d) => d.date === selectedDate)
+    ?.activities.find((a) => a.type === 'smartwatch');
+  const smartwatchUnchanged = smartwatchExisting
+    ? smartwatchInput === String(smartwatchExisting.caloriesBurned)
+    : false;
+  const smartwatchSaveDisabled =
+    !smartwatchInput || isNaN(parseInt(smartwatchInput, 10)) || smartwatchUnchanged;
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -848,13 +862,14 @@ export default function ActivitiesScreen() {
         {activityMode === 'smartwatch' ? (
           /* Smart Watch Mode: single calorie input */
           <View style={styles.sectionCard}>
+            <LinearGradient
+              colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+              style={StyleSheet.absoluteFill}
+            />
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Calories Burned</Text>
             </View>
             <View style={styles.sectionBody}>
-              <Text style={styles.smartwatchInstruction}>
-                Enter your total calories burned from your smart watch
-              </Text>
               <View ref={smartwatchInputWrapperRef} style={styles.inputRow}>
                 <TextInput
                   ref={smartwatchInputRef}
@@ -871,9 +886,9 @@ export default function ActivitiesScreen() {
                   placeholderTextColor={colors.textSecondary}
                 />
                 <TouchableOpacity
-                  style={[styles.addButtonFixed, (!smartwatchInput || parseInt(smartwatchInput, 10) < 0) && { opacity: 0.5 }]}
+                  style={[styles.addButtonFixed, smartwatchSaveDisabled && { opacity: 0.5 }]}
                   onPress={handleSaveSmartwatch}
-                  disabled={!smartwatchInput || isNaN(parseInt(smartwatchInput, 10))}
+                  disabled={smartwatchSaveDisabled}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.addButtonText}>Save</Text>
@@ -891,6 +906,10 @@ export default function ActivitiesScreen() {
           <>
             {/* Log Exercise section */}
             <View style={styles.sectionCard}>
+              <LinearGradient
+                colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+                style={StyleSheet.absoluteFill}
+              />
               <TouchableOpacity
                 style={styles.sectionHeader}
                 onPress={() => setExerciseCollapsed(!exerciseCollapsed)}
@@ -993,6 +1012,10 @@ export default function ActivitiesScreen() {
 
             {/* Log Steps section */}
             <View style={styles.sectionCard}>
+              <LinearGradient
+                colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+                style={StyleSheet.absoluteFill}
+              />
               <TouchableOpacity
                 style={styles.sectionHeader}
                 onPress={() => setStepsCollapsed(!stepsCollapsed)}
@@ -1042,6 +1065,10 @@ export default function ActivitiesScreen() {
         {/* Activity list — shown in manual and auto modes */}
         {activityMode !== 'smartwatch' && (
           <View style={styles.sectionCard}>
+            <LinearGradient
+              colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+              style={StyleSheet.absoluteFill}
+            />
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Today's Activities</Text>
             </View>

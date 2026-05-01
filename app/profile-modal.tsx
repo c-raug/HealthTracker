@@ -12,6 +12,7 @@ import {
   Image,
   useColorScheme,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -82,10 +83,13 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.md,
       marginBottom: Spacing.sm,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     inputLabel: {
       ...Typography.small,
@@ -122,14 +126,13 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       alignItems: 'center',
       borderRadius: Radius.sm - 2,
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     toggleOptionActive: {
-      backgroundColor: colors.primary,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
     },
     toggleText: {
       ...Typography.small,
@@ -137,7 +140,7 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '600',
     },
     toggleTextActive: {
-      color: colors.white,
+      color: colors.primary,
     },
     dobBtn: {
       flex: 1,
@@ -165,9 +168,13 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     activityBtnActive: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
     },
     activityBtnText: {
       ...Typography.small,
@@ -175,7 +182,7 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '500',
     },
     activityBtnTextActive: {
-      color: colors.white,
+      color: colors.primary,
     },
     modeRow: {
       gap: Spacing.xs,
@@ -194,9 +201,13 @@ const makeStyles = (colors: typeof LightColors) =>
       paddingVertical: Spacing.sm,
       paddingHorizontal: Spacing.md,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
     modePillActive: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primaryLight,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
     },
     modePillText: {
       ...Typography.small,
@@ -204,14 +215,16 @@ const makeStyles = (colors: typeof LightColors) =>
       fontWeight: '600',
     },
     modePillTextActive: {
-      color: colors.white,
+      color: colors.primary,
     },
     modeInfoIcon: {
       padding: Spacing.xs,
     },
     saveBtn: {
-      backgroundColor: colors.primary,
+      backgroundColor: colors.primaryLight,
       borderRadius: Radius.sm,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
     },
@@ -220,7 +233,7 @@ const makeStyles = (colors: typeof LightColors) =>
     },
     saveBtnText: {
       ...Typography.body,
-      color: colors.white,
+      color: colors.primary,
       fontWeight: '600',
     },
     pickerOverlay: {
@@ -293,6 +306,7 @@ export default function ProfileModal() {
   const router = useRouter();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
   const systemScheme = useColorScheme();
 
   const resolvedScheme =
@@ -554,6 +568,7 @@ export default function ProfileModal() {
 
         {/* Name */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.inputLabel}>Name (optional)</Text>
           <View style={[styles.row, { marginBottom: 0 }]}>
             <TextInput
@@ -570,6 +585,7 @@ export default function ProfileModal() {
 
         {/* Date of Birth */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.inputLabel}>Date of Birth</Text>
           <TouchableOpacity
             style={styles.dobBtn}
@@ -584,6 +600,7 @@ export default function ProfileModal() {
 
         {/* Sex */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.inputLabel}>Sex</Text>
           <View style={[styles.toggle, { marginBottom: 0 }]}>
             <TouchableOpacity
@@ -609,6 +626,7 @@ export default function ProfileModal() {
 
         {/* Height */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.inputLabel}>Height</Text>
           {isImperial ? (
             <View style={[styles.row, { marginBottom: 0 }]}>
@@ -649,6 +667,7 @@ export default function ProfileModal() {
 
         {/* Activity Tracking Mode */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.inputLabel}>Activity Tracking Mode</Text>
           <View style={[styles.modeRow, { marginBottom: 0 }]}>
             {(['auto', 'manual', 'smartwatch'] as ActivityMode[]).map((mode) => (
@@ -715,6 +734,7 @@ export default function ProfileModal() {
 
         {/* Save */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <TouchableOpacity
             style={[styles.saveBtn, !hasChanges && styles.saveBtnDisabled]}
             onPress={handleSave}

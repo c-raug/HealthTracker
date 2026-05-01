@@ -5,10 +5,11 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
+import { useColors, LightColors, Spacing, Typography } from '../constants/theme';
 import { MealCategory } from '../types';
 import AddFoodTab from '../components/nutrition/AddFoodTab';
 import AddMealTab from '../components/nutrition/AddMealTab';
@@ -23,25 +24,24 @@ const makeStyles = (colors: typeof LightColors) =>
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
       paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.sm,
+      paddingVertical: Spacing.md,
       backgroundColor: colors.card,
-      borderBottomWidth: 1,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: colors.border,
     },
     headerTitle: {
-      ...Typography.h3,
+      ...Typography.h2,
       color: colors.text,
+      marginLeft: Spacing.sm,
     },
-    closeBtn: {
-      padding: Spacing.xs,
+    tabRowWrapper: {
+      overflow: 'hidden',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
     },
     tabRow: {
       flexDirection: 'row',
-      backgroundColor: colors.card,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
     },
     tab: {
       flex: 1,
@@ -75,21 +75,27 @@ export default function AddFoodModal() {
   const category = (params.category ?? 'breakfast') as MealCategory;
 
   const [activeTab, setActiveTab] = useState<Tab>('food');
+  const isDark = colors.card === '#2C2C2E';
 
   const handleDone = () => {
     router.back();
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Add to {category.charAt(0).toUpperCase() + category.slice(1)}</Text>
-        <TouchableOpacity style={styles.closeBtn} onPress={handleDone}>
-          <Ionicons name="close" size={24} color={colors.text} />
+        <TouchableOpacity onPress={handleDone}>
+          <Ionicons name="chevron-back" size={28} color={colors.text} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Add to {category.charAt(0).toUpperCase() + category.slice(1)}</Text>
       </View>
 
-      <View style={styles.tabRow}>
+      <View style={styles.tabRowWrapper}>
+        <LinearGradient
+          colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.tabRow}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'food' && styles.tabActive]}
           onPress={() => setActiveTab('food')}
@@ -114,6 +120,7 @@ export default function AddFoodModal() {
             Quick Add
           </Text>
         </TouchableOpacity>
+        </View>
       </View>
 
       {activeTab === 'food' && (

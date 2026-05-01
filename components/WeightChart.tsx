@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert, useColorScheme } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
@@ -25,18 +26,19 @@ function getDaysForRange(range: TimeRange): number | null {
   }
 }
 
-const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
+const makeStyles = (colors: typeof LightColors, isDark: boolean) => StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
     marginVertical: Spacing.sm,
     borderRadius: Radius.lg,
     paddingVertical: Spacing.md,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerRow: {
     flexDirection: 'row',
@@ -65,8 +67,17 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  chart: {
+  chartWrapper: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.xs,
     borderRadius: Radius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: isDark ? '#2C2C2E' : '#F8F9FB',
+  },
+  chart: {
+    borderRadius: 0,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -92,16 +103,18 @@ const makeStyles = (colors: typeof LightColors) => StyleSheet.create({
     fontWeight: '600',
   },
   placeholder: {
-    backgroundColor: colors.card,
     marginVertical: Spacing.sm,
     borderRadius: Radius.lg,
     padding: Spacing.xl,
     alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+    elevation: 3,
   },
   placeholderText: {
     ...Typography.body,
@@ -129,7 +142,13 @@ function showRangePicker(current: TimeRange, onSelect: (r: TimeRange) => void) {
 export default function WeightChart() {
   const { entries, preferences } = useApp();
   const colors = useColors();
-  const styles = makeStyles(colors);
+  const deviceScheme = useColorScheme();
+  const appearanceMode = preferences.appearanceMode ?? 'system';
+  const isDark =
+    appearanceMode === 'dark' ||
+    (appearanceMode === 'system' && (deviceScheme ?? 'light') === 'dark');
+  const gradientColors: [string, string] = isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8'];
+  const styles = makeStyles(colors, isDark);
   const [selectedRange, setSelectedRange] = useState<TimeRange>('1M');
 
   // Sort ascending by date (all entries)
@@ -138,6 +157,7 @@ export default function WeightChart() {
   if (sorted.length < 2) {
     return (
       <View style={styles.placeholder}>
+        <LinearGradient colors={gradientColors} style={StyleSheet.absoluteFill} />
         <Text style={styles.placeholderText}>
           Log at least 2 entries to see your weight chart.
         </Text>
@@ -183,12 +203,19 @@ export default function WeightChart() {
     ],
   };
 
+  const chartBg = isDark ? '#2C2C2E' : '#F8F9FB';
+  // Parse colors.primary hex → rgb for use in rgba()
+  const hex = colors.primary.replace('#', '');
+  const pr = parseInt(hex.substring(0, 2), 16);
+  const pg = parseInt(hex.substring(2, 4), 16);
+  const pb = parseInt(hex.substring(4, 6), 16);
+
   const chartConfig = {
-    backgroundColor: colors.card,
-    backgroundGradientFrom: colors.card,
-    backgroundGradientTo: colors.card,
+    backgroundColor: chartBg,
+    backgroundGradientFrom: chartBg,
+    backgroundGradientTo: chartBg,
     decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
+    color: (opacity = 1) => `rgba(${pr}, ${pg}, ${pb}, ${opacity * 0.25})`,
     labelColor: () => colors.textSecondary,
     propsForDots: {
       r: '3',
@@ -196,7 +223,7 @@ export default function WeightChart() {
       stroke: colors.primary,
     },
     propsForBackgroundLines: {
-      stroke: colors.border,
+      stroke: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
       strokeDasharray: '4',
     },
   };
@@ -209,6 +236,7 @@ export default function WeightChart() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient colors={gradientColors} style={StyleSheet.absoluteFill} />
       <View style={styles.headerRow}>
         <Text style={styles.title}>Weight Trend ({preferences.unit})</Text>
         <TouchableOpacity
@@ -220,16 +248,18 @@ export default function WeightChart() {
           <Ionicons name="chevron-down" size={12} color={colors.primary} />
         </TouchableOpacity>
       </View>
-      <LineChart
-        data={chartData}
-        width={CHART_WIDTH}
-        height={200}
-        chartConfig={chartConfig}
-        style={styles.chart}
-        withInnerLines
-        withOuterLines={false}
-        fromZero={false}
-      />
+      <View style={styles.chartWrapper}>
+        <LineChart
+          data={chartData}
+          width={CHART_WIDTH - Spacing.md * 2}
+          height={200}
+          chartConfig={chartConfig}
+          style={styles.chart}
+          withInnerLines
+          withOuterLines={false}
+          fromZero={false}
+        />
+      </View>
       <View style={styles.summaryRow}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Start</Text>

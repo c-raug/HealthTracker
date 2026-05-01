@@ -44,6 +44,8 @@ const makeStyles = (colors: typeof LightColors) =>
     sectionHeader: {
       ...Typography.small,
       color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.xs,
       backgroundColor: colors.background,

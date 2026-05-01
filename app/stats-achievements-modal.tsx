@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -51,10 +52,13 @@ const makeStyles = (colors: typeof LightColors) =>
       padding: Spacing.md,
       marginBottom: Spacing.sm,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     sectionLabel: {
       ...Typography.body,
@@ -185,6 +189,7 @@ export default function StatsAchievementsModal() {
   const router = useRouter();
   const colors = useColors();
   const styles = makeStyles(colors);
+  const isDark = colors.card === '#2C2C2E';
 
   // ── Level / XP data ────────────────────────────────────────────────────────
   const totalXp = preferences.totalXp ?? 0;
@@ -280,6 +285,7 @@ export default function StatsAchievementsModal() {
       >
         {/* ── Level ── */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionLabel, { marginBottom: 0 }]}>Level</Text>
             <TouchableOpacity
@@ -328,6 +334,7 @@ export default function StatsAchievementsModal() {
 
         {/* ── Badges ── */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.sectionLabel}>Badges</Text>
           {badges.map((b) => (
             <View key={b.label} style={styles.badgeCard}>
@@ -346,6 +353,7 @@ export default function StatsAchievementsModal() {
 
         {/* ── Achievements ── */}
         <View style={styles.card}>
+          <LinearGradient colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']} style={StyleSheet.absoluteFill} />
           <Text style={styles.sectionLabel}>Achievements</Text>
           <View style={styles.achievementsGrid}>
             {ACHIEVEMENTS.map((a) => {

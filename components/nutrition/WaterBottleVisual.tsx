@@ -160,7 +160,7 @@ export default function WaterBottleVisual({ date, onPress }: Props) {
         <View style={styles.neck} />
         <View style={styles.bottleBody}>
           <Animated.View
-            style={[styles.fill, { height: fillAnim, backgroundColor: fillColor + '55' }]}
+            style={[styles.fill, { height: fillAnim, backgroundColor: WATER_BLUE + '88' }]}
           />
           <View style={styles.pctLabel}>
             <Text style={styles.pctText}>{pctDisplay}%</Text>

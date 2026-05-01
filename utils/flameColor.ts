@@ -1,4 +1,4 @@
-const STOPS = [0, 120, 240, 360, 480, 600];
+const STOPS = [0, 120, 240, 300, 420, 540];
 const COLORS = ['#FFC107', '#FF9800', '#F44336', '#3B82F6', '#9C27B0', '#4CAF50'];
 
 function hexToRgb(hex: string): [number, number, number] {

@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, useColorScheme } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { useColors, LightColors, Spacing, Typography, Radius } from '../constants/theme';
@@ -21,15 +22,17 @@ const TARGET_RATE_LBS: Record<WeightGoal, number> = {
 const makeStyles = (colors: typeof LightColors) =>
   StyleSheet.create({
     card: {
-      backgroundColor: colors.card,
       borderRadius: Radius.lg,
       padding: Spacing.md,
       marginBottom: Spacing.sm,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.10,
+      shadowRadius: 8,
+      elevation: 3,
     },
     title: {
       ...Typography.small,
@@ -95,6 +98,11 @@ function addDaysToDate(dateStr: string, days: number): string {
 export default function WeightInsights() {
   const { entries, preferences } = useApp();
   const colors = useColors();
+  const deviceScheme = useColorScheme();
+  const appearanceMode = preferences.appearanceMode ?? 'system';
+  const isDark =
+    appearanceMode === 'dark' ||
+    (appearanceMode === 'system' && (deviceScheme ?? 'light') === 'dark');
   const styles = makeStyles(colors);
 
   const unit = preferences.unit;
@@ -114,8 +122,11 @@ export default function WeightInsights() {
     .filter((e) => e.date >= sevenDaysAgo && e.date <= today)
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  const gradientColors: [string, string] = isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8'];
+
   const renderPlaceholder = (msg: string) => (
     <View style={styles.card}>
+      <LinearGradient colors={gradientColors} style={StyleSheet.absoluteFill} />
       <Text style={styles.title}>Progress Insights</Text>
       <Text style={styles.placeholder}>{msg}</Text>
     </View>
@@ -194,6 +205,7 @@ export default function WeightInsights() {
 
   return (
     <View style={styles.card}>
+      <LinearGradient colors={gradientColors} style={StyleSheet.absoluteFill} />
       <Text style={styles.title}>Progress Insights (Last 7 Days)</Text>
 
       <View style={styles.row}>
