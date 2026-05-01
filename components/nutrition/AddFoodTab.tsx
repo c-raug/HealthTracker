@@ -396,16 +396,6 @@ export default function AddFoodTab({ date, category, onDone }: Props) {
   if (selectedItem) {
     return (
       <View style={styles.container}>
-        <View style={styles.portionHeader}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => setSelectedItem(null)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="chevron-back" size={22} color={colors.primary} />
-          </TouchableOpacity>
-          <Text style={styles.portionTitle} numberOfLines={1}>{selectedItem.name}</Text>
-        </View>
         <PortionSelector
           value={servings}
           onChange={setServings}
