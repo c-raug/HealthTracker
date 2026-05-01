@@ -82,7 +82,7 @@ export default function AddFoodModal() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleDone}>
           <Ionicons name="chevron-back" size={28} color={colors.text} />
