@@ -109,10 +109,13 @@ const makeStyles = (colors: typeof LightColors) =>
       alignItems: 'center',
       marginBottom: Spacing.md,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     summaryRow: {
       flexDirection: 'row',
@@ -135,10 +138,12 @@ const makeStyles = (colors: typeof LightColors) =>
       marginBottom: Spacing.md,
       overflow: 'hidden',
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     sectionHeader: {
       flexDirection: 'row',
@@ -848,6 +853,10 @@ export default function ActivitiesScreen() {
         {activityMode === 'smartwatch' ? (
           /* Smart Watch Mode: single calorie input */
           <View style={styles.sectionCard}>
+            <LinearGradient
+              colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+              style={StyleSheet.absoluteFill}
+            />
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Calories Burned</Text>
             </View>
@@ -891,6 +900,10 @@ export default function ActivitiesScreen() {
           <>
             {/* Log Exercise section */}
             <View style={styles.sectionCard}>
+              <LinearGradient
+                colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+                style={StyleSheet.absoluteFill}
+              />
               <TouchableOpacity
                 style={styles.sectionHeader}
                 onPress={() => setExerciseCollapsed(!exerciseCollapsed)}
@@ -993,6 +1006,10 @@ export default function ActivitiesScreen() {
 
             {/* Log Steps section */}
             <View style={styles.sectionCard}>
+              <LinearGradient
+                colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+                style={StyleSheet.absoluteFill}
+              />
               <TouchableOpacity
                 style={styles.sectionHeader}
                 onPress={() => setStepsCollapsed(!stepsCollapsed)}
@@ -1042,6 +1059,10 @@ export default function ActivitiesScreen() {
         {/* Activity list — shown in manual and auto modes */}
         {activityMode !== 'smartwatch' && (
           <View style={styles.sectionCard}>
+            <LinearGradient
+              colors={isDark ? ['#3A3A3C', '#2C2C2E'] : ['#FFFFFF', '#F4F4F8']}
+              style={StyleSheet.absoluteFill}
+            />
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Today's Activities</Text>
             </View>
