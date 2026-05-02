@@ -89,7 +89,7 @@ A cross-platform mobile app (iOS & Android) built with React Native (Expo) for t
 
 | Layer | Choice |
 |---|---|
-| Framework | React Native + Expo SDK 54 (managed workflow) |
+| Framework | React Native + Expo SDK 55 (dev client workflow) |
 | Language | TypeScript |
 | Routing | Expo Router v6 (file-based tabs + modal routes) |
 | Storage | AsyncStorage (`@react-native-async-storage/async-storage`) |
@@ -321,44 +321,49 @@ AsyncStorage keys: `weight_entries`, `user_preferences`, `nutrition_log`, `custo
 
 ---
 
-## Local Development (Mac)
+## Debugging locally (daily)
 
 ### Prerequisites
 
-- **Node.js 20+** — required by Expo SDK 54. Check with `node -v`; install from [nodejs.org](https://nodejs.org/) if needed
-- **Expo Go (SDK 54)** on your phone
-  - iOS: [App Store → Expo Go](https://apps.apple.com/app/expo-go/id982107779)
-  - Android: [Google Play → Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent)
-- **Xcode** (optional) — for iOS Simulator
-- **Android Studio** (optional) — for Android Emulator
+- **Node.js 20+** — check with `node -v`; install from [nodejs.org](https://nodejs.org/) if needed
+- **Xcode** (latest) — required for building to the iPhone via free personal team signing
+- **Apple ID** — any free Apple account works (no $99/yr developer program needed)
 
-### Setup
+### First-time setup
 
 ```bash
 git clone <repo-url>
 cd HealthTracker
 npm install --legacy-peer-deps
+npx expo prebuild --platform ios --clean
+cd ios && pod install && cd ..
+open ios/HealthTracker.xcworkspace
 ```
 
 > Always use `--legacy-peer-deps` — see [CLAUDE.md → Dependency Management](CLAUDE.md) for details.
 
-### Running the app
+In Xcode:
+1. Select the **HealthTracker** target → **Signing & Capabilities**.
+2. Set **Team** to your free personal Apple ID team.
+3. If Xcode complains about bundle ID uniqueness, change it in Xcode only (leave `app.json` alone).
+4. Plug in your iPhone, select it as the run destination, hit **Run**.
+5. On first launch: **Settings → General → VPN & Device Management** → trust the personal-team developer profile.
+
+### Daily workflow
+
+After the first build is on the phone, daily development is the same hot-reload experience as Expo Go:
 
 ```bash
 npm start
+# or, from Codespaces / different network:
+npm run tunnel
 ```
 
-Metro starts and shows a QR code. Then choose your target:
+Open the **HealthTracker** dev client app on your iPhone (not Expo Go), tap "Enter URL manually" or scan the Metro QR. Hot reload, console, and the React DevMenu (shake the phone) all work.
 
-| Target | How |
-|--------|-----|
-| Physical device (Expo Go) | Scan the QR code — phone must be on the **same Wi-Fi** as your Mac |
-| iOS Simulator | Press `i` in the terminal (requires Xcode installed) |
-| Android Emulator | Press `a` in the terminal (requires Android Studio + emulator already running) |
+**Every 7 days**: the free personal team certificate expires. Re-plug the phone and hit Run in Xcode to refresh — source code changes never require a rebuild.
 
-> **Different network?** Use `npm run tunnel` instead of `npm start`.
-
-### Live development
+### Live development keys
 
 | Key | Action |
 |-----|--------|
@@ -377,12 +382,12 @@ This is the no-install workflow — runs entirely in the browser with no local s
 
 ### How it works
 
-**GitHub Codespaces** runs the Expo development server in the cloud. **Expo tunnel** (`--tunnel`) creates a public URL via ngrok so your phone can reach that server from anywhere. **Expo Go** connects to that URL and renders the app natively.
+**GitHub Codespaces** runs the Expo development server in the cloud. **Expo tunnel** (`--tunnel`) creates a public URL via ngrok so your phone can reach that server from anywhere. The **HealthTracker dev client** (built via Xcode) connects to that URL and renders the app natively.
 
 ### Prerequisites
 
 1. **GitHub account** with this repository
-2. **Expo Go (SDK 54)** installed on your phone
+2. **HealthTracker dev client** already built to your iPhone via Xcode (see First-time setup above)
 
 ### Starting a dev session
 
@@ -393,7 +398,7 @@ This is the no-install workflow — runs entirely in the browser with no local s
    ```bash
    npm run tunnel
    ```
-5. Wait ~20–30 seconds for a QR code, then scan it in Expo Go
+5. Wait ~20–30 seconds for a QR code, then scan it in the HealthTracker dev client
 
 > **Reopening an existing Codespace:** `postCreateCommand` does not re-run. Just open the terminal and run `npm run tunnel` — packages are already installed.
 
@@ -406,7 +411,9 @@ This is the no-install workflow — runs entirely in the browser with no local s
 
 ---
 
-## Android APK Distribution
+## Release process
+
+### Android (existing CI pipeline)
 
 Tagged releases trigger an automated GitHub Actions pipeline that builds a debug APK via EAS and attaches it to a GitHub Release.
 
@@ -419,6 +426,20 @@ git push origin v1.0.0
 
 **Installing on Android:** GitHub repo → Releases → download `.apk` → enable "Install unknown apps" in Android Settings → tap APK.
 
+### iOS preview (week-long sideload)
+
+Re-run the Xcode build flow against the latest `main`. No tagging, no CI — purely local. Expires after 7 days; just rebuild.
+
+### iOS via EAS (future, requires paid Apple Dev account)
+
+The `preview.ios` profile is already wired in `eas.json`. The day a paid account exists, run `eas build --platform ios --profile preview` and an `.ipa` will fall out.
+
+---
+
+## Why we don't use Expo Go anymore
+
+Expo Go ships with a fixed SDK version, so the only way to run the project on iOS 26 with SDK 55 native modules was a custom build. The **dev client** (`expo-dev-client`) gives the exact same hot-reload / Metro / DevMenu experience as Expo Go, but is tied to *this project's* native dependencies and SDK version — no more waiting for Expo Go to catch up.
+
 ---
 
 ## Troubleshooting
@@ -430,4 +451,6 @@ git push origin v1.0.0
 | Tunnel is slow to start | Wait up to 60 seconds — ngrok can take a moment |
 | `@expo/ngrok` not found | Run `npm install --legacy-peer-deps` first, then retry |
 | Codespace went to sleep | Reopen at github.com → Codespaces, then run `npm run tunnel` |
-| "Something went wrong" in Expo Go | Stop Expo (`Ctrl+C`), run `npm run tunnel` again, rescan QR |
+| "Untrusted Developer" on iPhone | Settings → General → VPN & Device Management → trust your profile |
+| 7-day signing expired | Re-plug the phone, hit Run in Xcode |
+| Pod install fails | `rm -rf ios/Pods ios/Podfile.lock && cd ios && pod install` |
