@@ -39,7 +39,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 4** — App shell: navigation, tab bar, headers
 - [x] **Phase 5** — Welcome + onboarding (5-step profile setup + Load Saved Data)
 - [x] **Phase 6** — Weight tracking (scale/chart pager, log card, 7-day insights)
-- [ ] **Phase 7** — Nutrition — split into three on-device checkpoints:
+- [x] **Phase 7** — Nutrition — three on-device checkpoints (core complete; polish deferred):
   - [x] **7a** — overview (profile/weight prompts, calorie pager + ring, macro bars)
   - [x] **7b** — meals & food rows (collapsible meal cards, food items, portion selector)
   - [x] **7c** — add-food flow (3-tab add modal, custom-food form, saved meals, create-meal)
