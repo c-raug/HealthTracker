@@ -59,10 +59,14 @@ struct NutritionView: View {
         }
         .onChange(of: store.selectedDate) { pagerPage = 1 }
         .sheet(item: $addFoodTarget) { target in
-            AddFoodPlaceholderSheet(category: target.category)
+            AddFoodModal(date: store.selectedDate, category: target.category)
         }
         .sheet(item: $saveMealDraft) { draft in
-            CreateMealPlaceholderSheet(name: draft.name, foodCount: draft.foods.count)
+            NavigationStack {
+                CreateMealFlowView(onDone: { saveMealDraft = nil }, initialFoods: draft.foods, initialName: draft.name)
+                    .navigationTitle("Save Meal")
+                    .navigationBarTitleDisplayMode(.inline)
+            }
         }
     }
 
@@ -148,31 +152,4 @@ struct SaveMealDraft: Identifiable {
     let id = UUID()
     let foods: [NutritionFoodItem]
     let name: String
-}
-
-/// Placeholder for the Phase 7c Add-Food modal (Add Food · Add Meal · Quick Add).
-private struct AddFoodPlaceholderSheet: View {
-    let category: MealCategory
-    var body: some View {
-        NavigationStack {
-            PlaceholderCard(systemImage: "plus.circle", title: "Add to \(category.rawValue.capitalized)", phase: "Phase 7c")
-                .padding()
-                .navigationTitle("Add Food")
-                .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-}
-
-/// Placeholder for the Phase 7c Create-Meal flow.
-private struct CreateMealPlaceholderSheet: View {
-    let name: String
-    let foodCount: Int
-    var body: some View {
-        NavigationStack {
-            PlaceholderCard(systemImage: "bookmark", title: "Save \(name) (\(foodCount) foods)", phase: "Phase 7c")
-                .padding()
-                .navigationTitle("Save Meal")
-                .navigationBarTitleDisplayMode(.inline)
-        }
-    }
 }

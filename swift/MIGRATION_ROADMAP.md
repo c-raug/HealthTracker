@@ -42,7 +42,9 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [ ] **Phase 7** — Nutrition — split into three on-device checkpoints:
   - [x] **7a** — overview (profile/weight prompts, calorie pager + ring, macro bars)
   - [x] **7b** — meals & food rows (collapsible meal cards, food items, portion selector)
-  - [ ] **7c** — add-food / food library (3-tab add modal, custom foods, saved meals, filters)
+  - [x] **7c** — add-food flow (3-tab add modal, custom-food form, saved meals, create-meal)
+    *(deferred polish: pinned drag-reorder, food-type filter modal, EditMealFlow, standalone Food
+    Library screen — tracked for a 7c follow-up / Phase 11 Profile)*
 - [ ] **Phase 8** — Water tracking
 - [ ] **Phase 9** — Activity tracking
 - [ ] **Phase 10** — Home dashboard
@@ -217,6 +219,45 @@ add foods) and verify:
   count-up, flag it if the gesture feels grabby next to the scroll/pager and we'll tune the thresholds.)*
 Then run the unit tests (⌘U): the new suite is `PortionMathTests` (decompose/compose, scale + preview,
 serving labels, per-serving base + row rescale); all existing suites pass.
+
+**Phase 7c →** Logging food end-to-end now works. From any meal card tap **+ Add** and verify the
+**Add-Food modal** (three-tab segmented switcher, title "Add to {Category}"):
+- **Add Food** — a searchable custom-food list: **Pinned** (for this category) + **Recent** (top-7 by
+  how often logged) when idle; **Pinned** + **My Foods** when searching. Each row → **pin** (choose
+  categories), **edit** (opens the custom-food form), **delete**. **Tap a row** → the **portion
+  selector** (wheels + preview) → **Add to {Category}** logs the scaled food and closes the modal.
+  **Create Custom Food** opens the form (Required/Optional tabs, auto-computed calories with Override,
+  food-type chips); saving jumps straight to that food's portion step.
+- **Add Meal** — a searchable saved-meal list (Pinned + All Meals); **tap** logs every food in the
+  meal under one group (appears as a collapsible saved-meal group on the Nutrition tab). Pin / delete /
+  **Create Meal** (name + food search + per-food portion → Save Meal) supported.
+- **Quick Add** — name (optional) + calories → logs a `quickAdd` food.
+- Swiping a meal header's **save-as-meal** now opens the real **Create-Meal** flow seeded with that
+  category's foods. Correct in light/dark + all 6 accents.
+Then run the unit tests (⌘U): the new suite is `FoodLibraryLogicTests` (frequency map, search, pinned
+sort, recent top-7, custom→logged scaling, meal-group explode, auto-calories, serving parse); all
+existing suites pass.
+*(Deferred from the RN original, tracked for a follow-up: pinned **drag-reorder**, the food-type
+**filter** modal + favorite pills, **EditMealFlow** (editing a saved meal), and the standalone **Food
+Library** management screen — which Phase 11's Profile will surface. The core log-food loop is complete.)*
+
+### Phase 7c map (what landed where)
+- `Logic/FoodLibraryLogic.swift` — pure ranking/scaling/search: `frequencyMap`, `matches`, `pinned`,
+  `recent`, `unpinned`, `toNutritionItem`, `logged` (portion scale + fresh id), saved-meal helpers
+  (`pinnedMeals`/`otherMeals`/`mealCalories`/`mealGroupFoods`), and form helpers (`autoCalories`,
+  `parseServingSize`, `caloriesAreManual`).
+- `Features/Nutrition/AddFoodModal.swift` — the 3-tab sheet host (port of `add-food-modal.tsx`).
+- `Features/Nutrition/AddFoodTabView.swift` — custom-food list + portion step + create/edit
+  (port of `AddFoodTab.tsx`).
+- `Features/Nutrition/AddMealTabView.swift` — saved-meal list + add-group + create (port of `AddMealTab.tsx`).
+- `Features/Nutrition/QuickAddTabView.swift` — calories-only add (port of `QuickAddTab.tsx`).
+- `Features/Nutrition/CustomFoodFormView.swift` — Required/Optional custom-food form (port of `CustomFoodForm.tsx`).
+- `Features/Nutrition/CreateMealFlowView.swift` — build+save a meal (port of `CreateMealFlow.tsx`);
+  also the target of the 7b save-as-meal swipe.
+- `Features/Nutrition/PinCategoriesSheet.swift` — shared "pin to categories" sheet.
+- `Features/Nutrition/NutritionView.swift` — now presents the real `AddFoodModal` / `CreateMealFlowView`
+  (the 7b placeholder sheets are gone).
+- `HealthTrackerTests/FoodLibraryLogicTests.swift` — parity suite for `FoodLibraryLogic`.
 
 ### Phase 7b map (what landed where)
 - `Logic/PortionMath.swift` — pure portion math: `decompose`/`compose` (whole + eighth), `scale`,
