@@ -2,19 +2,21 @@ import SwiftUI
 
 /// Nutrition tab. Port of `expo/app/(tabs)/nutrition.tsx`.
 ///
-/// **Phase 7a (this checkpoint):** profile/weight prompts, the calorie **pager** (calorie graph ↔
-/// ring), and the **macro bars**. The 7-day water graph + water bottle + water tracker are **Phase 8**
-/// and the per-meal sections are **Phase 7b** — both are honest placeholders here so the screen's
-/// shape is in place. The calorie-target math lives in the pure `NutritionStats`.
+/// Overview, meals, add-food, and water are all live now: profile/weight prompts, the **3-page pager**
+/// (calorie graph ↔ ring+bottle ↔ water graph), the **macro bars**, the meal-category cards, and the
+/// collapsible **Water Tracker**. Calorie math lives in the pure `NutritionStats`; water math (goal
+/// resolution, weekly series, bottle fill) in `WaterStats`.
 struct NutritionView: View {
     @Environment(\.appColors) private var colors
     @Environment(AppStore.self) private var store
 
     var onXpTap: () -> Void
 
-    /// Default page is the ring (index 1), matching the RN center-page default. Phase 8 appends the
-    /// water graph as a third page.
+    /// Default page is the ring+bottle (index 1), matching the RN center-page default. Page 2 is the
+    /// 7-day water graph.
     @State private var pagerPage = 1
+    /// Bumped when the water bottle is tapped, telling the `WaterTrackerView` to expand (RN `expandKey`).
+    @State private var waterExpandKey = 0
     /// Add-food / save-as-meal presentation is owned here so the meal cards stay thin. Phase 7c
     /// replaces the placeholder sheet bodies with the real Add-Food and Create-Meal flows.
     @State private var addFoodTarget: AddFoodTarget?
@@ -36,6 +38,13 @@ struct NutritionView: View {
     }
     private var calorieTarget: Int { baseTdee + caloriesBurned }
 
+    private var waterGoal: Int {
+        WaterStats.resolveGoal(preferences: store.preferences, profile: profile, latestWeight: latestWeight)
+    }
+    private var waterConsumed: Double {
+        WaterStats.consumed(store.waterLog.first { $0.date == store.selectedDate })
+    }
+
     var body: some View {
         CollapsibleScreen(title: "Nutrition", onXpTap: onXpTap) {
             DateNavBar()
@@ -53,7 +62,7 @@ struct NutritionView: View {
                     goalCalories: Double(calorieTarget),
                     split: split
                 )
-                PlaceholderCard(systemImage: "drop.fill", title: "Water Tracker", phase: "Phase 8")
+                WaterTrackerView(date: store.selectedDate, expandKey: waterExpandKey)
                 mealSections
             }
         }
@@ -113,12 +122,25 @@ struct NutritionView: View {
                 ringPage
                     .frame(maxWidth: .infinity)
                     .tag(1)
+
+                WeeklyBarChart(
+                    title: "Water — 7 Days",
+                    points: WaterStats.weeklyWaterSeries(
+                        waterLog: store.waterLog,
+                        selectedDate: store.selectedDate,
+                        goal: waterGoal
+                    ),
+                    goalLine: waterGoal > 0 ? waterGoal : nil,
+                    coloring: .fixed(FixedColors.water)
+                )
+                .frame(maxWidth: .infinity)
+                .tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: 300)
 
             HStack(spacing: 6) {
-                ForEach(0..<2, id: \.self) { i in
+                ForEach(0..<3, id: \.self) { i in
                     Circle()
                         .fill(pagerPage == i ? colors.primary : colors.border)
                         .frame(width: 6, height: 6)
@@ -127,9 +149,18 @@ struct NutritionView: View {
         }
     }
 
+    /// Page 1: calorie ring + water bottle side by side, with the exercise-burn note below (RN `ringRow`).
     private var ringPage: some View {
         VStack(spacing: Spacing.sm) {
-            CalorieRingView(consumed: NutritionStats.consumedCalories(meals), target: Double(calorieTarget))
+            HStack(alignment: .center, spacing: Spacing.lg) {
+                CalorieRingView(consumed: NutritionStats.consumedCalories(meals), target: Double(calorieTarget))
+                WaterBottleVisual(
+                    consumed: waterConsumed,
+                    goal: waterGoal,
+                    unitLabel: WaterStats.unitLabel(store.preferences.unit),
+                    onTap: { waterExpandKey += 1 }
+                )
+            }
             if caloriesBurned > 0 {
                 Text("+\(caloriesBurned) cal from \(activityMode == .smartwatch ? "smart watch" : "exercise")")
                     .font(Typography.small)

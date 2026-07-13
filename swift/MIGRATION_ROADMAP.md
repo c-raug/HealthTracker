@@ -45,7 +45,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
   - [x] **7c** — add-food flow (3-tab add modal, custom-food form, saved meals, create-meal)
     *(deferred polish: pinned drag-reorder, food-type filter modal, EditMealFlow, standalone Food
     Library screen — tracked for a 7c follow-up / Phase 11 Profile)*
-- [ ] **Phase 8** — Water tracking
+- [x] **Phase 8** — Water tracking (bottle visual, water tracker card, 7-day water graph)
 - [ ] **Phase 9** — Activity tracking
 - [ ] **Phase 10** — Home dashboard
 - [ ] **Phase 11** — Profile & Settings + sub-modals
@@ -240,6 +240,49 @@ existing suites pass.
 *(Deferred from the RN original, tracked for a follow-up: pinned **drag-reorder**, the food-type
 **filter** modal + favorite pills, **EditMealFlow** (editing a saved meal), and the standalone **Food
 Library** management screen — which Phase 11's Profile will surface. The core log-food loop is complete.)*
+
+**Phase 8 →** The Nutrition tab's three **water placeholders are now real widgets** (the Phase-7a
+"Water Tracker" placeholder and the pager's missing bottle/graph). Complete onboarding (or Load Saved
+Data), open the Nutrition tab, and verify:
+- The center pager page (**page 1**, default) now shows the **calorie ring + water bottle side by
+  side**. The bottle fills (spring-animated) to today's `consumed / goal` fraction, shows the percent
+  inside, a **`consumed/goal oz|mL`** caption below, and a **blue glow at ≥100%**. The pager is now
+  **3 pages** (graph ‹ ring+bottle › **water graph**) with **3 dots**; **page 2** is the 7-day water
+  bar graph (fixed water-blue bars + dashed goal line), reusing `WeeklyBarChart`.
+- **Tapping the bottle** expands the **Water** card below the macro bars. The card (collapsed by
+  default, with a **+{middle preset} oz|mL** quick-add pill in the header when collapsed) has **three
+  gradient preset buttons** (tap to add that amount; **long-press to edit** the amount inline — blank/
+  invalid resets to the unit default), a **custom-amount** field + **Add**, and a **grouped entry
+  list** (one row per amount with an **Nx** badge): the **trash** icon removes the most-recently-logged
+  entry of that amount, **Clear** removes all of that amount after a confirm.
+- The **goal** resolves manual-override-first, else auto from latest weight × activity level (the
+  ported `WaterGoal` formula; ×1.2 for Active/Very Active, optional creatine bump). Amounts are in the
+  user's unit (**oz** for lbs, **mL** for kg). Water UI is fixed **blue** in light/dark + all 6 accents.
+Then run the unit tests (⌘U): the new suite is `WaterStatsTests` (preset defaults/override, goal
+resolution, entry grouping + most-recent-id, weekly series, bottle fill/percent, custom-amount + save-
+preset input rules); all existing suites pass. *(No XP is granted on logging water — water-goal XP
+stays a Phase-12 gamification-watcher concern, consistent with weight/food.)*
+
+### Phase 8 map (what landed where)
+- `Logic/WaterStats.swift` — the pure core: `resolveGoal` (manual/legacy-override vs auto
+  `WaterGoal.calculate`, ported from the `waterGoalValue` IIFE in `nutrition.tsx`), `presets`/
+  `defaultPresets`/`unitLabel`, `consumed`, `grouped` + `mostRecentId` (remove-one target),
+  `weeklyWaterSeries` (reuses `NutritionStats.DayPoint`), `rawFraction`/`fillFraction`/`pctDisplay`
+  (bottle), and the `parseCustomAmount`/`savePreset` input rules. Ports `WaterBottleVisual.tsx` +
+  `WaterTracker.tsx` numbers.
+- `Features/Water/WaterBottleVisual.swift` — cap/neck/body bottle, spring-animated fill, centered
+  percent, `consumed/goal` caption, ≥100% blue glow, tap-to-expand (port of `WaterBottleVisual.tsx`).
+- `Features/Water/WaterTrackerView.swift` — the collapsible **Water** card: header (chevron +
+  collapsed quick-add pill), three gradient preset buttons (long-press → inline edit), custom-amount
+  field + Add, and the grouped entry list (trash = remove-one, Clear = confirm-remove-all). Writes via
+  `store.addWaterEntry`/`deleteWaterEntry`/`setWaterPresets`. Port of `WaterTracker.tsx`.
+- `Features/Nutrition/NutritionView.swift` — page 1 is now the **ring + bottle** row; page 2 appends
+  the water graph via the shared `WeeklyBarChart(coloring: .fixed(FixedColors.water))`; the dot count
+  is now 3; the bottle's tap bumps a `waterExpandKey` that expands the tracker (the 7a `PlaceholderCard`
+  is gone).
+- `HealthTrackerTests/WaterStatsTests.swift` — parity suite for `WaterStats`.
+- Water color is the fixed `FixedColors.water`/`waterLight`/`waterGlow` (already in the Design layer);
+  the RN Android glow backdrop has no iOS counterpart (an iOS `.shadow` glow is used, as in Phase 6).
 
 ### Phase 7c map (what landed where)
 - `Logic/FoodLibraryLogic.swift` — pure ranking/scaling/search: `frequencyMap`, `matches`, `pinned`,
