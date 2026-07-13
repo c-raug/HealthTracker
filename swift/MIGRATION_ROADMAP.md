@@ -46,7 +46,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
     *(deferred polish: pinned drag-reorder, food-type filter modal, EditMealFlow, standalone Food
     Library screen — tracked for a 7c follow-up / Phase 11 Profile)*
 - [x] **Phase 8** — Water tracking (bottle visual, water tracker card, 7-day water graph)
-- [ ] **Phase 9** — Activity tracking
+- [x] **Phase 9** — Activity tracking (burn flame, 7-day activity graph, exercise/steps/smartwatch logging)
 - [ ] **Phase 10** — Home dashboard
 - [ ] **Phase 11** — Profile & Settings + sub-modals
 - [ ] **Phase 12** — Gamification
@@ -262,6 +262,52 @@ Then run the unit tests (⌘U): the new suite is `WaterStatsTests` (preset defau
 resolution, entry grouping + most-recent-id, weekly series, bottle fill/percent, custom-amount + save-
 preset input rules); all existing suites pass. *(No XP is granted on logging water — water-goal XP
 stays a Phase-12 gamification-watcher concern, consistent with weight/food.)*
+
+**Phase 9 →** The **Activities** tab is now real (replaces the Phase-4 placeholder). Complete onboarding
+(or Load Saved Data), open the Activities tab, and verify:
+- Missing profile **or** no weight entry → the **Set-Up prompt** ("Set up your profile and log a weight
+  entry…", Go to Settings pushes the real Settings screen) blocks the rest of the screen.
+- With profile + weight: the shared **date-nav bar** drives `store.selectedDate`. In **Auto** mode a red
+  **reference-only warning** banner shows (activities here don't affect the calorie target). A **2-page
+  pager** (swipe + 2 dots) — **page 0** the **burn flame** (`flame.fill` tinted by the `FlameColor`
+  0…600 ramp with a burn-scaled glow, today's total-burned count + `cal`/`kcal` overlaid); **page 1** the
+  **7-day activity bar graph** (accent-colored bars, no goal line), reusing `WeeklyBarChart`.
+- **Manual / Auto** modes show two collapsible cards (default per "Expand sections by default",
+  re-collapse on tab-leave when off): **Log Exercise** (Weight-Lifting pill + Hours 0–5 / Minutes 0–59
+  **wheel pickers** → `~N cal burned` preview → **Add Exercise**, disabled at 0 duration; resets to 0h/30m
+  after adding) and **Log Steps** (numeric field → preview → **Add Steps**, disabled when ≤ 0). Below,
+  **Today's Activities** lists each entry (label · detail · `N cal` · trash-delete); a row logged under a
+  different mode shows a dismissible **mode-mismatch warning** row.
+- **Smart Watch** mode replaces both logging cards + the list with a single **Calories Burned** field
+  (pre-filled from the day's existing smartwatch entry; **Save** disabled when empty/unparseable/unchanged;
+  saving overwrites the one-per-day smartwatch entry, or removes it when 0, and shows an "Entry saved"
+  pill for 3s). Correct in light/dark + all 6 accents; collapsing header + XP pill still behave.
+Then run the unit tests (⌘U): the new suite is `ActivityStatsTests` (jsParseInt, total-burned +
+weekly series, exercise/steps previews, the smartwatch save-disabled gate, duration/label/detail
+formatting, mode-mismatch warning); all existing suites pass. *(The pager uses `TabView(.page)` like
+Weight/Nutrition; the flame is an SF-Symbol adaptation of RN's SVG fire path — flag if the glow or the
+count overlay wants tuning on device. No XP is granted here — activity XP stays a Phase-12 concern.)*
+
+### Phase 9 map (what landed where)
+- `Logic/ActivityStats.swift` — the pure core ported from the inline math in
+  `expo/app/(tabs)/activities.tsx`: `jsParseInt` (JS `parseInt` parity), `totalBurned` (mode-independent
+  day sum, distinct from `NutritionStats.caloriesBurned`), `weeklyActivitySeries` (reuses
+  `NutritionStats.DayPoint`, `goal = 0`), `exercisePreview`/`stepsPreview` (wrap `ActivityCalories`),
+  `smartwatchEntry` + `smartwatchSaveDisabled`, `formatDuration`, `label`/`detail`, `modeLabel`,
+  `showWarning`, `groupedNumber`.
+- `Features/Activities/CalorieFlameView.swift` — the burn flame (port of `CalorieFlame.tsx`): `flame.fill`
+  SF Symbol tinted by `FlameColor.color(forBurn:)` with a `FlameColor.glowIntensity`-scaled `.shadow`
+  glow, the grouped burn count + `cal`/`kcal` unit overlaid over the flame body.
+- `Features/Activities/ActivitiesView.swift` — the screen (replaces the Phase-4 placeholder): prompt vs
+  content gate, auto-mode warning, the flame ↔ weekly-graph pager, the mode-specific logging
+  (smartwatch card **or** Log-Exercise wheels + Log-Steps), and the Today's-Activities list with the
+  per-row mode-mismatch warning. Writes via `store.addActivity` / `deleteActivity` /
+  `dismissActivityWarning` (the store stamps `loggedWithMode` at add-time).
+- `HealthTrackerTests/ActivityStatsTests.swift` — parity suite for `ActivityStats`.
+- Reuses the already-ported `Logic/ActivityCalories.swift` (Phase 3), `Design/FlameColor.swift` (Phase 1),
+  and the shared `Features/Shared/WeeklyBarChart.swift` (Phase 7a). The RN custom duration "drums" become
+  native `Picker(.wheel)`s (as with the portion selector); the RN `AndroidGlowBackdrop` has no iOS
+  counterpart (an iOS `.shadow` glow is used, as in Phases 6/8).
 
 ### Phase 8 map (what landed where)
 - `Logic/WaterStats.swift` — the pure core: `resolveGoal` (manual/legacy-override vs auto
