@@ -15,6 +15,10 @@ struct NutritionView: View {
     /// Default page is the ring (index 1), matching the RN center-page default. Phase 8 appends the
     /// water graph as a third page.
     @State private var pagerPage = 1
+    /// Add-food / save-as-meal presentation is owned here so the meal cards stay thin. Phase 7c
+    /// replaces the placeholder sheet bodies with the real Add-Food and Create-Meal flows.
+    @State private var addFoodTarget: AddFoodTarget?
+    @State private var saveMealDraft: SaveMealDraft?
 
     private var profile: UserProfile? { store.preferences.profile }
     private var latestWeight: WeightEntry? { NutritionStats.latestWeight(store.entries) }
@@ -50,10 +54,31 @@ struct NutritionView: View {
                     split: split
                 )
                 PlaceholderCard(systemImage: "drop.fill", title: "Water Tracker", phase: "Phase 8")
-                PlaceholderCard(systemImage: "fork.knife", title: "Meals", phase: "Phase 7b")
+                mealSections
             }
         }
         .onChange(of: store.selectedDate) { pagerPage = 1 }
+        .sheet(item: $addFoodTarget) { target in
+            AddFoodPlaceholderSheet(category: target.category)
+        }
+        .sheet(item: $saveMealDraft) { draft in
+            CreateMealPlaceholderSheet(name: draft.name, foodCount: draft.foods.count)
+        }
+    }
+
+    // MARK: - Meal sections
+
+    private var mealSections: some View {
+        ForEach(MealCategory.allCases, id: \.self) { category in
+            MealCategoryView(
+                category: category,
+                foods: meals[category],
+                date: store.selectedDate,
+                sectionsExpanded: store.preferences.sectionsExpanded ?? false,
+                onAdd: { addFoodTarget = AddFoodTarget(category: $0) },
+                onSaveAsMeal: { foods, name in saveMealDraft = SaveMealDraft(foods: foods, name: name) }
+            )
+        }
     }
 
     // MARK: - Pager (calorie graph ↔ ring)
@@ -109,5 +134,45 @@ struct NutritionView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, Spacing.lg)
+    }
+}
+
+/// Identifiable wrapper so the add-food sheet can be presented per meal category.
+struct AddFoodTarget: Identifiable {
+    let id = UUID()
+    let category: MealCategory
+}
+
+/// Foods + suggested name captured from a "save this meal as a custom meal" swipe.
+struct SaveMealDraft: Identifiable {
+    let id = UUID()
+    let foods: [NutritionFoodItem]
+    let name: String
+}
+
+/// Placeholder for the Phase 7c Add-Food modal (Add Food · Add Meal · Quick Add).
+private struct AddFoodPlaceholderSheet: View {
+    let category: MealCategory
+    var body: some View {
+        NavigationStack {
+            PlaceholderCard(systemImage: "plus.circle", title: "Add to \(category.rawValue.capitalized)", phase: "Phase 7c")
+                .padding()
+                .navigationTitle("Add Food")
+                .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+/// Placeholder for the Phase 7c Create-Meal flow.
+private struct CreateMealPlaceholderSheet: View {
+    let name: String
+    let foodCount: Int
+    var body: some View {
+        NavigationStack {
+            PlaceholderCard(systemImage: "bookmark", title: "Save \(name) (\(foodCount) foods)", phase: "Phase 7c")
+                .padding()
+                .navigationTitle("Save Meal")
+                .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }

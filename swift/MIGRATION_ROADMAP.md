@@ -41,7 +41,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 6** — Weight tracking (scale/chart pager, log card, 7-day insights)
 - [ ] **Phase 7** — Nutrition — split into three on-device checkpoints:
   - [x] **7a** — overview (profile/weight prompts, calorie pager + ring, macro bars)
-  - [ ] **7b** — meals & food rows (collapsible meal cards, food items, portion selector)
+  - [x] **7b** — meals & food rows (collapsible meal cards, food items, portion selector)
   - [ ] **7c** — add-food / food library (3-tab add modal, custom foods, saved meals, filters)
 - [ ] **Phase 8** — Water tracking
 - [ ] **Phase 9** — Activity tracking
@@ -196,6 +196,44 @@ latest-weight, TDEE-base, mode-aware burn, weekly series + adjusted goal); all e
 - `HealthTrackerTests/NutritionStatsTests.swift` — parity suite for all of `NutritionStats`.
 - Water widgets (`WaterBottleVisual`, `WaterTracker`, `WeeklyWaterGraph`) intentionally deferred to
   Phase 8; the pager keeps the ring at index 1 so Phase 8 can append the water graph as page 2.
+
+**Phase 7b →** The Nutrition tab now shows the four **meal-category cards** below the macro bars
+(replaces the Phase-7a "Meals" placeholder). Import a backup with nutrition history (or wait for 7c to
+add foods) and verify:
+- Each card (**Breakfast/Lunch/Dinner/Snacks**) is **collapsible** (chevron header; defaults to
+  collapsed unless "Expand sections by default" is on, and re-collapses on tab-leave when that's off).
+  The header shows `(count) · N cal` when non-empty, a **copy-yesterday** button, and a **+ Add** pill.
+- **Swipe a header left** → a blue **save-as-meal** action (confirms, then opens the Create-Meal
+  placeholder — real flow in 7c). **+ Add** opens the Add-Food placeholder (real flow in 7c).
+- **Copy-yesterday** copies that category's foods from the previous day (fresh IDs) after a confirm,
+  or says "Nothing to Copy" when yesterday is empty.
+- **Food rows**: bullet · name (italic + "Quick" badge for quick-adds) · serving detail · `N cal`.
+  **Swipe left → Delete.** **Tap** → an edit sheet: quick-adds get a calories/name form; normal foods
+  get the **portion selector** (two wheels — whole + eighth fraction — with a live cal/macro preview),
+  and **Update Portion** rescales the stored values.
+- **Saved-meal groups** (foods sharing a `mealGroupId`) render as their own collapsible sub-header
+  (`name · N cal`); **swipe left → remove** the whole group (confirms).
+- Correct in light/dark + all 6 accents. *(Swipe uses a custom `SwipeableRow` drag — like the Phase 6
+  count-up, flag it if the gesture feels grabby next to the scroll/pager and we'll tune the thresholds.)*
+Then run the unit tests (⌘U): the new suite is `PortionMathTests` (decompose/compose, scale + preview,
+serving labels, per-serving base + row rescale); all existing suites pass.
+
+### Phase 7b map (what landed where)
+- `Logic/PortionMath.swift` — pure portion math: `decompose`/`compose` (whole + eighth), `scale`,
+  `preview` (cal Int + 1-dp macros), `servingCountLabel`/`totalDisplay`, `perServingBase`, and
+  `rescale` (row re-portion). Ports `PortionSelector.tsx` numbers + `FoodItem.tsx` scaling.
+- `Features/Nutrition/PortionSelectorView.swift` — the two wheel `Picker(.wheel)`s + live preview
+  (rn-to-swift map's replacement for the RN scroll drums).
+- `Features/Nutrition/FoodItemView.swift` — the food row (swipe-delete, tap→edit portion / quick-edit),
+  writing via `store.updateFoodInMeal` / `deleteFoodFromMeal`.
+- `Features/Nutrition/MealCategoryView.swift` — the collapsible category card (header swipe→save-as-meal,
+  copy-yesterday, empty state, ungrouped rows, saved-meal groups w/ swipe→remove) + the `MealGroup`
+  splitter. `+ Add` / save-as-meal are surfaced as closures the parent presents.
+- `Features/Shared/SwipeableRow.swift` — reusable left-swipe-to-reveal-one-action row (RN `Swipeable`
+  stand-in for content outside a `List`). Content paints opaque so the action hides until swiped.
+- `Features/Nutrition/NutritionView.swift` — renders the four `MealCategoryView`s and owns the
+  Add-Food / Create-Meal sheet presentation (placeholders until 7c).
+- `HealthTrackerTests/PortionMathTests.swift` — parity suite for `PortionMath`.
 
 ### Phase 6 map (what landed where)
 - `Logic/WeightStats.swift` — the pure, testable core: `jsParseFloat`/`jsNumberString` (JS number

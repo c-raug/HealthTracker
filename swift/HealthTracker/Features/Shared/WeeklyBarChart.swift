@@ -116,12 +116,6 @@ struct WeeklyBarChart: View {
                 }
             }
         }
-        .chartXAxis {
-            AxisMarks { _ in
-                AxisValueLabel()
-                    .font(Typography.small)
-            }
-        }
         .padding(Spacing.sm)
     }
 }
