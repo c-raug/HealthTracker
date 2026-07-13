@@ -39,7 +39,10 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 4** — App shell: navigation, tab bar, headers
 - [x] **Phase 5** — Welcome + onboarding (5-step profile setup + Load Saved Data)
 - [x] **Phase 6** — Weight tracking (scale/chart pager, log card, 7-day insights)
-- [ ] **Phase 7** — Nutrition (7a overview · 7b meals/rows · 7c add-food/library)
+- [ ] **Phase 7** — Nutrition — split into three on-device checkpoints:
+  - [x] **7a** — overview (profile/weight prompts, calorie pager + ring, macro bars)
+  - [ ] **7b** — meals & food rows (collapsible meal cards, food items, portion selector)
+  - [ ] **7c** — add-food / food library (3-tab add modal, custom foods, saved meals, filters)
 - [ ] **Phase 8** — Water tracking
 - [ ] **Phase 9** — Activity tracking
 - [ ] **Phase 10** — Home dashboard
@@ -145,6 +148,54 @@ save-range + save-disabled rules, chart-series range filter + net change, and th
 status math); all existing suites pass. *(The chart uses the native `Charts` framework in place of RN's
 `react-native-chart-kit`; the count-up uses a `Task`-driven cubic ease matching the RN rAF loop —
 flag if either feels off on device and we'll tune.)*
+
+## Phase 7 plan (Nutrition — the largest phase)
+Ported in three self-contained checkpoints so each can be built & verified on device independently.
+The **water** parts of the Nutrition screen (bottle visual, water tracker, 7-day water graph) belong
+to **Phase 8** and are honest placeholders until then; the pure calorie/macro math is shared now.
+- **7a — overview:** `NutritionView` rebuild — profile/weight prompts, the calorie **pager** (7-day
+  calorie graph ↔ calorie ring), and the **macro bars**. Pure `Logic/NutritionStats.swift` holds the
+  consumed totals, TDEE-base + mode-aware burn, `calorieTarget`, macro targets, and the weekly series.
+- **7b — meals & food rows:** the four collapsible **meal category** cards (add pill, copy-yesterday,
+  swipe→save-as-meal, grouped saved meals) + **food rows** (swipe-delete, tap→edit portion / quick-edit)
+  + the **portion selector** wheels. Wires `addFoodToMeal`/`deleteFoodFromMeal`/`updateFoodInMeal`.
+- **7c — add-food / library:** the 3-tab **Add** modal (Add Food · Add Meal · Quick Add), the
+  **custom-food form**, **create/edit-meal** flows, the **Food Library** screen, and the food-type
+  **filter** + pinned/recent ordering. Pure logic for recent-food ranking / search / pinning.
+
+**Phase 7a →** The **Nutrition** tab is now real for the overview (replaces the Phase-4 placeholder).
+Complete onboarding (or Load Saved Data with real nutrition history) and open the Nutrition tab:
+- Missing profile → **"Set Up Your Profile"** prompt (Go to Settings pushes the real Settings screen);
+  profile but no weight entry → the **log-a-weight** prompt. Both block the rest of the screen.
+- With profile + weight: a **2-page pager** (swipe + page dots) — **page 0** the **7-day calorie graph**
+  (Swift `Charts` bars, proximity-colored, dashed activity-adjusted goal line); **page 1** (default) the
+  **calorie ring** (consumed / target, proximity color, "N remaining/over"), plus a **"+N cal from
+  exercise/smart watch"** note when the day has burn. **Macro bars** (protein/carbs/fat, fixed colors,
+  grams vs target) sit below.
+- The **Water Tracker** and per-**Meals** sections are marked **Coming in Phase 8 / Phase 7b**.
+- `calorieTarget = baseTdee + todayBurned` (manual = non-smartwatch burn, smartwatch = smartwatch burn,
+  auto = 0). Correct in light/dark + all 6 accents; collapsing header + XP pill still behave.
+Then run the unit tests (⌘U): the new suite is `NutritionStatsTests` (consumed totals, macro targets,
+latest-weight, TDEE-base, mode-aware burn, weekly series + adjusted goal); all existing suites pass.
+
+### Phase 7a map (what landed where)
+- `Logic/NutritionStats.swift` — the pure core: `consumedCalories`/`consumedMacros`, `macroTargets`
+  (`round(pct/100·cal/calPerGram)`), `latestWeight`, `resolvedAge`, `baseTdee` (delegates to `TDEE`),
+  mode-aware `caloriesBurned`, `last7Days`, `weeklyCalorieSeries`, `adjustedCalorieGoal`. Ports the
+  inline math in `expo/app/(tabs)/nutrition.tsx` + `MacroProgressBars.tsx`.
+- `Features/Nutrition/NutritionView.swift` — the screen: `DateNavBar` → prompts **or** pager
+  (calorie graph ↔ ring) → macro bars → water/meals placeholders. Replaces the Phase-4 placeholder.
+- `Features/Nutrition/CalorieRingView.swift` — trimmed-`Circle` ring (port of `CalorieRing.tsx`).
+- `Features/Nutrition/MacroProgressBarsView.swift` — the Macros card (port of `MacroProgressBars.tsx`).
+- `Features/Nutrition/ProfilePromptView.swift` — the set-up prompt; its button is a
+  `NavigationLink(value: MoreDestination.settings)` resolving against the shell's registered
+  destination (no shell change). Port of `ProfilePrompt.tsx`.
+- `Features/Shared/WeeklyBarChart.swift` — reusable 7-day bar chart (bars + dashed goal line) with a
+  `Coloring` (`.proximity` for calories now; `.fixed` for water Phase 8 / activity Phase 9). Swift
+  `Charts` port of `BarChart`/`WeeklyCalorieGraph` in `WeeklyIntakeGraph.tsx`.
+- `HealthTrackerTests/NutritionStatsTests.swift` — parity suite for all of `NutritionStats`.
+- Water widgets (`WaterBottleVisual`, `WaterTracker`, `WeeklyWaterGraph`) intentionally deferred to
+  Phase 8; the pager keeps the ring at index 1 so Phase 8 can append the water graph as page 2.
 
 ### Phase 6 map (what landed where)
 - `Logic/WeightStats.swift` — the pure, testable core: `jsParseFloat`/`jsNumberString` (JS number
