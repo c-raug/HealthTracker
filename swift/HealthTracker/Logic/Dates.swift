@@ -122,6 +122,14 @@ enum Dates {
         return keyFormatter.string(from: shifted)
     }
 
+    /// Whole calendar days between two `"YYYY-MM-DD"` keys (`to − from`), local-tz.
+    /// Mirrors the RN `dateDiffDays` helper in `expo/components/WeightInsights.tsx`
+    /// (`Math.round((b − a) / 86400000)` over local-midnight dates). Returns 0 for malformed input.
+    static func dayDifference(from: String, to: String) -> Int {
+        guard let a = date(from: from), let b = date(from: to) else { return 0 }
+        return calendar.dateComponents([.day], from: a, to: b).day ?? 0
+    }
+
     /// JS `getDay()` for a `"YYYY-MM-DD"` key: Sunday=0…Saturday=6 (Monday=1).
     /// Used by the app shell to decide whether to auto-show the weekly recap on Mondays.
     static func jsDayOfWeek(_ dateStr: String) -> Int {

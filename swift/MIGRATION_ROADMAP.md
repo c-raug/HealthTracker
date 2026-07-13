@@ -38,7 +38,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 3** — Business-logic utilities (+ parity tests)
 - [x] **Phase 4** — App shell: navigation, tab bar, headers
 - [x] **Phase 5** — Welcome + onboarding (5-step profile setup + Load Saved Data)
-- [ ] **Phase 6** — Weight tracking
+- [x] **Phase 6** — Weight tracking (scale/chart pager, log card, 7-day insights)
 - [ ] **Phase 7** — Nutrition (7a overview · 7b meals/rows · 7c add-food/library)
 - [ ] **Phase 8** — Water tracking
 - [ ] **Phase 9** — Activity tracking
@@ -122,6 +122,49 @@ Design-Gallery link). Verify:
 - Relaunch after completing setup → it skips straight to the tab shell (onboarding not shown again).
 Then run the unit tests (⌘U): the new suite is `OnboardingTests` (height ft/in→in, weight-range and
 custom-macro-sum gates, profile/entry builders, unit-dependent goal labels); all existing suites pass.
+
+**Phase 6 →** The **Weight** tab is now real (replaces the Phase-4 placeholder). Complete onboarding
+(or Load Saved Data), then open the Weight tab and verify:
+- The shared **date-nav bar** at the top drives `store.selectedDate` (shared with the other tabs).
+- A **2-page horizontal pager** (swipe + page dots): **page 0** is the **digital scale** (LCD readout
+  showing the saved weight for the selected date, or a dimmed `175.5`/`80.0` placeholder); **page 1** is
+  the **weight-trend line chart** (Swift Charts) with a **range menu** (1W/1M/3M/1Y/All) and a
+  **Start · Change · Current** summary. With **<2 entries** the chart shows "Log at least 2 entries…".
+- **Log Weight (unit)** card: type a value → **Save**. Save is **disabled** when the field is empty,
+  unparseable, or unchanged from the saved value. Out-of-range (‹50 / ›1000 lbs · ‹20 / ›500 kg) or
+  invalid input shows an alert. On a valid save the scale **counts up** to the new value with a
+  `primary` glow, a **"Weight saved"** pill appears for 3s, and the chart/insights update.
+- Saving on a date that already has an entry **overwrites** it (one entry per date); changing the
+  date pre-fills the field with that date's saved value (converted to the current unit).
+- **Progress Insights (Last 7 Days)** card below: weight change, weekly rate, and an
+  **On Track / Behind / Ahead of Target** badge. Falls back to "Set a weight goal…" (no goal) or
+  "Log more entries…" (< 2 entries in the last 7 days).
+- Correct in light/dark + all 6 accents; the collapsing header + XP pill still behave.
+Then run the unit tests (⌘U): the new suite is `WeightStatsTests` (parseFloat/Number-string parity,
+save-range + save-disabled rules, chart-series range filter + net change, and the 7-day insight
+status math); all existing suites pass. *(The chart uses the native `Charts` framework in place of RN's
+`react-native-chart-kit`; the count-up uses a `Task`-driven cubic ease matching the RN rAF loop —
+flag if either feels off on device and we'll tune.)*
+
+### Phase 6 map (what landed where)
+- `Logic/WeightStats.swift` — the pure, testable core: `jsParseFloat`/`jsNumberString` (JS number
+  parity), `range`/`validate`/`isSaveDisabled` (the log-card save rules), `chartSeries`
+  (time-range filter + fallback-to-last-2 + net change), and `insights` (7-day weekly-rate →
+  `onTrack`/`behind`/`ahead`). Ports `expo/app/(tabs)/index.tsx` + `WeightChart.tsx` + `WeightInsights.tsx`.
+- `Logic/Dates.swift` — added `dayDifference(from:to:)` (local-tz calendar day span) for the insight math.
+- `Features/Weight/DigitalScaleView.swift` — port of `expo/components/weight/DigitalScale.tsx`: LCD
+  recess, saved-value/placeholder priority, `Task`-driven cubic-ease count-up on save, `primary` glow
+  (RN's iOS `scaleOuterGlow`; the Android `AndroidGlowBackdrop` has no iOS counterpart). `hideUnit`
+  kept for later reuse (Home).
+- `Features/Weight/WeightChartView.swift` — Swift `Charts` line chart + `Menu` range selector +
+  Start/Change/Current summary; frosted `featureCardStyle` card; placeholder under 2 entries.
+- `Features/Weight/WeightInsightsView.swift` — renders `WeightStats.insights` (stat rows + status badge).
+- `Features/Weight/WeightView.swift` — the screen: `DateNavBar` → `TabView(.page)` pager (scale ↔ chart)
+  with custom dots → Log Weight card (`@FocusState` input, validation alert, saved pill, `upsertEntry`)
+  → `WeightInsightsView`. Pre-fills + resets the count-up on date/entries change. Replaces the placeholder.
+- `HealthTrackerTests/WeightStatsTests.swift` — parity suite for all of `WeightStats`.
+- Icons use **SF Symbols** (`checkmark.circle.fill`, `exclamationmark.triangle.fill`, `chevron.down`,
+  `forward.end`) for the RN Ionicons; no XP is granted here — weight XP stays a Phase-12 watcher concern.
 
 ### Phase 5 map (what landed where)
 - `Features/Onboarding/OnboardingDraft.swift` — pure, testable form model: every wizard field +
