@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// App root / onboarding gate. Port of the redirect logic in `expo/app/_layout.tsx`:
-/// `onboardingComplete` → the tab shell (`RootTabView`); otherwise → welcome/onboarding.
-/// (Phase 5 replaces `WelcomePlaceholderView` with the real welcome + 5-step onboarding flow.)
+/// `onboardingComplete` → the tab shell (`RootTabView`); otherwise → the welcome + 5-step
+/// onboarding flow (`WelcomeView` → `OnboardingView`, Phase 5).
 struct RootView: View {
     @Environment(\.appColors) private var colors
     @Environment(AppStore.self) private var store
@@ -13,7 +13,7 @@ struct RootView: View {
                 RootTabView()
             } else {
                 NavigationStack {
-                    WelcomePlaceholderView()
+                    WelcomeView()
                 }
             }
         }

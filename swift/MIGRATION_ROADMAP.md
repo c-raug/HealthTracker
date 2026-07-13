@@ -37,7 +37,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 2** — Data model, store & persistence (+ backup import)
 - [x] **Phase 3** — Business-logic utilities (+ parity tests)
 - [x] **Phase 4** — App shell: navigation, tab bar, headers
-- [ ] **Phase 5** — Welcome + onboarding
+- [x] **Phase 5** — Welcome + onboarding (5-step profile setup + Load Saved Data)
 - [ ] **Phase 6** — Weight tracking
 - [ ] **Phase 7** — Nutrition (7a overview · 7b meals/rows · 7c add-food/library)
 - [ ] **Phase 8** — Water tracking
@@ -102,6 +102,45 @@ auto-recap check); all existing Phase 2/3 suites should still pass. *(The collap
 translate/blur uses `onScrollGeometryChange` + `contentMargins`; if the offset feels off on device,
 that's the spot to tune — flag it and we'll iterate.)*
 
+**Phase 5 →** The onboarding gate is now real (replaces the Phase-4 welcome placeholder). On a fresh
+install `RootView` shows the **welcome screen** (`figure.run` logo, tagline, two buttons + the dev
+Design-Gallery link). Verify:
+- **Start New Profile** pushes the **5-step wizard** (progress dots fill as you advance):
+  1. **Welcome** — lbs/kg segmented toggle + optional name.
+  2. **About You** — Date of Birth (wheel picker in a sheet, capped at 10 yrs ago, defaults to 30
+     yrs ago), Male/Female toggle, height (ft + in when lbs, cm when kg).
+  3. **Your Goals** — activity-level list + weight-goal list (labels switch lb/wk ↔ kg/wk with the unit).
+  4. **Nutrition** — Balanced / High Protein / Keto presets, a **Custom** split with −/+ steppers
+     (blocks Next until the three fields total 100%), a live `P:/C:/F:` summary, and a
+     "Skip — use Balanced defaults" link.
+  5. **Starting Weight** — numeric entry gated to 50–1000 lbs / 20–500 kg.
+  The footer's Next/Complete button dims + disables until each step's inputs are valid.
+- **Complete Setup** writes unit, profile, macro split, a today-dated starting **weight entry**, and
+  `activityMode = auto`, then flips `onboardingComplete` → the app drops straight into the **tab shell**.
+- **Load Saved Data** opens the file importer; pick an existing HealthTracker `*.json` backup and it
+  imports via `store.importBackup(_:)` and enters the app (errors surface in an alert).
+- Relaunch after completing setup → it skips straight to the tab shell (onboarding not shown again).
+Then run the unit tests (⌘U): the new suite is `OnboardingTests` (height ft/in→in, weight-range and
+custom-macro-sum gates, profile/entry builders, unit-dependent goal labels); all existing suites pass.
+
+### Phase 5 map (what landed where)
+- `Features/Onboarding/OnboardingDraft.swift` — pure, testable form model: every wizard field +
+  `canProceedStep2/5`, `isNextDisabled(step:)`, `resolvedHeight()`, `makeProfile()`,
+  `makeWeightEntry()`, and the RN label/preset tables (activity, lbs/kg goals, macro presets).
+- `Features/Onboarding/OnboardingComponents.swift` — shared `SegmentedToggle`, `OptionButton`,
+  `FieldLabel`, `OnboardingTextField` (ports of the repeated RN `toggle`/`optionBtn`/`input` styles).
+- `Features/Onboarding/WelcomeView.swift` — real welcome (port of `expo/app/welcome.tsx`): Start New
+  Profile → `OnboardingView`; **Load Saved Data** via `.fileImporter` → `importBackup` +
+  `setOnboardingComplete`; keeps the Design-Gallery dev link. Replaces `WelcomePlaceholderView`.
+- `Features/Onboarding/OnboardingView.swift` — the 5-step wizard (port of `expo/app/onboarding.tsx`):
+  progress dots, step bodies, DOB wheel sheet, macro steppers, footer Back/Next/Complete; on finish
+  calls `setUnit`/`setProfile`/`setMacroPreset`/`upsertEntry`/`setActivityMode(.auto)`/`setOnboardingComplete`.
+- `App/RootView.swift` — gate now routes to `WelcomeView` (was the placeholder).
+- `Logic/Dates.swift` — added `nowTimestamp()` (ISO-8601 UTC w/ ms = JS `toISOString()`) for the
+  starting weight entry's `createdAt`; reusable for later `loggedAt` fields.
+- `HealthTrackerTests/OnboardingTests.swift` — parity checks for `OnboardingDraft`.
+- Icons use **SF Symbols** (`figure.run`) for the RN Ionicons `fitness-outline`; swap if a closer glyph is wanted.
+
 ### Phase 4 map (what landed where)
 - `Navigation/RootTabView.swift` — the in-app shell: 4-tab switch + `NavigationStack` (Profile/Settings
   as pushed hidden routes), floating pill overlay, More popover, stats sheet, and the Monday
@@ -121,7 +160,7 @@ that's the spot to tune — flag it and we'll iterate.)*
   `Features/Shared/PlaceholderCard.swift`.
 - `Features/{Home,Weight,Nutrition,Activities}/*View.swift` — placeholder tab screens (data tabs host
   `DateNavBar`); `Features/{Profile,Settings}/*View.swift` — pushed placeholders (Settings keeps the
-  dev Design-Gallery link); `Features/Onboarding/WelcomePlaceholderView.swift`;
+  dev Design-Gallery link); `Features/Onboarding/WelcomePlaceholderView.swift` *(replaced by `WelcomeView` in Phase 5)*;
   `Features/Gamification/StatsAchievementsPlaceholderView.swift`;
   `Features/Recap/WeeklyRecapPlaceholderView.swift` (marks `lastRecapShownWeek` on dismiss).
 - `Logic/Dates.swift` — added `jsDayOfWeek` (JS `getDay()` semantics) for the Monday recap check

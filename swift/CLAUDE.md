@@ -38,6 +38,7 @@ phases, each ending in an on-device checkpoint.
   - `RootView` is the onboarding gate; `RootTabView` hosts the pill tab bar + More popover + stats sheet.
   - Wrap a tab screen's body in `CollapsibleScreen(title:onXpTap:) { … }` for the collapsing header + `HeaderXpBar` + pill clearance; data tabs add `DateNavBar()` at the top.
   - Shared date state: `store.selectedDate` / `store.setSelectedDate(_:)` (not persisted).
+- **Onboarding is done (Phase 5)** — `RootView` gates on `preferences.onboardingComplete`: false → `WelcomeView` → 5-step `OnboardingView`; true → `RootTabView`. Wizard form lives in the pure `OnboardingDraft` (validate + build there, keep the view thin); completion writes via `setUnit`/`setProfile`/`setMacroPreset`/`upsertEntry`/`setActivityMode(.auto)`/`setOnboardingComplete`. New runtime-timestamp helper: `Dates.nowTimestamp()` (JS `toISOString()` parity) for entry `createdAt`/`loggedAt`.
 - **Dates:** local-timezone `"YYYY-MM-DD"` strings compared lexicographically — never UTC/ISO for day keys. ISO week is un-padded `YYYY-Wn`.
 - **IDs:** `UUID().uuidString.lowercased()`.
 - Store mutations mirror the RN reducer actions (see `docs/data-model.md` §2); keep newest-first prepend semantics and the once-per-day XP guards.

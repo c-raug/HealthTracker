@@ -62,6 +62,19 @@ enum Dates {
         keyFormatter.string(from: Date())
     }
 
+    /// UTC ISO-8601 timestamp with milliseconds, e.g. `"2026-07-13T14:58:00.000Z"` — matches
+    /// JS `new Date().toISOString()`. Used for entry `createdAt` / `loggedAt` fields (not day keys).
+    private static let timestampFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    /// Current instant as an ISO-8601 UTC timestamp string (JS `toISOString()` parity).
+    static func nowTimestamp(_ instant: Date = Date()) -> String {
+        timestampFormatter.string(from: instant)
+    }
+
     /// Long human-readable string, e.g. "Monday, February 27, 2026".
     static func formatDisplayDate(_ dateStr: String) -> String {
         guard let d = date(from: dateStr) else { return dateStr }
