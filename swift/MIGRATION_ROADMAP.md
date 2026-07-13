@@ -11,6 +11,9 @@ final cutover (Phase 16). See `XCODE_SETUP.md` for one-time project setup.
   report results so we iterate.
 - Temporary dev bundle id `com.healthtracker.app.native` lets the new app run **alongside** the
   current Expo app for side-by-side comparison. Switches to `com.healthtracker.app` at Phase 16.
+- **Fresh-session bootstrap:** read `CLAUDE.md` (conventions/workflow) + `docs/` (porting specs —
+  `data-model.md`, `feature-inventory.md`, `design-system.md`, `rn-to-swift-mapping.md`) instead of
+  re-exploring `../expo`. Recommended: **one context window per phase** (see `CLAUDE.md`).
 
 ## Architecture (target)
 ```
