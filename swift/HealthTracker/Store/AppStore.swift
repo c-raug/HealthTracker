@@ -33,7 +33,7 @@ final class AppStore {
     private let ioQueue = DispatchQueue(label: "com.healthtracker.persistence", qos: .utility)
     private var autoBackupTask: Task<Void, Never>?
 
-    static let xpFoodCap = 25
+    static let xpFoodCap = XP.foodCap
 
     enum XpSource: Sendable {
         case food, calorieGoal, waterGoal, weight, activity, streak7, streak30
@@ -445,13 +445,9 @@ final class AppStore {
 
     // MARK: - Dates
 
-    /// Local-timezone `"YYYY-MM-DD"` for today. Phase 3 replaces this with the full `Dates` logic;
-    /// kept minimal here so the store can seed `selectedDate` without depending on unbuilt code.
+    /// Local-timezone `"YYYY-MM-DD"` for today. Delegates to the Phase 3 `Dates` logic
+    /// (single source of truth for day-key formatting).
     static func todayString() -> String {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: Date())
+        Dates.getToday()
     }
 }

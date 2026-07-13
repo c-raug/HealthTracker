@@ -35,7 +35,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 0** — Project scaffolding & foundation (roadmap, setup docs, app entry, folder layout)
 - [x] **Phase 1** — Design system (tokens, theme, shadows, proximity/flame color, Design Gallery)
 - [x] **Phase 2** — Data model, store & persistence (+ backup import)
-- [ ] **Phase 3** — Business-logic utilities (+ parity tests)
+- [x] **Phase 3** — Business-logic utilities (+ parity tests)
 - [ ] **Phase 4** — App shell: navigation, tab bar, headers
 - [ ] **Phase 5** — Welcome + onboarding
 - [ ] **Phase 6** — Weight tracking
@@ -74,6 +74,27 @@ fresh install). Verify the app still builds & launches unchanged, then run the u
 migration), and `AppStoreTests` (prepend/XP-cap/import parity) should all pass. Once the Settings
 screen exists (Phase 11), importing an existing Expo `healthtracker-backup.json` becomes the real
 end-to-end data-migration check.
+
+**Phase 3 →** No new UI — RootView still shows the Design Gallery. The pure business-logic layer
+(`Logic/`) is now in place, ported verbatim from `expo/utils/*`. Verify the app still builds &
+launches unchanged, then run the unit tests (⌘U): the new parity suites — `DatesTests`,
+`CalculationTests` (TDEE/water/activity/units/id + `jsRound`), `StreakTests`, `WeeklyRatingTests`,
+`GamificationLogicTests` (XP + achievements) — plus the existing Phase 2 tests should all pass.
+No behavior visible to the user yet; this locks the formulas before feature screens consume them.
+
+### Phase 3 map (what landed where)
+- `Logic/Dates.swift` — `getToday`, `addDays`, `formatDisplayDate/ShortDate`, `getISOWeekString`
+  (**un-padded** `YYYY-Wn`), `getISOWeekMonday`; local-tz Gregorian, day-count ISO-week math.
+- `Logic/MathParity.swift` — `jsRound`/`jsRoundInt` (JS `Math.round` half-up semantics) used by every port.
+- `Logic/Units.swift` — `lbsToKg`/`kgToLbs` (1-dp display), `convertWeight`.
+- `Logic/Identifiers.swift` — `generate()` → `UUID().uuidString.lowercased()` (locked decision).
+- `Logic/TDEE.swift` — BMR, activity multipliers, goal deltas, `heightToCm`/`weightToKg` (unrounded), `ageFromDob`, `calculateDailyCalories` (auto vs manual/smartwatch multiplier).
+- `Logic/WaterGoal.swift`, `Logic/ActivityCalories.swift` — water target; exercise (MET 5) + step calories.
+- `Logic/Streaks.swift` — current/longest for food/calorie-goal/weight/activity.
+- `Logic/WeeklyRating.swift` — 4-factor (food/calorie/weight/water) → 1–5 stars.
+- `Logic/XP.swift`, `Logic/Achievements.swift` — XP constants + 10-level ladder; 8 achievements + newly-unlocked check.
+- `Store/AppStore.swift` — `todayString()` now delegates to `Dates.getToday()`; `xpFoodCap` → `XP.foodCap` (single source of truth).
+- `calorieColor`/`flameColor` were already ported in Phase 1 (`Design/`), so not re-ported here.
 
 ### Phase 2 map (what landed where)
 - `Models/` — `Enums`, `WeightEntry`, `UserProfile`, `Nutrition` (+ `Meals`/`DayNutrition`/`MacroSplit`),
