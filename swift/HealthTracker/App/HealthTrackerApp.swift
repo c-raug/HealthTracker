@@ -2,31 +2,41 @@ import SwiftUI
 
 @main
 struct HealthTrackerApp: App {
-    /// Owned here so it lives for the app's lifetime. Bridged to AppStore.preferences in Phase 2.
+    /// Owned here so they live for the app's lifetime.
     @State private var theme = AppTheme()
+    /// The single source of truth for app state (Phase 2). Loaded on first appearance.
+    @State private var store = AppStore()
 
     var body: some Scene {
         WindowGroup {
-            AppRoot(theme: theme)
+            AppRoot(theme: theme, store: store)
         }
     }
 }
 
-/// Injects the theme + resolved palette into the environment and applies the forced appearance.
+/// Injects the theme + resolved palette and the `AppStore` into the environment, loads persisted
+/// state on first appearance, and applies the forced appearance.
 ///
 /// `effectiveScheme` is computed from the appearance mode directly for forced modes (so palette
 /// resolution never depends on `.preferredColorScheme` propagation timing), and from the device's
 /// `\.colorScheme` for `.system`.
 struct AppRoot: View {
     let theme: AppTheme
+    let store: AppStore
     @Environment(\.colorScheme) private var deviceScheme
 
     var body: some View {
         let effectiveScheme = theme.appearanceMode.forcedScheme ?? deviceScheme
         RootView()
             .environment(theme)
+            .environment(store)
             .environment(\.appColors, theme.colors(for: effectiveScheme))
             .tint(theme.accentPrimary)
             .preferredColorScheme(theme.appearanceMode.forcedScheme)
+            .task {
+                store.load()
+                // Phase 2 bridge: adopt the persisted theme preferences as the source of truth.
+                theme.sync(from: store.preferences)
+            }
     }
 }

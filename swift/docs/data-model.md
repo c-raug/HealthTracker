@@ -6,7 +6,7 @@ Swift target: `Codable` structs (`swift/HealthTracker/Models/`), a single `@Obse
 (`swift/HealthTracker/Store/`), JSON-file persistence (`swift/HealthTracker/Persistence/`), and
 pure logic (`swift/HealthTracker/Logic/`). Read this instead of re-exploring `expo/`.
 
-## 1. Entities & enums (`expo/types/index.ts`)
+## 1. Entities & enums (`expo/types/index.ts`) — **Ported: `Models/*` (Phase 2)**
 
 **Enums / unions**
 - `Sex` = `male | female`
@@ -55,7 +55,7 @@ Default food-type categories: `['Meat','Fruit','Vegetable','Grain','Dairy','Snac
 **WaterEntry** — `id`, `amount` (oz when unit=lbs, mL when unit=kg — implicit from `preferences.unit`), `loggedAt?`.
 **DayWater** — `date`, `entries: WaterEntry[]`. Default presets: imperial `[8,16,32]` oz, metric `[250,500,750]` mL.
 
-## 2. Store / reducer (`expo/context/AppContext.tsx`)
+## 2. Store / reducer (`expo/context/AppContext.tsx`) — **Ported: `Store/AppStore.swift` (Phase 2)**
 
 Global state slices: `entries`, `preferences` (init `{unit:'lbs'}`), `nutritionLog`, `customFoods`,
 `savedMeals`, `activityLog`, `waterLog`, `selectedDate` (init `getToday()`, **not persisted**), `isLoading`.
@@ -78,7 +78,7 @@ Global state slices: `entries`, `preferences` (init `{unit:'lbs'}`), `nutritionL
 - `UNLOCK_ACHIEVEMENT {id}` (dedup), `ADD_XP {amount,date,source}` (see gamification §5), `PRESTIGE` (`totalXp=0`, `prestige++`).
 - `SET_LAST_RECAP_WEEK`, `SET_FOOD_TYPE_CATEGORIES` (also prunes each custom food's `foodTypes`), `SET_FAVORITE_FILTER_TYPES`.
 
-## 3. Persistence (`expo/storage/`)
+## 3. Persistence (`expo/storage/`) — **Ported: `Persistence/JSONStore.swift` + `Persistence/BackupCodec.swift` (Phase 2)**
 
 **7 keyed slices** (JSON per key): `weight_entries`, `user_preferences` (default `{unit:'lbs'}`),
 `nutrition_log`, `custom_foods`, `saved_meals`, `activity_log`, `water_log`. → Swift: 7 JSON files

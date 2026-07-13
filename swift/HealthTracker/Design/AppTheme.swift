@@ -53,6 +53,14 @@ final class AppTheme {
     /// The accent primary color (scheme-independent), used for `.tint(...)`.
     var accentPrimary: Color { Color(hex: accentHex ?? ColorPalette.light.primary) }
 
+    /// Phase 2 bridge: adopt the theme fields from the loaded/imported `UserPreferences` so the
+    /// store is the source of truth on launch (mirrors `ThemeColorSync` in `expo/app/_layout.tsx`).
+    /// Later phases route Settings changes back through `AppStore`, which re-syncs here.
+    func sync(from preferences: UserPreferences) {
+        appearanceMode = preferences.appearanceMode ?? .system
+        accentHex = preferences.themeColor
+    }
+
     func colors(for scheme: ColorScheme) -> AppColors {
         AppColors.resolve(scheme: scheme, accentHex: accentHex)
     }

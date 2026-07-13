@@ -34,7 +34,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 ## Progress checklist
 - [x] **Phase 0** — Project scaffolding & foundation (roadmap, setup docs, app entry, folder layout)
 - [x] **Phase 1** — Design system (tokens, theme, shadows, proximity/flame color, Design Gallery)
-- [ ] **Phase 2** — Data model, store & persistence (+ backup import)
+- [x] **Phase 2** — Data model, store & persistence (+ backup import)
 - [ ] **Phase 3** — Business-logic utilities (+ parity tests)
 - [ ] **Phase 4** — App shell: navigation, tab bar, headers
 - [ ] **Phase 5** — Welcome + onboarding
@@ -66,3 +66,19 @@ Each phase ends in an on-device checkpoint. Current checkpoint:
 **Design Gallery** (swatches, type scale, card styles, calorie-proximity + flame ramps),
 correct in light/dark and across all 6 accent colors. This proves the toolchain, project
 structure, and the entire design-token layer before any feature work.
+
+**Phase 2 →** No new UI — RootView still shows the Design Gallery. The data layer is now wired:
+`AppStore` is injected into the environment and `store.load()` runs on launch (empty state on a
+fresh install). Verify the app still builds & launches unchanged, then run the unit tests (⌘U):
+`BackupCodecTests` (envelope round-trip + validation), `CustomFoodMigrationTests` (legacy-field
+migration), and `AppStoreTests` (prepend/XP-cap/import parity) should all pass. Once the Settings
+screen exists (Phase 11), importing an existing Expo `healthtracker-backup.json` becomes the real
+end-to-end data-migration check.
+
+### Phase 2 map (what landed where)
+- `Models/` — `Enums`, `WeightEntry`, `UserProfile`, `Nutrition` (+ `Meals`/`DayNutrition`/`MacroSplit`),
+  `CustomFood` (legacy-tolerant decoder), `SavedMeal`, `Activity`, `Water`, `UserPreferences` (+ `XpDayLog`), `BackupData`.
+- `Persistence/` — `JSONStore` (7 slice files in Application Support + backup file in Documents), `BackupCodec` (envelope encode/decode/validate).
+- `Store/AppStore.swift` — `@MainActor @Observable`; all ~40 reducer actions as methods, write-through per slice, debounced 3s auto-backup, `LOAD_DATA` migrations, backup export/import.
+- `App/` — `AppStore` injected into the environment, loaded on launch; `AppTheme.sync(from:)` bridges persisted theme prefs (the Phase 2 hook noted in `AppTheme.swift`).
+- All dates/timestamps modeled as `String` for byte-clean JSON parity with the Expo backup envelope.
