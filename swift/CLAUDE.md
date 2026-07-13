@@ -34,6 +34,10 @@ phases, each ending in an on-device checkpoint.
   - `Typography.h1…small`, `Spacing.xs…xl`, `Radius.sm/md/lg`, `.cardStyle()`, `.featureCardStyle()`.
   - `FixedColors` (water/macros), `CalorieProximity.ringColor(...)`, `FlameColor.color(forBurn:)`.
   - Theme state: `@Environment(AppTheme.self)` (appearance mode + accent).
+- **App shell is done (Phase 4)** — plug feature screens into it, don't rebuild navigation:
+  - `RootView` is the onboarding gate; `RootTabView` hosts the pill tab bar + More popover + stats sheet.
+  - Wrap a tab screen's body in `CollapsibleScreen(title:onXpTap:) { … }` for the collapsing header + `HeaderXpBar` + pill clearance; data tabs add `DateNavBar()` at the top.
+  - Shared date state: `store.selectedDate` / `store.setSelectedDate(_:)` (not persisted).
 - **Dates:** local-timezone `"YYYY-MM-DD"` strings compared lexicographically — never UTC/ISO for day keys. ISO week is un-padded `YYYY-Wn`.
 - **IDs:** `UUID().uuidString.lowercased()`.
 - Store mutations mirror the RN reducer actions (see `docs/data-model.md` §2); keep newest-first prepend semantics and the once-per-day XP guards.
@@ -48,7 +52,7 @@ phases, each ending in an on-device checkpoint.
 
 ## Don'ts
 - Don't modify `../expo/**` except to read it as reference (until the Phase 16 cutover).
-- Don't push to any branch other than `claude/expo-to-swift-conversion-aromb1` without permission.
+- Don't push to any branch other than the phase branch you were assigned for the session (see the session's git instructions) without permission.
 - Don't add SwiftData, third-party packages, or a backend without asking.
 - Don't create a PR unless the user asks.
 

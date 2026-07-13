@@ -36,7 +36,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 1** — Design system (tokens, theme, shadows, proximity/flame color, Design Gallery)
 - [x] **Phase 2** — Data model, store & persistence (+ backup import)
 - [x] **Phase 3** — Business-logic utilities (+ parity tests)
-- [ ] **Phase 4** — App shell: navigation, tab bar, headers
+- [x] **Phase 4** — App shell: navigation, tab bar, headers
 - [ ] **Phase 5** — Welcome + onboarding
 - [ ] **Phase 6** — Weight tracking
 - [ ] **Phase 7** — Nutrition (7a overview · 7b meals/rows · 7c add-food/library)
@@ -81,6 +81,52 @@ launches unchanged, then run the unit tests (⌘U): the new parity suites — `D
 `CalculationTests` (TDEE/water/activity/units/id + `jsRound`), `StreakTests`, `WeeklyRatingTests`,
 `GamificationLogicTests` (XP + achievements) — plus the existing Phase 2 tests should all pass.
 No behavior visible to the user yet; this locks the formulas before feature screens consume them.
+
+**Phase 4 →** First visible change since Phase 1: `RootView` is now the **onboarding gate**, not the
+Design Gallery. On a fresh install it shows the Phase-5 **welcome placeholder** — tap **"Enter app
+(dev)"** (sets `onboardingComplete`) to reach the **tab shell**. Verify:
+- **Floating pill tab bar** (blurred glass, hairline border) with Home / Weight / Nutrition /
+  Activities; the active item tints `primary`. Correct in light/dark + all 6 accents.
+- **"More"** opens a popover (Profile / Settings) above the pill; tapping a scrim or row dismisses it.
+  Profile/Settings push with a system back button; choosing a primary tab pops back.
+- Every tab has a **collapsible large-title header** that translates up and reveals a frosted blur as
+  you scroll, with the **`HeaderXpBar`** pill at the trailing edge (shows `Level N`/`MAX` + progress).
+  Tapping it presents the **Stats & Achievements** sheet.
+- Each data tab shows the shared **date-nav bar** (‹ · date → graphical picker capped at today · › ·
+  skip-to-today) bound to the app-wide `selectedDate`.
+- **Design Gallery** is still reachable (Settings → "Design Gallery (dev)", and from the welcome
+  screen) so the Phase-1 token layer stays verifiable.
+- The screens themselves are **placeholders** ("Coming in Phase N") — later phases replace each body.
+Then run the unit tests (⌘U): the only new test is `DatesTests.testJsDayOfWeek` (the Monday
+auto-recap check); all existing Phase 2/3 suites should still pass. *(The collapsing-header
+translate/blur uses `onScrollGeometryChange` + `contentMargins`; if the offset feels off on device,
+that's the spot to tune — flag it and we'll iterate.)*
+
+### Phase 4 map (what landed where)
+- `Navigation/RootTabView.swift` — the in-app shell: 4-tab switch + `NavigationStack` (Profile/Settings
+  as pushed hidden routes), floating pill overlay, More popover, stats sheet, and the Monday
+  **auto weekly-recap** cover (once/session).
+- `Navigation/PillTabBar.swift` — floating `.ultraThinMaterial` pill (`AppTab` enum, SF-Symbol icons);
+  "More" toggles the popover instead of navigating.
+- `Navigation/MoreMenu.swift` — Profile/Settings popover + tap-catcher scrim (`MoreDestination`).
+- `Navigation/HeaderXpBar.swift` — frosted level pill; animates `+N xp` then springs the fill on XP
+  gain; drives the stats sheet. Uses `XP.progress(forXp:)`.
+- `Navigation/CollapsibleHeader.swift` — translate-up/blur header **+ `CollapsibleScreen`** container
+  (scroll + `contentMargins` for header/pill clearance + `onScrollGeometryChange`).
+- `Navigation/SafeAreaInsets.swift` — `topSafeInset`/`bottomSafeInset` environment values injected
+  once at the shell root.
+- `App/RootView.swift` — now the **onboarding gate** (`onboardingComplete` → `RootTabView`, else the
+  welcome placeholder).
+- `Features/Shared/DateNavBar.swift` (+ graphical `DatePicker` sheet capped at today) and
+  `Features/Shared/PlaceholderCard.swift`.
+- `Features/{Home,Weight,Nutrition,Activities}/*View.swift` — placeholder tab screens (data tabs host
+  `DateNavBar`); `Features/{Profile,Settings}/*View.swift` — pushed placeholders (Settings keeps the
+  dev Design-Gallery link); `Features/Onboarding/WelcomePlaceholderView.swift`;
+  `Features/Gamification/StatsAchievementsPlaceholderView.swift`;
+  `Features/Recap/WeeklyRecapPlaceholderView.swift` (marks `lastRecapShownWeek` on dismiss).
+- `Logic/Dates.swift` — added `jsDayOfWeek` (JS `getDay()` semantics) for the Monday recap check
+  (+ `DatesTests.testJsDayOfWeek`).
+- Icons use **SF Symbols** as stand-ins for the RN Ionicons; swap if a closer glyph is wanted.
 
 ### Phase 3 map (what landed where)
 - `Logic/Dates.swift` — `getToday`, `addDays`, `formatDisplayDate/ShortDate`, `getISOWeekString`

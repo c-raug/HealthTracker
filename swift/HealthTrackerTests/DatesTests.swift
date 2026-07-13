@@ -43,4 +43,12 @@ final class DatesTests: XCTestCase {
         XCTAssertEqual(Dates.getISOWeekMonday("2026-07-15"), "2026-07-13") // Wednesday → same Monday
         XCTAssertEqual(Dates.getISOWeekMonday("2026-07-19"), "2026-07-13") // Sunday → same Monday
     }
+
+    func testJsDayOfWeek() {
+        // JS getDay(): Sunday=0 … Saturday=6. Used by the shell's Monday auto-recap check.
+        XCTAssertEqual(Dates.jsDayOfWeek("2026-07-12"), 0) // Sunday
+        XCTAssertEqual(Dates.jsDayOfWeek("2026-07-13"), 1) // Monday
+        XCTAssertEqual(Dates.jsDayOfWeek("2026-07-17"), 5) // Friday
+        XCTAssertEqual(Dates.jsDayOfWeek("2026-07-18"), 6) // Saturday
+    }
 }

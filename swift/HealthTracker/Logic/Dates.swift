@@ -109,6 +109,13 @@ enum Dates {
         return keyFormatter.string(from: shifted)
     }
 
+    /// JS `getDay()` for a `"YYYY-MM-DD"` key: Sunday=0…Saturday=6 (Monday=1).
+    /// Used by the app shell to decide whether to auto-show the weekly recap on Mondays.
+    static func jsDayOfWeek(_ dateStr: String) -> Int {
+        guard let d = date(from: dateStr) else { return 0 }
+        return calendar.component(.weekday, from: d) - 1 // Swift Sun=1…Sat=7 → JS Sun=0…Sat=6
+    }
+
     /// ISO day-of-week (Mon=1…Sun=7), matching JS `date.getDay() || 7`.
     private static func jsIsoDayOfWeek(_ d: Date) -> Int {
         // Swift weekday: Sunday=1…Saturday=7. JS getDay: Sunday=0…Saturday=6.

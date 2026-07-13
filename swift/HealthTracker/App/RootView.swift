@@ -1,18 +1,29 @@
 import SwiftUI
 
-/// App root. In Phase 4/5 this becomes the onboarding gate (welcome / onboarding vs. the tab bar).
-/// For the Phase 1 checkpoint it shows the Design Gallery so the full token layer can be verified.
+/// App root / onboarding gate. Port of the redirect logic in `expo/app/_layout.tsx`:
+/// `onboardingComplete` → the tab shell (`RootTabView`); otherwise → welcome/onboarding.
+/// (Phase 5 replaces `WelcomePlaceholderView` with the real welcome + 5-step onboarding flow.)
 struct RootView: View {
     @Environment(\.appColors) private var colors
+    @Environment(AppStore.self) private var store
 
     var body: some View {
-        DesignGalleryView()
-            .background(colors.background.ignoresSafeArea())
+        Group {
+            if store.preferences.onboardingComplete == true {
+                RootTabView()
+            } else {
+                NavigationStack {
+                    WelcomePlaceholderView()
+                }
+            }
+        }
+        .background(colors.background.ignoresSafeArea())
     }
 }
 
 #Preview {
     RootView()
         .environment(AppTheme())
+        .environment(AppStore())
         .environment(\.appColors, AppColors.resolve(scheme: .light, accentHex: nil))
 }
