@@ -76,7 +76,7 @@ struct RootTabView: View {
             StatsAchievementsView()
         }
         .fullScreenCover(item: $recap) { item in
-            WeeklyRecapPlaceholderView(week: item.week)
+            WeeklyRecapView(week: item.week)
         }
         .task { maybeShowWeeklyRecap() }
     }

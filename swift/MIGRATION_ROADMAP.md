@@ -50,7 +50,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 10** — Home dashboard (profile card + nutrition/activity/weight summary cards)
 - [x] **Phase 11** — Profile & Settings + sub-screens (Edit Profile, Nutrition Goals, Appearance, App Settings, Food Library)
 - [x] **Phase 12** — Gamification (reactive XP/achievement watcher + toasts, Stats & Achievements screen, leveling tutorial, prestige)
-- [ ] **Phase 13** — Weekly recap
+- [x] **Phase 13** — Weekly recap (4-page story cover: Weight / Nutrition / Streaks / Rating)
 - [ ] **Phase 14** — Cross-cutting polish & full parity QA
 - [ ] **Phase 15** — HealthKit integration
 - [ ] **Phase 16** — Release & cutover
@@ -377,6 +377,52 @@ invisible `GamificationWatcher` view keyed on one Equatable snapshot; the toast 
 `unlockAchievement`/`prestige` already exist. Flag if a toast's spring/insets or the tutorial tap
 zones want tuning on device.)*
 
+**Phase 13 →** The **Weekly Recap** is now real (replaces the Phase-4 placeholder). It's already wired
+into the shell — it auto-presents on **Mondays** (once per ISO week, once per session) and from the
+**ProfileCard avatar tap** (Home + Profile). Complete onboarding (or Load Saved Data with a week+ of
+history), then trigger the recap and verify the **4-page story cover** (progress segments fill as you
+advance; an invisible **left tap-zone = back**, **right = forward**; a footer **week label** + a
+**Next/Done** button; the ✕ closes):
+- **Page 0 — Weekly Weight:** start-of-week and end-of-week weight for the covered week, plus a
+  colored **change** row (loss = accent + ↓, gain = danger + ↑, "No change" when equal). A single
+  entry shows start = end with **no change** row; an empty week shows "No weight entries this week".
+- **Page 1 — Weekly Nutrition:** **Avg Daily Calories** (averaged over the days that had food only) +
+  the **Goal** row (base TDEE from the newest weight, hidden when profile/weight incomplete) + "Based
+  on N of 7 days logged", then **Weekly Macros** totals in the fixed macro colors. Empty → "No
+  nutrition data logged this week".
+- **Page 2 — Streaks & Milestones:** the four **current streaks** (Food / Calorie Goal / Weight /
+  Activity) in a 2×2 emoji grid, plus up to **3 unlocked achievements** (or "Keep going to unlock
+  achievements!").
+- **Page 3 — Week Rating:** the **1–5 star** rating (fixed amber) over the **4-factor breakdown** bars
+  (Calorie Goal / Water Goal / Weight Logged / Food Logged, each a %-filled accent bar).
+- The recap always covers the **most recently completed ISO week** (previous Mon–Sun). Opening it
+  marks the **current** ISO week as shown (`SET_LAST_RECAP_WEEK`) so the Monday auto-cover won't
+  reappear. Correct in light/dark + all 6 accents.
+Then run the unit tests (⌘U): the new suite is `RecapStatsTests` (previous-ISO-Monday week window,
+week label, Weight start/end/change + single-entry/empty guards, Nutrition avg-over-logged-days +
+macro totals + window filtering, current-streak wiring, unlocked-achievement cap/order); all existing
+suites pass. *(The RN story-modal's `ScrollView` paging is a `page`-index state with left/right tap
+zones — same pattern as `LevelingTutorialView`; SF Symbols stand in for the RN Ionicons
+[`scalemass`/`fork.knife`/`flame`/`trophy`/`arrow.up`/`arrow.down`/`star.fill`]. No XP or writes here
+beyond marking the week shown.)*
+
+### Phase 13 map (what landed where)
+- `Logic/RecapStats.swift` — the pure recap core (ports the inline math in `weekly-recap-modal.tsx`
+  + `components/recap/*`): `weekStart` (previous ISO Monday), `calorieTarget` (base TDEE from the
+  newest weight, mode-aware, `nil` when incomplete — reuses `NutritionStats`), `weightPage`
+  (start/end/change with the same-id no-change guard), `nutritionPage` (avg-over-logged-days + macro
+  totals), `currentStreaks` (wraps `Streaks.*`), `unlockedThisWeek` (first 3 of `Achievements.all`),
+  and `weekLabel` (`"MMM d – MMM d"` via `Dates.formatShortDate`).
+- `Features/Recap/WeeklyRecapView.swift` — the 4-page story shell (progress segments, ✕, left/right
+  tap zones, week-label footer, Next/Done). Marks the current ISO week shown on `.onAppear`
+  (`store.setLastRecapWeek`). Replaces `WeeklyRecapPlaceholderView.swift` (deleted).
+- `Features/Recap/RecapWeightPageView.swift` / `RecapNutritionPageView.swift` /
+  `RecapStreaksPageView.swift` / `RecapRatingPageView.swift` — the four pages (ports of the RN
+  `Recap*Page.tsx`). Rating reuses `WeeklyRating.calculate` (Phase 3) directly.
+- `Navigation/RootTabView.swift` — the `.fullScreenCover(item:)` now presents `WeeklyRecapView` (was
+  the placeholder); the Monday auto-cover logic (`maybeShowWeeklyRecap`) is unchanged.
+- `HealthTrackerTests/RecapStatsTests.swift` — parity suite for `RecapStats`.
+
 ### Phase 12 map (what landed where)
 - `Logic/GamificationStats.swift` — the pure reconcile core (port of the derived values + effect
   guards in `GamificationWatcher.tsx`): `totalFoodsLogged`, `longestStreak` (max across the 4 streak
@@ -596,7 +642,7 @@ zones want tuning on device.)*
   `DateNavBar`); `Features/{Profile,Settings}/*View.swift` — pushed placeholders (Settings keeps the
   dev Design-Gallery link); `Features/Onboarding/WelcomePlaceholderView.swift` *(replaced by `WelcomeView` in Phase 5)*;
   `Features/Gamification/StatsAchievementsPlaceholderView.swift`;
-  `Features/Recap/WeeklyRecapPlaceholderView.swift` (marks `lastRecapShownWeek` on dismiss).
+  `Features/Recap/WeeklyRecapPlaceholderView.swift` *(replaced by `WeeklyRecapView` in Phase 13)* (marks `lastRecapShownWeek` on dismiss).
 - `Logic/Dates.swift` — added `jsDayOfWeek` (JS `getDay()` semantics) for the Monday recap check
   (+ `DatesTests.testJsDayOfWeek`).
 - Icons use **SF Symbols** as stand-ins for the RN Ionicons; swap if a closer glyph is wanted.
