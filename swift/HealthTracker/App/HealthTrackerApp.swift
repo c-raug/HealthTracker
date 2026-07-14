@@ -6,10 +6,12 @@ struct HealthTrackerApp: App {
     @State private var theme = AppTheme()
     /// The single source of truth for app state (Phase 2). Loaded on first appearance.
     @State private var store = AppStore()
+    /// The transient-toast queue (Phase 12) — achievement-unlock / level-up banners.
+    @State private var toasts = ToastCenter()
 
     var body: some Scene {
         WindowGroup {
-            AppRoot(theme: theme, store: store)
+            AppRoot(theme: theme, store: store, toasts: toasts)
         }
     }
 }
@@ -23,6 +25,7 @@ struct HealthTrackerApp: App {
 struct AppRoot: View {
     let theme: AppTheme
     let store: AppStore
+    let toasts: ToastCenter
     @Environment(\.colorScheme) private var deviceScheme
 
     var body: some View {
@@ -30,6 +33,7 @@ struct AppRoot: View {
         RootView()
             .environment(theme)
             .environment(store)
+            .environment(toasts)
             .environment(\.appColors, theme.colors(for: effectiveScheme))
             .tint(theme.accentPrimary)
             .preferredColorScheme(theme.appearanceMode.forcedScheme)

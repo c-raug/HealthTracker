@@ -62,6 +62,10 @@ struct RootTabView: View {
                     }
                     .transition(.opacity)
                 }
+
+                // Phase 12: reactive XP/achievement watcher (invisible) + toast overlay on top.
+                GamificationWatcher()
+                ToastView()
             }
             .environment(\.topSafeInset, proxy.safeAreaInsets.top)
             .environment(\.bottomSafeInset, proxy.safeAreaInsets.bottom)
@@ -69,7 +73,7 @@ struct RootTabView: View {
         // Reset any pushed Profile/Settings screen when a primary tab is chosen.
         .onChange(of: selection) { _, _ in navPath.removeAll() }
         .sheet(isPresented: $showStats) {
-            StatsAchievementsPlaceholderView()
+            StatsAchievementsView()
         }
         .fullScreenCover(item: $recap) { item in
             WeeklyRecapPlaceholderView(week: item.week)

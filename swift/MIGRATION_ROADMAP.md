@@ -49,7 +49,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 9** — Activity tracking (burn flame, 7-day activity graph, exercise/steps/smartwatch logging)
 - [x] **Phase 10** — Home dashboard (profile card + nutrition/activity/weight summary cards)
 - [x] **Phase 11** — Profile & Settings + sub-screens (Edit Profile, Nutrition Goals, Appearance, App Settings, Food Library)
-- [ ] **Phase 12** — Gamification
+- [x] **Phase 12** — Gamification (reactive XP/achievement watcher + toasts, Stats & Achievements screen, leveling tutorial, prestige)
 - [ ] **Phase 13** — Weekly recap
 - [ ] **Phase 14** — Cross-cutting polish & full parity QA
 - [ ] **Phase 15** — HealthKit integration
@@ -345,6 +345,63 @@ filter pills + `FloatingPillBar` — consistent with the Phase-7c deferral — a
 capture**, so Debug Info reads "No crash log on record." until a Swift crash reporter lands. The RN
 modal routes are pushed onto the shell's `NavigationStack` here rather than presented as modals; the
 always-floating pill bar stays visible over them, with bottom clearance added to each scroll.)*
+
+**Phase 12 →** The gamification layer is now live: XP and achievements are earned in the background,
+and the **Stats & Achievements** sheet + **leveling tutorial** are real (the XP pill and the Profile
+"Stats & Achievements" row now open the real screen, not the Phase-4 placeholder). Complete
+onboarding (or Load Saved Data with real history) and verify:
+- **Earning XP / achievements (no UI to open — it just happens):** logging food/weight/water/activity
+  or hitting a goal grants XP once per day per source (food +5/entry capped 25/day; calorie goal +20;
+  water goal +15; weight +10; activity +10), plus one-time +50 (7-day) / +200 (30-day) streak bonuses.
+  The **HeaderXpBar** pill animates `+N xp` then springs its fill on each gain. When XP crosses a
+  level boundary a **"Level Up! Level N · Name"** toast drops from the top; unlocking an achievement
+  shows an **"Achievement Unlocked: …"** toast. Toasts auto-dismiss after 3s (tap to dismiss early);
+  the **first** reconcile after data loads unlocks already-earned achievements **silently** (no toast
+  spam on launch), matching the RN watcher.
+- **Tap the XP pill** (or Profile → Stats & Achievements) → the **Stats & Achievements** sheet: a
+  **Level** card (`⭐ [P{n} ·] Level N · Name`, the XP-to-next bar with a `Level N → Level N+1` hint,
+  or a **Prestige →** button at Level 10; an ⓘ opens the tutorial), a **Badges** card (Calorie Goal /
+  Weight / Food / Activity, each with **Current** + **Best** day counts), and an **Achievements** grid
+  (the 8 badges; locked ones are dimmed with a lock, unlocked ones get a primary ring).
+- **ⓘ → Leveling Tutorial** (full-screen, 3 pages with progress segments + left/right tap zones +
+  Next/Done): **How to Earn XP** (the XP table), **The Levels** (the 10-level ladder, current level
+  highlighted), **Prestige** (the explainer).
+- **Prestige** (only at Level 10 / Legend): the button shows a confirm alert; confirming resets
+  `totalXp → 0`, bumps the prestige number, and the label becomes `⭐ P{n} · Level 1 · Novice`.
+  Correct in light/dark + all 6 accents; the collapsing header + XP pill still behave.
+Then run the unit tests (⌘U): the new suite is `GamificationStatsTests` (food-XP capped delta,
+calorie/water/weight/activity per-day guards, one-time streak-bonus gating, level-up crossing,
+total-foods aggregate); all existing suites pass. *(The RN reactive `useEffect` watcher becomes an
+invisible `GamificationWatcher` view keyed on one Equatable snapshot; the toast system is a small
+`@Observable ToastCenter` + `ToastView` overlay. No new store actions — Phase 2's `addXP`/
+`unlockAchievement`/`prestige` already exist. Flag if a toast's spring/insets or the tutorial tap
+zones want tuning on device.)*
+
+### Phase 12 map (what landed where)
+- `Logic/GamificationStats.swift` — the pure reconcile core (port of the derived values + effect
+  guards in `GamificationWatcher.tsx`): `totalFoodsLogged`, `longestStreak` (max across the 4 streak
+  types), `pendingGrants` (the capped-food-delta + per-day boolean + one-time-streak XP decisions →
+  `[Grant]`), and `didLevelUp`. Reuses `Streaks`/`XP`/`Achievements`/`NutritionStats`/`WaterStats`.
+- `Store/ToastCenter.swift` — `@Observable @MainActor` toast queue (port of `ToastContext`): one
+  message at a time, replace-on-new, 3s `Task`-based auto-dismiss. Injected at `AppRoot`.
+- `Features/Shared/ToastView.swift` — the top-anchored banner overlay (port of `ToastNotification`):
+  spring-in from above, card + hairline border + emoji/text/✕, tap-to-dismiss. Mounted in the shell.
+- `Features/Gamification/GamificationWatcher.swift` — the invisible reactive view (port of
+  `GamificationWatcher.tsx`): recomputes an Equatable `DayInputs` snapshot, and on `.onAppear` /
+  `.onChange` unlocks achievements (silent first pass, toast after), grants due XP via `store.addXP`,
+  and fires the level-up toast. Converges (post-grant re-runs find the ledger satisfied).
+- `Features/Gamification/StatsAchievementsView.swift` — the real Stats & Achievements sheet (Level /
+  Badges / Achievements cards using `featureCardStyle`); ⓘ → tutorial cover; Prestige confirm alert.
+  Replaces `StatsAchievementsPlaceholderView.swift` (deleted). Badge calorie target uses base TDEE
+  only (no burn), matching the RN modal.
+- `Features/Gamification/LevelingTutorialView.swift` — the 3-page full-screen tutorial + its
+  `TutorialXpPage` / `TutorialLevelsPage` / `TutorialPrestigePage` subviews (ports of the RN pages).
+- `Navigation/RootTabView.swift` — mounts `GamificationWatcher()` + `ToastView()` in the shell ZStack
+  and presents `StatsAchievementsView()` (was the placeholder).
+- `App/HealthTrackerApp.swift` — owns a `ToastCenter` and injects it into the environment.
+- `HealthTrackerTests/GamificationStatsTests.swift` — parity suite for `GamificationStats`.
+- SF Symbols stand in for the RN Ionicons (`star`/`trophy`/`rosette`/`info.circle`/`lock.fill`/
+  `arrow.left`/`xmark`); swap if a closer glyph is wanted.
 
 ### Phase 11 map (what landed where)
 - `Logic/ProfileEditLogic.swift` — pure Edit-Profile core (port of the inline logic in
