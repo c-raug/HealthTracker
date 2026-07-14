@@ -47,7 +47,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
     Library screen — tracked for a 7c follow-up / Phase 11 Profile)*
 - [x] **Phase 8** — Water tracking (bottle visual, water tracker card, 7-day water graph)
 - [x] **Phase 9** — Activity tracking (burn flame, 7-day activity graph, exercise/steps/smartwatch logging)
-- [ ] **Phase 10** — Home dashboard
+- [x] **Phase 10** — Home dashboard (profile card + nutrition/activity/weight summary cards)
 - [ ] **Phase 11** — Profile & Settings + sub-modals
 - [ ] **Phase 12** — Gamification
 - [ ] **Phase 13** — Weekly recap
@@ -287,6 +287,47 @@ weekly series, exercise/steps previews, the smartwatch save-disabled gate, durat
 formatting, mode-mismatch warning); all existing suites pass. *(The pager uses `TabView(.page)` like
 Weight/Nutrition; the flame is an SF-Symbol adaptation of RN's SVG fire path — flag if the glow or the
 count overlay wants tuning on device. No XP is granted here — activity XP stays a Phase-12 concern.)*
+
+**Phase 10 →** The **Home** tab is now real (replaces the Phase-4 placeholder). Complete onboarding
+(or Load Saved Data), open the Home tab, and verify:
+- The shared **date-nav bar** at the top drives `store.selectedDate` (shared with the other tabs) —
+  changing the date here reflects on Weight/Nutrition/Activities and vice-versa.
+- The **Profile card**: an accent-ringed **avatar** (photo if set → initials from the name → a person
+  icon), the profile **name** (or "Your Profile"), and the gamified **level label** (`⭐ Level N ·
+  Title`, prefixed `⭐ P{n} ·` at prestige > 0). A small **red dot** on the avatar when this ISO week's
+  recap is unseen. **Tap the avatar** → the weekly-recap cover; **tap the name/chevron** → the Edit
+  Profile screen (pushed; Phase-11 placeholder for now).
+- The full-width **Nutrition** card: the **calorie ring** (consumed / `baseTdee + burn` target,
+  proximity-colored) beside the spring-filled **water bottle**. **Tap anywhere** → the Nutrition tab.
+- The bottom row of two half-width cards: **Activity** (the burn **flame** tinted by today's total
+  burned) → the Activities tab, and **Weight** (the **digital scale** LCD showing the latest weight at
+  or before the viewed date, unit hidden, or a dimmed placeholder) → the Weight tab.
+- Home is **not** gated on a complete profile (matching RN): with no profile/weight the target is 0,
+  the flame reads 0, and the scale shows its placeholder — the cards still render. Correct in
+  light/dark + all 6 accents; the collapsing header + XP pill still behave.
+Then run the unit tests (⌘U): the new suite is `HomeStatsTests` (initials, prestige/level label,
+latest-entry-on-or-before-date, recap badge); all existing suites pass. *(The RN `EdgeBlurFade`
+top/bottom overlays have no separate port — the shared `CollapsibleScreen` already frosts the header
+region; flag if the bottom pill edge wants a fade on device.)*
+
+### Phase 10 map (what landed where)
+- `Logic/HomeStats.swift` — the small pure core: `initials(from:)` (ProfileCard first/last-initial
+  rule), `levelLabel(prestige:totalXp:)` (⭐ / prestige prefix over `XP.levelLabel`), `latestEntry
+  (onOrBefore:in:)` (the scale value for the viewed date), and `showRecapBadge(...)`.
+- `Features/Home/ProfileCardView.swift` — the summary card (port of `profile/ProfileCard.tsx`):
+  avatar ring (photo/initials/person) + recap dot, name, level label, chevron; avatar → recap,
+  name/chevron → profile (closures from the shell). Includes `AvatarImage` (best-effort `data:`/file
+  URI loader; real photo-picking is Phase 11).
+- `Features/Home/HomeView.swift` — the dashboard (replaces the Phase-4 placeholder): `DateNavBar` →
+  `ProfileCardView` → full-width Nutrition feature card (`CalorieRingView` + `WaterBottleVisual`) →
+  half-width Activity (`CalorieFlameView`) + Weight (`DigitalScaleView`, `hideUnit`) cards, each
+  tapping through to its tab. Reuses `NutritionStats`/`WaterStats`/`ActivityStats` verbatim for the
+  numbers — no new derived math beyond `HomeStats`.
+- `Navigation/RootTabView.swift` — feeds `HomeView` the `onSelectTab` (switch primary tab),
+  `onOpenProfile` (`navPath.append(.profile)`), and `onOpenRecap` (present the recap cover) closures.
+- `HealthTrackerTests/HomeStatsTests.swift` — parity suite for `HomeStats`.
+- Reuses the shared `featureCardStyle` (Design layer) for all four cards; the RN nested-touchable
+  quirk (bottle tap = no-op on Home) is intentionally simplified so the whole Nutrition card is tappable.
 
 ### Phase 9 map (what landed where)
 - `Logic/ActivityStats.swift` — the pure core ported from the inline math in

@@ -66,11 +66,22 @@ struct RootTabView: View {
     @ViewBuilder
     private var tabContent: some View {
         switch selection {
-        case .home: HomeView(onXpTap: { showStats = true })
+        case .home: HomeView(
+            onXpTap: { showStats = true },
+            onSelectTab: { selection = $0 },
+            onOpenProfile: { navPath.append(.profile) },
+            onOpenRecap: { recap = RecapWeek(id: Dates.getISOWeekString(Dates.getToday())) }
+        )
         case .weight: WeightView(onXpTap: { showStats = true })
         case .nutrition: NutritionView(onXpTap: { showStats = true })
         case .activities: ActivitiesView(onXpTap: { showStats = true })
-        case .more: HomeView(onXpTap: { showStats = true }) // unreachable: "More" opens the popover
+        case .more: // unreachable: "More" opens the popover
+            HomeView(
+                onXpTap: { showStats = true },
+                onSelectTab: { selection = $0 },
+                onOpenProfile: { navPath.append(.profile) },
+                onOpenRecap: { recap = RecapWeek(id: Dates.getISOWeekString(Dates.getToday())) }
+            )
         }
     }
 
