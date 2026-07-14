@@ -2,8 +2,9 @@ import SwiftUI
 
 /// Build and save a multi-food meal. Port of `expo/components/nutrition/CreateMealFlow.tsx`:
 /// a name field, a food search, an "In Meal" list, and a portion step for each added food. Also used
-/// to save a meal from the "swipe → save as meal" action (seeded with `initialFoods`/`initialName`).
-/// Saves via `store.addSavedMeal`.
+/// to save a meal from the "swipe → save as meal" action (seeded with `initialFoods`/`initialName`),
+/// and — when `editing` is supplied — as the **EditMealFlow** (Phase 11 Food Library), updating the
+/// existing meal in place. Saves via `store.addSavedMeal` / `store.updateSavedMeal`.
 struct CreateMealFlowView: View {
     @Environment(\.appColors) private var colors
     @Environment(AppStore.self) private var store
@@ -11,6 +12,8 @@ struct CreateMealFlowView: View {
     var onDone: () -> Void
     var initialFoods: [NutritionFoodItem]
     var initialName: String
+    /// When non-nil, the flow edits this saved meal (updates in place, preserving id / pins).
+    var editing: SavedMeal?
 
     @State private var mealName: String
     @State private var foods: [NutritionFoodItem]
@@ -19,12 +22,13 @@ struct CreateMealFlowView: View {
     @State private var servings: Double = 1
     @State private var alertMessage: String?
 
-    init(onDone: @escaping () -> Void, initialFoods: [NutritionFoodItem] = [], initialName: String = "") {
+    init(onDone: @escaping () -> Void, initialFoods: [NutritionFoodItem] = [], initialName: String = "", editing: SavedMeal? = nil) {
         self.onDone = onDone
-        self.initialFoods = initialFoods
-        self.initialName = initialName
-        _mealName = State(initialValue: initialName)
-        _foods = State(initialValue: initialFoods)
+        self.editing = editing
+        self.initialFoods = editing?.foods ?? initialFoods
+        self.initialName = editing?.name ?? initialName
+        _mealName = State(initialValue: editing?.name ?? initialName)
+        _foods = State(initialValue: editing?.foods ?? initialFoods)
     }
 
     private var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -78,7 +82,7 @@ struct CreateMealFlowView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Create Meal").font(Typography.h3).foregroundStyle(colors.text)
+            Text(editing != nil ? "Edit Meal" : "Create Meal").font(Typography.h3).foregroundStyle(colors.text)
             input($mealName, placeholder: "Meal name (e.g. Post-Workout Shake)")
             input($query, placeholder: "Search foods to add…")
         }
@@ -165,7 +169,7 @@ struct CreateMealFlowView: View {
             }
             .buttonStyle(.plain)
             Button(action: save) {
-                Text("Save Meal").font(Typography.body.weight(.semibold)).foregroundStyle(colors.white)
+                Text(editing != nil ? "Save Changes" : "Save Meal").font(Typography.body.weight(.semibold)).foregroundStyle(colors.white)
                     .frame(maxWidth: .infinity).padding(.vertical, Spacing.md)
                     .background(colors.primary)
                     .clipShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
@@ -192,14 +196,26 @@ struct CreateMealFlowView: View {
     private func save() {
         guard !mealName.trimmingCharacters(in: .whitespaces).isEmpty else { alertMessage = "Please enter a meal name."; return }
         guard !foods.isEmpty else { alertMessage = "Please add at least one food."; return }
-        store.addSavedMeal(SavedMeal(
-            id: Identifiers.generate(),
-            name: mealName.trimmingCharacters(in: .whitespaces),
-            foods: foods,
-            createdAt: Dates.nowTimestamp(),
-            pinnedCategories: nil,
-            pinnedOrder: nil
-        ))
+        let trimmedName = mealName.trimmingCharacters(in: .whitespaces)
+        if let editing {
+            store.updateSavedMeal(SavedMeal(
+                id: editing.id,
+                name: trimmedName,
+                foods: foods,
+                createdAt: editing.createdAt,
+                pinnedCategories: editing.pinnedCategories,
+                pinnedOrder: editing.pinnedOrder
+            ))
+        } else {
+            store.addSavedMeal(SavedMeal(
+                id: Identifiers.generate(),
+                name: trimmedName,
+                foods: foods,
+                createdAt: Dates.nowTimestamp(),
+                pinnedCategories: nil,
+                pinnedOrder: nil
+            ))
+        }
         onDone()
     }
 }

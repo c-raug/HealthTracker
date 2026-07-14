@@ -48,7 +48,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 8** — Water tracking (bottle visual, water tracker card, 7-day water graph)
 - [x] **Phase 9** — Activity tracking (burn flame, 7-day activity graph, exercise/steps/smartwatch logging)
 - [x] **Phase 10** — Home dashboard (profile card + nutrition/activity/weight summary cards)
-- [ ] **Phase 11** — Profile & Settings + sub-modals
+- [x] **Phase 11** — Profile & Settings + sub-screens (Edit Profile, Nutrition Goals, Appearance, App Settings, Food Library)
 - [ ] **Phase 12** — Gamification
 - [ ] **Phase 13** — Weekly recap
 - [ ] **Phase 14** — Cross-cutting polish & full parity QA
@@ -309,6 +309,80 @@ Then run the unit tests (⌘U): the new suite is `HomeStatsTests` (initials, pre
 latest-entry-on-or-before-date, recap badge); all existing suites pass. *(The RN `EdgeBlurFade`
 top/bottom overlays have no separate port — the shared `CollapsibleScreen` already frosts the header
 region; flag if the bottom pill edge wants a fade on device.)*
+
+**Phase 11 →** The **Profile** and **Settings** screens are now real (replace the Phase-4
+placeholders), and their five RN sub-modals are ported as pushed sub-screens. Complete onboarding (or
+Load Saved Data) and open **More → Profile / Settings**:
+- **Profile** shows the **ProfileCard** (avatar → weekly recap; name/chevron → **Edit Profile**), a
+  **Stats & Achievements** row (opens the same stats sheet the XP pill does — a Phase-12 placeholder),
+  and **Food Library** / **Nutrition Goals** rows.
+- **Edit Profile**: a 120px avatar (**Edit** → Choose Photo via `PhotosPicker` → copied to
+  `Documents/avatar.jpg`, or Remove), then Name / Date of Birth (wheel sheet, capped 10 yrs ago) /
+  Sex / Height (ft+in or cm by unit) / **Activity Tracking Mode** (Auto·Manual·Smart Watch pills, each
+  with an ⓘ info sheet; the mode change dispatches live) / **Activity Level** (Auto only). **Save** is
+  disabled until something changes; the back chevron **guards unsaved changes** (Discard / Keep
+  Editing). Invalid height (< 1) blocks Save.
+- **Nutrition Goals**: **Weight Goal** wheel (labels switch lb/wk ↔ kg/wk with the unit) + **Activity
+  Level** list (Auto only, each with an ⓘ sheet); **Macro Split** (Balanced / High Protein / Keto +
+  **Custom** −/+ steppers with a live `P/C/F % (g)` preview and a "must equal 100%" validator, grams
+  computed from the activity-adjusted goal); **Daily Water Goal** (Auto/Manual, creatine On/Off in
+  Auto, a manual override field + **Save** with a transient "Saved!" and a positive-number guard).
+- **Settings** shows **Appearance** and **App Settings** rows, the inline **Send Feedback** card
+  (posts to the same Google Form endpoint), a version footer, and the dev **Design Gallery** link.
+- **Appearance**: **Color Mode** (Light / Dark / System) + **Accent Color** (6 swatches). Each change
+  writes the store **and** the live `AppTheme`, so the whole app recolors/re-appears immediately.
+- **App Settings**: **Weight Unit** (lbs/kg), **Expand sections by default** (On/Off), **Data Backup**
+  (Save Data → the iOS share sheet with `healthtracker-backup.json`), and **Debug Info** (see below).
+- **Food Library** (from Profile): **Foods / Meals** segmented, an alphabetical searchable list with
+  **edit** + **delete** (confirm), and a **＋** toolbar action that opens the shared **Custom-Food
+  form** (Foods) or **Create/Edit-Meal flow** (Meals) in a sheet — the deferred **EditMealFlow** now
+  works. Correct in light/dark + all 6 accents.
+Then run the unit tests (⌘U): the new suites are `ProfileEditLogicTests` (height ft/in↔inches
+resolve, change detection, `makeProfile` preservation/empty-name/invalid-height, mode copy) and
+`SettingsLogicTests` (water-goal Save rules, macro custom-sum/clamp, grams label, goalCalories); all
+existing suites pass. *(Deferred, documented: the Food Library **food-type filter** modal + favorite
+filter pills + `FloatingPillBar` — consistent with the Phase-7c deferral — and native **crash-log
+capture**, so Debug Info reads "No crash log on record." until a Swift crash reporter lands. The RN
+modal routes are pushed onto the shell's `NavigationStack` here rather than presented as modals; the
+always-floating pill bar stays visible over them, with bottom clearance added to each scroll.)*
+
+### Phase 11 map (what landed where)
+- `Logic/ProfileEditLogic.swift` — pure Edit-Profile core (port of the inline logic in
+  `profile-modal.tsx`): `initialSnapshot` (ft/in split vs cm), `resolveHeight` (`ft*12+in` / `cm`,
+  `< 1` → invalid), `hasChanges`, `makeProfile` (empty-name→nil, preserves `weightGoal`/`fitnessGoal`),
+  and the activity-mode label/info copy.
+- `Logic/SettingsLogic.swift` — pure Nutrition-Goals helpers: `waterGoalSave` (blank→clear /
+  positive→set / else invalid), `waterGoalPlaceholder`/`creatineAmountLabel`, `customMacroSum` /
+  `clampPercent` / `macroInt`, `gramsLabel` (`round(pct/100·cal/perGram)`), and `goalCalories`
+  (base TDEE + activity-adjusted, reusing `NutritionStats`).
+- `Features/Profile/ProfileView.swift` — the real Profile tab (ProfileCard + three nav rows).
+- `Features/Profile/EditProfileView.swift` — the Edit-Profile screen (`PhotosPicker` avatar, all
+  fields, DOB wheel, mode info sheets, discard guard). Reuses `AvatarImage` (Phase 10) + `HomeStats.initials`.
+- `Features/Settings/SettingsView.swift` — the real Settings tab (Appearance/App-Settings rows,
+  Feedback card, version footer, Design-Gallery dev link).
+- `Features/Settings/AppearanceView.swift` — Color Mode + Accent; writes `AppStore` **and** the live
+  `AppTheme` (the one-time RN `ThemeColorSync` bridge is made two-way here for instant recolor).
+- `Features/Settings/AppSettingsView.swift` — unit / expand-sections toggles, backup export via
+  `ShareSheet`, Debug Info placeholder.
+- `Features/Settings/NutritionGoalsView.swift` — `GoalsSectionView` + `MacroSectionView` +
+  `DailyWaterGoalView` (private subviews). Weight goal is a `Picker(.wheel)` (the drum replacement);
+  reuses `OnboardingDraft` label/preset tables.
+- `Features/Settings/FeedbackSectionView.swift` — the Send-Feedback form (Google-Form `POST`).
+- `Features/Settings/SettingsComponents.swift` — shared `SettingsNavRow`, `SettingsCard`,
+  `SettingsToggle` (primaryLight-active style), `SettingLabel`/`SettingDescription`,
+  `SettingsActionButton`, and the `.pillBottomClearance()` modifier.
+- `Features/Shared/InfoSheet.swift` — port of `InfoModal` (+ `InfoContent` / `.infoSheet(_:)`).
+- `Features/Shared/ShareSheet.swift` — `UIActivityViewController` wrapper for the backup export.
+- `Features/Nutrition/FoodLibraryView.swift` — the standalone Food Library (Foods/Meals lists +
+  search + create/edit/delete), presenting the forms in sheets.
+- `Features/Nutrition/CreateMealFlowView.swift` — extended with an `editing: SavedMeal?` path (the
+  deferred **EditMealFlow**): seeds name/foods, updates in place preserving id/pins, retitles.
+- `Navigation/MoreMenu.swift` — `MoreDestination` gains `.editProfile` / `.foodLibrary` /
+  `.nutritionGoals` / `.appearance` / `.appSettings`.
+- `Navigation/RootTabView.swift` — registers the five new destinations; passes `onOpen`/`onOpenRecap`
+  closures into Profile / Settings (append to the shared `navPath`).
+- `HealthTrackerTests/ProfileEditLogicTests.swift`, `HealthTrackerTests/SettingsLogicTests.swift` —
+  parity suites.
 
 ### Phase 10 map (what landed where)
 - `Logic/HomeStats.swift` — the small pure core: `initials(from:)` (ProfileCard first/last-initial

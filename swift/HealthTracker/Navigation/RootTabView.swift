@@ -30,8 +30,22 @@ struct RootTabView: View {
                         .toolbar(.hidden, for: .navigationBar)
                         .navigationDestination(for: MoreDestination.self) { dest in
                             switch dest {
-                            case .profile: ProfileView(onXpTap: { showStats = true })
-                            case .settings: SettingsView(onXpTap: { showStats = true })
+                            case .profile:
+                                ProfileView(
+                                    onXpTap: { showStats = true },
+                                    onOpenRecap: { recap = RecapWeek(id: Dates.getISOWeekString(Dates.getToday())) },
+                                    onOpen: { navPath.append($0) }
+                                )
+                            case .settings:
+                                SettingsView(
+                                    onXpTap: { showStats = true },
+                                    onOpen: { navPath.append($0) }
+                                )
+                            case .editProfile: EditProfileView()
+                            case .foodLibrary: FoodLibraryView()
+                            case .nutritionGoals: NutritionGoalsView()
+                            case .appearance: AppearanceView()
+                            case .appSettings: AppSettingsView()
                             }
                         }
                 }

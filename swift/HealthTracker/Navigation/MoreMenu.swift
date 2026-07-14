@@ -74,8 +74,17 @@ struct MoreMenu: View {
     }
 }
 
-/// Hidden destinations reachable only through the More menu (mirrors `href: null` routes).
+/// Hidden destinations reachable only through the More menu (mirrors `href: null` routes) plus the
+/// Phase-11 sub-screens pushed from Profile / Settings (the RN modal routes). All resolve against the
+/// shell's single `NavigationStack`, so any screen can push one with `NavigationLink(value:)` or by
+/// appending to the shared path.
 enum MoreDestination: Hashable {
     case profile
     case settings
+    // Phase 11 sub-screens
+    case editProfile      // profile-modal
+    case foodLibrary      // food-library-modal
+    case nutritionGoals   // nutrition-goals-modal
+    case appearance       // appearance-modal
+    case appSettings      // app-settings-modal
 }

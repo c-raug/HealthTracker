@@ -1,17 +1,31 @@
 import SwiftUI
 
-/// Settings screen (Phase 11) — a hidden route reached via the More menu. Placeholder for the
-/// Phase 4 shell. Keeps a dev link to the Design Gallery so the Phase 1 token layer stays
-/// reachable now that `RootView` shows the app shell instead of the gallery.
+/// Settings screen (Phase 11) — a hidden route reached via the More menu. Port of
+/// `expo/app/(tabs)/settings.tsx`: an "Appearance" row, an "App Settings" row, the inline
+/// `FeedbackSection` card, and a version footer. Keeps the dev Design-Gallery link so the Phase-1
+/// token layer stays reachable.
 struct SettingsView: View {
     @Environment(\.appColors) private var colors
     var onXpTap: () -> Void
+    /// Push a sub-screen onto the shared shell stack.
+    var onOpen: (MoreDestination) -> Void
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+    }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Spacing.md) {
-                PlaceholderCard(systemImage: "gearshape.fill", title: "Settings", phase: "Phase 11")
+            VStack(spacing: Spacing.sm) {
+                SettingsNavRow(title: "Appearance") { onOpen(.appearance) }
+                SettingsNavRow(title: "App Settings") { onOpen(.appSettings) }
 
+                SettingsCard {
+                    FeedbackSectionView()
+                        .padding(Spacing.md)
+                }
+
+                // Dev-only entry point to the Phase-1 Design Gallery.
                 NavigationLink {
                     DesignGalleryView()
                         .background(colors.background.ignoresSafeArea())
@@ -33,9 +47,16 @@ struct SettingsView: View {
                     .cardStyle()
                 }
                 .buttonStyle(.plain)
+
+                Text("HealthTracker v\(appVersion)")
+                    .font(Typography.small)
+                    .foregroundStyle(colors.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.lg)
             }
             .padding(Spacing.md)
         }
+        .pillBottomClearance()
         .background(colors.background.ignoresSafeArea())
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
