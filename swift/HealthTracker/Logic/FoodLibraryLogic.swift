@@ -59,6 +59,28 @@ enum FoodLibraryLogic {
         matches.filter { !isPinnedHere($0, category: category) }
     }
 
+    // MARK: - Food-type filtering (Phase 14)
+
+    /// Whether any food-type filter is active (RN `hasActiveFilters`).
+    static func hasActiveFoodTypeFilter(_ activeTypes: [String]) -> Bool { !activeTypes.isEmpty }
+
+    /// Foods passing the active food-type filter (RN `applyFoodFilters`, OR logic): with no active
+    /// types every food passes; otherwise a food passes only if it has at least one `foodTypes`
+    /// value present in `activeTypes` (foods with no `foodTypes` are excluded while a filter is on).
+    static func applyFoodTypeFilter(_ foods: [CustomFood], activeTypes: [String]) -> [CustomFood] {
+        guard !activeTypes.isEmpty else { return foods }
+        let active = Set(activeTypes)
+        return foods.filter { food in
+            guard let types = food.foodTypes, !types.isEmpty else { return false }
+            return types.contains { active.contains($0) }
+        }
+    }
+
+    /// Toggle a type in the active-filter list (RN `handleToggleFavoriteFilter` / pill tap).
+    static func toggleFoodTypeFilter(_ activeTypes: [String], type: String) -> [String] {
+        activeTypes.contains(type) ? activeTypes.filter { $0 != type } : activeTypes + [type]
+    }
+
     // MARK: - Custom food → logged food
 
     /// A custom food as a to-log `NutritionFoodItem` at 1 serving (RN `toNutritionItem`).

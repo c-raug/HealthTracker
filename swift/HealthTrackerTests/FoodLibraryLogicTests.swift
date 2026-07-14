@@ -94,4 +94,36 @@ final class FoodLibraryLogicTests: XCTestCase {
         XCTAssertFalse(FoodLibraryLogic.caloriesAreManual(cf("A", cal: 165, p: 10, c: 20, f: 5)))
         XCTAssertTrue(FoodLibraryLogic.caloriesAreManual(cf("B", cal: 200, p: 10, c: 20, f: 5)))
     }
+
+    // MARK: - Food-type filter (Phase 14)
+
+    private func typed(_ name: String, _ types: [String]?) -> CustomFood {
+        CustomFood(id: name, name: name, calories: 100, protein: 0, carbs: 0, fat: 0,
+                   servingSize: "1 g", createdAt: "2026-01-01T00:00:00.000Z",
+                   pinnedCategories: nil, pinnedOrder: nil, foodTypes: types)
+    }
+
+    func testApplyFoodTypeFilterOrLogicAndUntyped() {
+        let foods = [
+            typed("Steak", ["Meat"]),
+            typed("Apple", ["Fruit"]),
+            typed("Yogurt Bowl", ["Dairy", "Fruit"]),
+            typed("Mystery", nil),        // untyped → excluded while a filter is active
+        ]
+        // No active filter → everything passes.
+        XCTAssertEqual(FoodLibraryLogic.applyFoodTypeFilter(foods, activeTypes: []).count, 4)
+        // OR logic: "Fruit" matches Apple + Yogurt Bowl (shares Fruit), excludes Steak/untyped.
+        XCTAssertEqual(FoodLibraryLogic.applyFoodTypeFilter(foods, activeTypes: ["Fruit"]).map(\.name),
+                       ["Apple", "Yogurt Bowl"])
+        // Multi-select is a union: Meat OR Dairy.
+        XCTAssertEqual(FoodLibraryLogic.applyFoodTypeFilter(foods, activeTypes: ["Meat", "Dairy"]).map(\.name),
+                       ["Steak", "Yogurt Bowl"])
+    }
+
+    func testHasActiveAndToggleFilter() {
+        XCTAssertFalse(FoodLibraryLogic.hasActiveFoodTypeFilter([]))
+        XCTAssertTrue(FoodLibraryLogic.hasActiveFoodTypeFilter(["Meat"]))
+        XCTAssertEqual(FoodLibraryLogic.toggleFoodTypeFilter(["Meat"], type: "Fruit"), ["Meat", "Fruit"])
+        XCTAssertEqual(FoodLibraryLogic.toggleFoodTypeFilter(["Meat", "Fruit"], type: "Meat"), ["Fruit"])
+    }
 }

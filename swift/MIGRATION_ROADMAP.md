@@ -51,7 +51,7 @@ swift/HealthTrackerTests/  XCTest for Logic + Store + Backup round-trip
 - [x] **Phase 11** — Profile & Settings + sub-screens (Edit Profile, Nutrition Goals, Appearance, App Settings, Food Library)
 - [x] **Phase 12** — Gamification (reactive XP/achievement watcher + toasts, Stats & Achievements screen, leveling tutorial, prestige)
 - [x] **Phase 13** — Weekly recap (4-page story cover: Weight / Nutrition / Streaks / Rating)
-- [ ] **Phase 14** — Cross-cutting polish & full parity QA
+- [x] **Phase 14** — Cross-cutting polish & full parity QA (food-type filter + favorites, crash-log Debug Info, parity audit)
 - [ ] **Phase 15** — HealthKit integration
 - [ ] **Phase 16** — Release & cutover
 
@@ -405,6 +405,49 @@ suites pass. *(The RN story-modal's `ScrollView` paging is a `page`-index state 
 zones — same pattern as `LevelingTutorialView`; SF Symbols stand in for the RN Ionicons
 [`scalemass`/`fork.knife`/`flame`/`trophy`/`arrow.up`/`arrow.down`/`star.fill`]. No XP or writes here
 beyond marking the week shown.)*
+
+**Phase 14 →** Cross-cutting polish & full parity QA — closes the deferrals carried since Phases 7c/11
+and produces the on-device QA checklist (`docs/parity-qa.md`). No new *screens*; the changes thread
+through the existing Add-Food modal, Food Library, and App Settings. Complete onboarding (or Load
+Saved Data with real foods) and verify:
+- **Food-type filter** (Add-Food modal's **Add Food** tab **and** Food Library → **Foods**): a
+  **filter button** sits beside the search field (outline normally; fills + tints `primary` when a
+  filter is active). Tapping it opens the **Filter Foods** sheet — multi-select category pills (OR
+  logic), **Clear Filters** / **Apply**. When any category is favorited, a **Quick Filters** pill row
+  appears above the list (tap to toggle that type inline).
+- **Filter Edit mode** (in the sheet): **Remove** (tap a pill → confirm → deletes that category from
+  every food + any favorite), **Favorite** (a ± badge promotes/demotes a Quick Filter, capped at 4 →
+  "Quick Filter Limit" alert), and **+** adds a brand-new category. Applying a filter narrows
+  Pinned/Recent/My-Foods (untyped foods drop out while active); no match → "No results found".
+- **Debug Info crash log** (App Settings): after an uncaught `NSException` is captured, Debug Info
+  shows the stored log (timestamp + message + stack) with **Copy** and **Clear** (confirm) — otherwise
+  "No crash log on record." The log persists to `Application Support/HealthTracker/crash_log.json` and
+  survives relaunch (installed via `CrashReporter.install()` at app start).
+- Correct in light/dark + all 6 accents. **Documented deferrals (see `docs/parity-qa.md` §4):** the
+  RN `FloatingPillBar` is replaced by native search + filter button + toolbar `＋`; **pinned
+  drag-reorder** stays device-polish (store methods ready); there is no RN-style **ErrorBoundary
+  fallback screen** (SwiftUI can't recover from a view-body trap — the shareable Debug-Info log is the
+  ported half); favorite-mode pill **shake** dropped (decorative).
+Then run the unit tests (⌘U): `FoodLibraryLogicTests` gains the food-type-filter cases (OR-match,
+untyped-exclusion, has-active, toggle); all existing suites pass.
+
+### Phase 14 map (what landed where)
+- `Logic/FoodLibraryLogic.swift` — added `hasActiveFoodTypeFilter`, `applyFoodTypeFilter` (RN
+  `applyFoodFilters` OR logic — untyped foods excluded while active), `toggleFoodTypeFilter`.
+- `Features/Nutrition/FoodFilterSheet.swift` — the filter sheet (port of `FoodFilterModal.tsx`):
+  select/clear/apply + Edit mode (remove/favorite/add-category) writing via `store.setFoodTypeCategories`
+  / `setFavoriteFilterTypes`. Includes a local `WrapHStack` (`Layout`) for the wrapping pill rows.
+- `Features/Nutrition/FavoritePillRow.swift` — the up-to-4 Quick-Filter pill row (port of
+  `FavoritePillRow.tsx`).
+- `Features/Nutrition/AddFoodTabView.swift` — filter button + `FavoritePillRow` + filter applied to
+  Pinned/Recent/My-Foods; presents `FoodFilterSheet`.
+- `Features/Nutrition/FoodLibraryView.swift` — same filter wiring for the Foods tab.
+- `Persistence/CrashReporter.swift` — local crash-log capture (`install()` uncaught-exception handler,
+  `record`/`lastLog`/`formatted`/`clear`; port of `crashReporting.ts` + `ErrorBoundary` capture half).
+- `App/HealthTrackerApp.swift` — `init()` calls `CrashReporter.install()`.
+- `Features/Settings/AppSettingsView.swift` — Debug Info now renders the log + Copy/Clear.
+- `HealthTrackerTests/FoodLibraryLogicTests.swift` — food-type-filter parity cases.
+- `docs/parity-qa.md` — the full screen-by-screen parity/QA audit + consolidated on-device tuning list.
 
 ### Phase 13 map (what landed where)
 - `Logic/RecapStats.swift` — the pure recap core (ports the inline math in `weekly-recap-modal.tsx`

@@ -5,8 +5,9 @@ import SwiftUI
 /// the shared `CustomFoodFormView` (foods) or `CreateMealFlowView` (meals, incl. the edit/EditMeal
 /// path) in a sheet. Reached from the Profile screen.
 ///
-/// Deferred vs RN (consistent with the Phase-7c deferral): the food-type **filter** modal +
-/// **favorite** filter pills + the `FloatingPillBar` layout. Search + create/edit/delete are here.
+/// Phase 14: the food-type **filter** sheet + **favorite** Quick-Filter pills are wired here (Foods
+/// tab). The RN `FloatingPillBar` blurred-pill layout is intentionally replaced by the native search
+/// field + a filter button + toolbar `＋` (an idiomatic substitution, consistent with earlier phases).
 struct FoodLibraryView: View {
     @Environment(\.appColors) private var colors
     @Environment(AppStore.self) private var store
@@ -36,14 +37,39 @@ struct FoodLibraryView: View {
     @State private var sheet: FormSheet?
     @State private var deleteFood: CustomFood?
     @State private var deleteMeal: SavedMeal?
+    @State private var activeFilters: [String] = []
+    @State private var showFilterSheet = false
+
+    private var filtersActive: Bool { FoodLibraryLogic.hasActiveFoodTypeFilter(activeFilters) }
 
     var body: some View {
         VStack(spacing: Spacing.sm) {
             SettingsToggle(options: [(Tab.foods, "Foods"), (Tab.meals, "Meals")], selection: $tab)
                 .padding(.horizontal, Spacing.md)
 
-            searchField
-                .padding(.horizontal, Spacing.md)
+            HStack(spacing: Spacing.sm) {
+                searchField
+                if tab == .foods {
+                    Button { showFilterSheet = true } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle\(filtersActive ? ".fill" : "")")
+                            .font(.system(size: 22))
+                            .foregroundStyle(filtersActive ? colors.primary : colors.textSecondary)
+                            .frame(width: 44, height: 44)
+                            .background(colors.card)
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous).strokeBorder(filtersActive ? colors.primary : colors.border, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Filter foods")
+                }
+            }
+            .padding(.horizontal, Spacing.md)
+
+            if tab == .foods {
+                FavoritePillRow(favorites: store.preferences.favoriteFilterTypes ?? [], activeFilters: activeFilters) { type in
+                    activeFilters = FoodLibraryLogic.toggleFoodTypeFilter(activeFilters, type: type)
+                }
+            }
 
             ScrollView {
                 LazyVStack(spacing: Spacing.sm) {
@@ -69,6 +95,9 @@ struct FoodLibraryView: View {
         }
         .sheet(item: $sheet) { form in
             NavigationStack { formView(form) }
+        }
+        .sheet(isPresented: $showFilterSheet) {
+            FoodFilterSheet(currentFilters: activeFilters) { activeFilters = $0 }
         }
         .confirmationDialog(
             "Delete Food", isPresented: Binding(get: { deleteFood != nil }, set: { if !$0 { deleteFood = nil } }),
@@ -131,15 +160,15 @@ struct FoodLibraryView: View {
 
     private var sortedFoods: [CustomFood] {
         let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-        return store.customFoods
-            .filter { q.isEmpty || $0.name.lowercased().contains(q) }
+        let byName = store.customFoods.filter { q.isEmpty || $0.name.lowercased().contains(q) }
+        return FoodLibraryLogic.applyFoodTypeFilter(byName, activeTypes: activeFilters)
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     @ViewBuilder
     private var foodRows: some View {
         if sortedFoods.isEmpty {
-            emptyText(query.isEmpty ? "No custom foods yet. Create one!" : "No foods match your search.")
+            emptyText(query.isEmpty && !filtersActive ? "No custom foods yet. Create one!" : "No foods match your search.")
         } else {
             ForEach(sortedFoods) { food in
                 libraryRow(name: food.name, meta: "\(WeightStats.jsNumberString(food.calories)) cal · \(food.servingSize)") {

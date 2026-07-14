@@ -1,17 +1,20 @@
 import SwiftUI
+import UIKit
 
 /// App Settings sub-screen — port of `expo/app/app-settings-modal.tsx`: Weight Unit toggle, an
 /// "Expand sections by default" toggle, Data Backup (share the full-state JSON), and Debug Info.
 ///
-/// Deferred vs RN: the RN Debug Info shows the last captured JS crash log (`crashReporting.ts` +
-/// AsyncStorage). That crash-capture path has no Swift port yet, so this shows "No crash log on
-/// record." until a native crash reporter lands.
+/// Phase 14: Debug Info now shows the last captured crash log (via `CrashReporter`) with **Copy** and
+/// **Clear**, matching `expo/app/app-settings-modal.tsx`. See `CrashReporter` for the capture-scope
+/// note (uncaught `NSException`s; local-only, like the RN utility before Sentry).
 struct AppSettingsView: View {
     @Environment(\.appColors) private var colors
     @Environment(AppStore.self) private var store
 
     @State private var shareItem: ShareItem?
     @State private var errorMessage: String?
+    @State private var crashLog: String? = CrashReporter.formatted()
+    @State private var showClearConfirm = false
 
     private var unitBinding: Binding<WeightUnit> {
         Binding(get: { store.preferences.unit }, set: { store.setUnit($0) })
@@ -89,12 +92,40 @@ struct AppSettingsView: View {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 SettingLabel("Debug Info")
                 SettingDescription("Last recorded crash log. Share this when reporting a bug.")
-                Text("No crash log on record.")
-                    .font(Typography.small)
-                    .foregroundStyle(colors.textSecondary)
+                if let log = crashLog {
+                    ScrollView {
+                        Text(log)
+                            .font(.system(.caption2, design: .monospaced))
+                            .foregroundStyle(colors.danger)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .textSelection(.enabled)
+                    }
+                    .frame(maxHeight: 120)
+                    .padding(Spacing.sm)
+                    .background(colors.dangerLight)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.sm, style: .continuous))
+
+                    HStack(spacing: Spacing.sm) {
+                        Button("Copy") {
+                            UIPasteboard.general.string = log
+                        }
+                        .font(Typography.small.weight(.semibold)).foregroundStyle(colors.primary)
+                        Spacer()
+                        Button("Clear") { showClearConfirm = true }
+                            .font(Typography.small.weight(.semibold)).foregroundStyle(colors.danger)
+                    }
+                } else {
+                    Text("No crash log on record.")
+                        .font(Typography.small)
+                        .foregroundStyle(colors.textSecondary)
+                }
             }
             .padding(Spacing.md)
         }
+        .confirmationDialog("Clear Log", isPresented: $showClearConfirm, titleVisibility: .visible) {
+            Button("Clear", role: .destructive) { CrashReporter.clear(); crashLog = nil }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("Delete the stored crash log?") }
     }
 
     // MARK: - Actions

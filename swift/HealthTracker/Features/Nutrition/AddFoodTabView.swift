@@ -5,8 +5,10 @@ import SwiftUI
 /// row tappable to a portion step, with pin / edit / delete actions and a "Create Custom Food" entry.
 /// Ranking/scaling lives in `FoodLibraryLogic`.
 ///
-/// Deferred vs RN: pinned drag-**reorder** and food-type **filtering** (`FoodFilterModal`/
-/// `FavoritePillRow`) — pinning, editing, deleting, search, and portioned add are all here.
+/// Deferred vs RN (device-polish, documented in the roadmap): pinned drag-**reorder** — a drag
+/// gesture that can't be validated blind; the `reorderPinnedFoods` store method is ready for it.
+/// Food-type **filtering** (`FoodFilterSheet`/`FavoritePillRow`), pinning, editing, deleting, search,
+/// and portioned add are all here.
 struct AddFoodTabView: View {
     @Environment(\.appColors) private var colors
     @Environment(AppStore.self) private var store
@@ -19,6 +21,8 @@ struct AddFoodTabView: View {
     @State private var screen: Screen = .list
     @State private var servings: Double = 1
     @State private var pinning: CustomFood?
+    @State private var activeFilters: [String] = []
+    @State private var showFilterSheet = false
 
     private enum Screen {
         case list
@@ -28,11 +32,16 @@ struct AddFoodTabView: View {
     }
 
     private var isSearching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
+    private var filtersActive: Bool { FoodLibraryLogic.hasActiveFoodTypeFilter(activeFilters) }
     private var frequency: [String: Int] { FoodLibraryLogic.frequencyMap(store.nutritionLog) }
-    private var matched: [CustomFood] { FoodLibraryLogic.matches(store.customFoods, query: query) }
+    private var matched: [CustomFood] {
+        FoodLibraryLogic.applyFoodTypeFilter(FoodLibraryLogic.matches(store.customFoods, query: query), activeTypes: activeFilters)
+    }
     private var pinnedFoods: [CustomFood] { FoodLibraryLogic.pinned(matched, category: category) }
     private var recentFoods: [CustomFood] {
-        isSearching ? [] : FoodLibraryLogic.recent(store.customFoods, category: category, frequency: frequency)
+        guard !isSearching else { return [] }
+        let base = FoodLibraryLogic.applyFoodTypeFilter(store.customFoods, activeTypes: activeFilters)
+        return FoodLibraryLogic.recent(base, category: category, frequency: frequency)
     }
     private var myFoods: [CustomFood] { isSearching ? FoodLibraryLogic.unpinned(matched, category: category) : [] }
     private var isEmpty: Bool {
@@ -58,6 +67,9 @@ struct AddFoodTabView: View {
     private var listScreen: some View {
         VStack(spacing: 0) {
             searchBar
+            FavoritePillRow(favorites: store.preferences.favoriteFilterTypes ?? [], activeFilters: activeFilters) { type in
+                activeFilters = FoodLibraryLogic.toggleFoodTypeFilter(activeFilters, type: type)
+            }
             ScrollView {
                 LazyVStack(spacing: 0) {
                     if !pinnedFoods.isEmpty {
@@ -73,7 +85,7 @@ struct AddFoodTabView: View {
                         ForEach(myFoods) { foodRow($0) }
                     }
                     if isEmpty {
-                        Text(isSearching ? "No results found" : "No custom foods yet. Tap \"Create Custom Food\" to add one.")
+                        Text(isSearching || filtersActive ? "No results found" : "No custom foods yet. Tap \"Create Custom Food\" to add one.")
                             .font(Typography.small)
                             .foregroundStyle(colors.textSecondary)
                             .multilineTextAlignment(.center)
@@ -91,20 +103,37 @@ struct AddFoodTabView: View {
                 store.updateCustomFood(updated)
             }
         }
+        .sheet(isPresented: $showFilterSheet) {
+            FoodFilterSheet(currentFilters: activeFilters) { activeFilters = $0 }
+        }
     }
 
     private var searchBar: some View {
         HStack(spacing: Spacing.sm) {
-            Image(systemName: "magnifyingglass").foregroundStyle(colors.textSecondary)
-            TextField("Search foods…", text: $query)
-                .font(Typography.body)
-                .foregroundStyle(colors.text)
+            HStack(spacing: Spacing.sm) {
+                Image(systemName: "magnifyingglass").foregroundStyle(colors.textSecondary)
+                TextField("Search foods…", text: $query)
+                    .font(Typography.body)
+                    .foregroundStyle(colors.text)
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(colors.card)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).strokeBorder(colors.border, lineWidth: 1))
+
+            Button { showFilterSheet = true } label: {
+                Image(systemName: "line.3.horizontal.decrease.circle\(filtersActive ? ".fill" : "")")
+                    .font(.system(size: 22))
+                    .foregroundStyle(filtersActive ? colors.primary : colors.textSecondary)
+                    .frame(width: 44, height: 44)
+                    .background(colors.card)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).strokeBorder(filtersActive ? colors.primary : colors.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Filter foods")
         }
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.sm)
-        .background(colors.card)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.md, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Radius.md, style: .continuous).strokeBorder(colors.border, lineWidth: 1))
         .padding(Spacing.md)
     }
 

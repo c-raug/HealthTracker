@@ -4,6 +4,9 @@ import SwiftUI
 struct HealthTrackerApp: App {
     /// Owned here so they live for the app's lifetime.
     @State private var theme = AppTheme()
+
+    /// Install the local crash-log capture before any view builds (Phase 14).
+    init() { CrashReporter.install() }
     /// The single source of truth for app state (Phase 2). Loaded on first appearance.
     @State private var store = AppStore()
     /// The transient-toast queue (Phase 12) — achievement-unlock / level-up banners.
